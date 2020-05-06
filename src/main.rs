@@ -1,6 +1,7 @@
 use argparse::Mode;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
+use parsing::generate_target_lists;
 use simplelog::{
     CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
@@ -8,6 +9,7 @@ use simplelog::{
 use std::fs::File;
 
 mod argparse;
+mod parsing;
 mod rdp;
 mod web;
 
@@ -46,6 +48,10 @@ fn main() {
     CombinedLogger::init(log_dests).unwrap();
 
     debug!("Got opts:\n{:?}", opts);
+
+    // Load in the target lists, parsed from arguments, files, and nmap
+    let targets = generate_target_lists(&opts);
+    println!("target list: {:?}", targets);
 
     match opts.mode {
         Mode::Rdp => rdp::capture(&opts),
