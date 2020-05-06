@@ -1,6 +1,7 @@
 use image::{DynamicImage, ImageBuffer, Rgba, RgbaImage};
 use rdp::core::client::Connector;
 use rdp::core::event::RdpEvent;
+use rdp::core::event::{PointerButton, PointerEvent};
 use std::collections::HashMap;
 use std::net::{SocketAddr, TcpStream};
 
@@ -9,8 +10,9 @@ use log::{debug, error, info, trace, warn};
 
 use crate::argparse::Opts;
 
-const IMAGE_WIDTH: u16 = 800;
-const IMAGE_HEIGHT: u16 = 600;
+//TODO maybe make this configurable
+const IMAGE_WIDTH: u16 = 1280;
+const IMAGE_HEIGHT: u16 = 1024;
 
 struct BitmapChunk {
     width: u32,
@@ -153,7 +155,12 @@ pub fn capture(opts: &Opts) {
 
     let mut exit_count = 0_usize;
     //while exit_count < 230 {
-    while !rdp_image.is_complete() && exit_count < 400 {
+    // A 320-chunk image might need several frames' worth of loops.
+    // TODO implement a timeout, probably via tokio later?
+    // TODO work out why the captured image sometimes is missing the bottom
+    // right corner (all black) and sometimes the top section is overwritten
+    // with an orangey-brown colour
+    while !rdp_image.is_complete() && exit_count < 800 {
         match client.read(|rdp_event| match rdp_event {
             RdpEvent::Bitmap(bitmap) => {
                 // numbers all come in as u16
@@ -188,13 +195,16 @@ pub fn capture(opts: &Opts) {
                     true, //bitmap.is_compress,
                 );
 
-                rdp_image.add_chunk(&chunk).unwrap();
+                if !rdp_image.is_complete() {
+                    rdp_image.add_chunk(&chunk).unwrap();
+                } else {
+                    trace!("Image complete, ignoring chunk");
+                }
                 exit_count += 1;
                 trace!("exit count is {}", exit_count);
             }
-            _event => {
-                debug!("Received other event");
-            }
+            RdpEvent::Pointer(_) => info!("Pointer event!"),
+            RdpEvent::Key(_) => info!("Key event!"),
         }) {
             Ok(_) => (),
             Err(e) => {
@@ -202,10 +212,27 @@ pub fn capture(opts: &Opts) {
                 exit_count = 999;
             },
         }
+
+        // send a mouse event
+        client
+            .write(RdpEvent::Pointer(PointerEvent {
+                x: exit_count as u16,
+                y: 100_u16,
+                button: PointerButton::None,
+                down: false,
+            }))
+            .unwrap();
+    }
+    if exit_count > 300 {
+        info!("Exit count is {}", exit_count);
     }
 
     match rdp_image.buffer {
         Some(di) => {
+            info!(
+                "Received image in {} chunks",
+                rdp_image.filled_progress.iter().count()
+            );
             info!("Saving image");
             di.save("/tmp/image.png").unwrap();
         }
