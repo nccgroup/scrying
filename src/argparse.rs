@@ -32,11 +32,17 @@ pub struct Opts {
     #[clap(short, long)]
     pub mode: Mode,
 
+    #[clap(short, long)]
+    pub log_file: Option<String>,
+
     #[clap(short, long, default_value = "output")]
     pub output_dir: String,
 
+    #[clap(short, long)]
+    pub silent: bool,
+
     #[clap(short, long, parse(from_occurrences))]
-    pub verbose: i32,
+    pub verbose: u8,
 }
 
 pub fn parse() -> Opts {

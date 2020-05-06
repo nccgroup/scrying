@@ -3,6 +3,9 @@ use rdp::core::client::Connector;
 use rdp::core::event::RdpEvent;
 use std::net::{SocketAddr, TcpStream};
 
+#[allow(unused)]
+use log::{debug, error, info, trace, warn};
+
 use crate::argparse::Opts;
 
 const IMAGE_WIDTH: u16 = 800;
@@ -53,7 +56,7 @@ impl Image {
         for (idx, pixel) in
             chunk.data.chunks(self.component_width.unwrap()).enumerate()
         {
-            println!("idx: {}, pixel: {:?}, at ({}, {})", idx, pixel, x, y);
+            trace!("idx: {}, pixel: {:?}, at ({}, {})", idx, pixel, x, y);
 
             match &mut self.buffer {
                 Some(DynamicImage::ImageRgba8(img)) => {
@@ -70,7 +73,7 @@ impl Image {
             // Increment x and y around the chunk
             x += 1;
             if x > chunk.right {
-                println!("CR");
+                trace!("CR");
                 x = chunk.left;
                 y += 1;
             }
@@ -137,7 +140,7 @@ pub fn capture(opts: &Opts) {
                 };
                 chunk.data = data;
 
-                println!(
+                debug!(
                     "Received {}x{} bmp pos {}, {}, {}, {}, bpp: {}, len {}, compress {}",
                     chunk.width,
                     chunk.height,
@@ -150,20 +153,20 @@ pub fn capture(opts: &Opts) {
                     true, //bitmap.is_compress,
                 );
 
-                rdp_image.add_chunk(&chunk);
+                rdp_image.add_chunk(&chunk).unwrap();
                 exit_count += 1;
-                println!("exit count is {}", exit_count);
+                trace!("exit count is {}", exit_count);
             }
-            event => {
-                println!("Received other event");
+            _event => {
+                debug!("Received other event");
             }
-        });
+        }).unwrap();
     }
 
     match rdp_image.buffer {
         Some(di) => {
-            println!("Saving image");
-            di.save("/tmp/image.png");
+            info!("Saving image");
+            di.save("/tmp/image.png").unwrap();
         }
         _ => unimplemented!(),
     }
