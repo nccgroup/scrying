@@ -1,6 +1,7 @@
 use image::{DynamicImage, ImageBuffer, Rgba, RgbaImage};
 use rdp::core::client::Connector;
 use rdp::core::event::RdpEvent;
+use std::collections::HashMap;
 use std::net::{SocketAddr, TcpStream};
 
 #[allow(unused)]
@@ -38,6 +39,7 @@ struct Image {
     component_width: Option<usize>,
     width: Option<u32>,
     height: Option<u32>,
+    filled_progress: HashMap<(u32, u32), u32>,
 }
 
 impl Image {
@@ -50,6 +52,11 @@ impl Image {
         }
 
         //TODO assert that the buffer is the right length etc.
+
+        // Initialise an accumulator for calculating the average pixel value
+        // 64x64 chunk with 16-bit RGB values (ignoring A) fits inside a u32:
+        // 64*64*3*2*255 = 6266880 << 2^32 = 4294967296
+        let mut pixval_acc: u32 = 0;
 
         let mut x: u32 = chunk.left;
         let mut y: u32 = chunk.top;
@@ -66,6 +73,8 @@ impl Image {
                         y,
                         Rgba([pixel[0], pixel[1], pixel[2], 255 - pixel[3]]),
                     );
+                    pixval_acc +=
+                        pixel[0] as u32 + pixel[1] as u32 + pixel[2] as u32;
                 }
                 _ => unimplemented!(),
             }
@@ -78,6 +87,10 @@ impl Image {
                 y += 1;
             }
         }
+
+        // Put average pixel value into hashmap
+        let avg = pixval_acc / (self.width.unwrap() * self.height.unwrap());
+        self.filled_progress.insert((chunk.top, chunk.left), avg);
 
         Ok(())
     }
@@ -99,6 +112,27 @@ impl Image {
 
         Ok(())
     }
+
+    fn is_complete(&self) -> bool {
+        //TODO This method kinda relies on the server sending at least one blank
+        // frame before the desktop to ensure that the hashmap is never in a
+        // state where it has, say, four filled frames and no blanks. Can this
+        // be better? Set minimum = size/size of first frame divided by some
+        // conservative approximation?
+
+        // If the hashmap is zero length return false
+        if self.filled_progress.iter().count() == 0 {
+            trace!("Image empty");
+            return false;
+        }
+        // If ∃ k s.t. hash[k] = 0 then return false
+        if self.filled_progress.values().any(|x| *x == 0) {
+            trace!("∃ null chunk");
+            return false;
+        }
+        // else return true
+        true
+    }
 }
 
 pub fn capture(opts: &Opts) {
@@ -118,8 +152,9 @@ pub fn capture(opts: &Opts) {
     let mut rdp_image: Image = Default::default();
 
     let mut exit_count = 0_usize;
-    while exit_count < 230 {
-        client.read(|rdp_event| match rdp_event {
+    //while exit_count < 230 {
+    while !rdp_image.is_complete() && exit_count < 400 {
+        match client.read(|rdp_event| match rdp_event {
             RdpEvent::Bitmap(bitmap) => {
                 // numbers all come in as u16
                 let mut chunk = BitmapChunk {
@@ -160,7 +195,13 @@ pub fn capture(opts: &Opts) {
             _event => {
                 debug!("Received other event");
             }
-        }).unwrap();
+        }) {
+            Ok(_) => (),
+            Err(e) => {
+                error!("{:?}", e);
+                exit_count = 999;
+            },
+        }
     }
 
     match rdp_image.buffer {
