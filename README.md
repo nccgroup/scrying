@@ -24,3 +24,4 @@ Features with ticks next to them have been implemented, others are TODO
 * Parse targets smartly from nessus and nmap output
 * OCR on RDP usernames, either live or on a directory of images
 * Readme has pretty pictures of the output
+* NLA/auth to test credentials
