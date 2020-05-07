@@ -16,7 +16,7 @@ impl Target {
     fn parse(input: &str, mode: Mode) -> Result<Vec<Self>, &str> {
         // Parse a &str into a Target using the mode hint to guide output.
         // It doesn't make much sense to use a URL for RDP, etc.
-        use Mode::{Rdp, Web};
+        use Mode::{Auto, Rdp, Web};
 
         //TODO basic auth
 
@@ -30,14 +30,14 @@ impl Target {
             match u.scheme() {
                 "http" | "https" => {
                     trace!("Parsed as HTTP/HTTPS web url");
-                    if mode != Web {
+                    if mode != Web || mode != Auto {
                         return Err("Non-web mode requested for web-type URL");
                     }
                     return Ok(vec![Target::Url(u)]);
                 }
                 "rdp" => {
                     trace!("Parsed as RDP url");
-                    if mode != Rdp {
+                    if mode != Rdp || mode != Auto {
                         return Err("Non-rdp mode requested for rdp-type URL");
                     }
                     let port = u.port().unwrap_or(3389);
@@ -63,6 +63,7 @@ impl Target {
         }
 
         match mode {
+            Auto => unimplemented!(), // do both
             Rdp => {
                 // if no port specified then assume 3389, otherwise take
                 // the provided port
@@ -181,6 +182,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     // Process the optional command-line target argument
     if let Some(t) = &opts.target {
         match &opts.mode {
+            Auto => unimplemented!(), // do both
             Web => unimplemented!(),
             Rdp => input_lists
                 .rdp_targets

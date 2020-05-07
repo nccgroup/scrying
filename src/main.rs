@@ -56,5 +56,6 @@ fn main() {
     match opts.mode {
         Mode::Rdp => rdp::capture(&opts),
         Mode::Web => web::capture(&opts),
+        Mode::Auto => unimplemented!(),
     }
 }

@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 #[derive(PartialEq, Debug)]
 pub enum Mode {
+    Auto,
     Web,
     Rdp,
 }
@@ -11,11 +12,12 @@ impl FromStr for Mode {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use Mode::{Rdp, Web};
+        use Mode::{Auto, Rdp, Web};
         match s {
             "web" => Ok(Web),
             "rdp" => Ok(Rdp),
-            _ => Err("Mode must be \"web\" or \"rdp\""),
+            "auto" => Ok(Auto),
+            _ => Err("Mode must be \"auto\", \"web\" or \"rdp\""),
         }
     }
 }
@@ -29,7 +31,7 @@ pub struct Opts {
     #[clap(short, long)]
     pub target: Option<String>,
 
-    #[clap(short, long)]
+    #[clap(short, long, default_value = "auto")]
     pub mode: Mode,
 
     #[clap(short, long)]
