@@ -18,6 +18,10 @@ impl Target {
         // It doesn't make much sense to use a URL for RDP, etc.
         use Mode::{Auto, Rdp, Web};
 
+        // "Auto" is not supported here because this function returns a
+        // Vec of Targets and cannot tag them as RDP or Web
+        assert!(mode != Auto, "Mode cannot be Auto here");
+
         //TODO basic auth
 
         // Try to match a URL format. Examples could be:
@@ -26,18 +30,19 @@ impl Target {
         // * https://[2001:db8::5]:8080
         // * rdp://192.0.2.4:3390
         // * rdp://[2001:db8:6]
+        // * rdp://localhost
         if let Ok(u) = Url::parse(&input) {
             match u.scheme() {
                 "http" | "https" => {
                     trace!("Parsed as HTTP/HTTPS web url");
-                    if mode != Web || mode != Auto {
+                    if mode != Web {
                         return Err("Non-web mode requested for web-type URL");
                     }
                     return Ok(vec![Target::Url(u)]);
                 }
                 "rdp" => {
                     trace!("Parsed as RDP url");
-                    if mode != Rdp || mode != Auto {
+                    if mode != Rdp {
                         return Err("Non-rdp mode requested for rdp-type URL");
                     }
                     let port = u.port().unwrap_or(3389);
