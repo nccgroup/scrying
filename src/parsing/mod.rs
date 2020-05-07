@@ -181,17 +181,43 @@ fn ip_port_to_sockaddr(input: &str) -> Result<SocketAddr, io::Error> {
 }
 
 pub fn generate_target_lists(opts: &Opts) -> InputLists {
-    use Mode::{Rdp, Web};
+    use Mode::{Auto, Rdp, Web};
     let mut input_lists: InputLists = Default::default();
 
     // Process the optional command-line target argument
     if let Some(t) = &opts.target {
+        let mut parse_successful = false;
         match &opts.mode {
-            Auto => unimplemented!(), // do both
-            Web => unimplemented!(),
-            Rdp => input_lists
-                .rdp_targets
-                .append(&mut Target::parse(&t, Rdp).unwrap()),
+            Auto => {
+                // Try parsing as both web and RDP, saving any that stick
+                if let Ok(mut targets) = Target::parse(&t, Rdp) {
+                    input_lists.rdp_targets.append(&mut targets);
+                    parse_successful = true;
+                    debug!("{} parsed as RDP target", t);
+                }
+                if let Ok(mut targets) = Target::parse(&t, Web) {
+                    input_lists.web_targets.append(&mut targets);
+                    parse_successful = true;
+                    debug!("{} parsed as Web target", t);
+                }
+            }
+            Web => {
+                if let Ok(mut targets) = Target::parse(&t, Web) {
+                    input_lists.web_targets.append(&mut targets);
+                    parse_successful = true;
+                    debug!("{} parsed as Web target", t);
+                }
+            }
+            Rdp => {
+                if let Ok(mut targets) = Target::parse(&t, Rdp) {
+                    input_lists.rdp_targets.append(&mut targets);
+                    parse_successful = true;
+                    debug!("{} parsed as RDP target", t);
+                }
+            }
+        }
+        if !parse_successful {
+            warn!("Unable to parse {}", t);
         }
     }
 
