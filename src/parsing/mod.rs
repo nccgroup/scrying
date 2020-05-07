@@ -8,7 +8,7 @@ use url::{Host, Url};
 #[derive(Debug, PartialEq)]
 pub enum Target {
     Address(SocketAddr),
-    Hostname(String),
+    //  Hostname(String),
     Url(Url),
 }
 
