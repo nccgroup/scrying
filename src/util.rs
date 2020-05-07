@@ -1,0 +1,109 @@
+use crate::parsing::Target;
+use std::net::{SocketAddr, ToSocketAddrs};
+use url::Url;
+
+//TODO maybe move this to impl fmt::Display rather than a function
+pub fn target_to_filename(target: &Target) -> Result<String, &str> {
+    match target {
+        Target::Address(SocketAddr::V4(addr)) => {
+            let converted = format!("{}", addr).replace(":", "-");
+
+            return Ok(converted);
+        }
+        Target::Address(SocketAddr::V6(addr)) => {
+            let converted = format!("{}", addr)
+                .replace("]:", "-")
+                .replace("[", "")
+                .replace(":", "_");
+
+            return Ok(converted);
+        }
+        Target::Url(u) => {
+            // The :// scheme separator is converted to a hyphen
+            // Any slashes in the URL are converted into hyphens
+            // The port-separating colon is converted into an underscore
+            // This avoids the edge case where http://example.com:8080/thing
+            // and http://example.com/8080/thing convert to the same.
+            // TODO maybe convert the colons in a v6 address to dots
+            // rather than underscores
+            let mut converted: String = String::from(u.as_str())
+                .replace("://", "_") // Replace the scheme separator with -
+                .replace("/", "-") // replace all slashes with /
+                .replace(":", "_") // replace colon (probably port, could be uname)
+                .replace("[", "") // Remove the square brackets as they are not
+                .replace("]", "") // needed for uniqueness
+                ;
+            while converted.ends_with("-") {
+                // remove the trailing - if the URL had a trailing /
+                converted.pop();
+            }
+
+            return Ok(converted);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_target_to_filename() {
+        let test_cases: Vec<(Target, &str)> = vec![
+            (
+                Target::Url(Url::parse("http://example.com///").unwrap()),
+                "http_example.com",
+            ),
+            (
+                Target::Url(Url::parse("http://example.com:8443").unwrap()),
+                "http_example.com_8443",
+            ),
+            (
+                Target::Url(
+                    Url::parse("http://example.com:8443/this/is/a/path/")
+                        .unwrap(),
+                ),
+                "http_example.com_8443-this-is-a-path",
+            ),
+            (
+                Target::Url(Url::parse("http://192.0.2.65_8443/").unwrap()),
+                "http_192.0.2.65_8443",
+            ),
+            (
+                Target::Url(Url::parse("http://[2001:db8::56]:8443/").unwrap()),
+                "http_2001_db8__56_8443",
+            ),
+            (
+                Target::Address(
+                    "[::1]:3389".to_socket_addrs().unwrap().next().unwrap(),
+                ),
+                "__1-3389",
+            ),
+            (
+                Target::Address(
+                    "[2001:db8::1]:3389"
+                        .to_socket_addrs()
+                        .unwrap()
+                        .next()
+                        .unwrap(),
+                ),
+                "2001_db8__1-3389",
+            ),
+            (
+                Target::Address(
+                    "192.0.2.45:3389"
+                        .to_socket_addrs()
+                        .unwrap()
+                        .next()
+                        .unwrap(),
+                ),
+                "192.0.2.45-3389",
+            ),
+        ];
+
+        for case in test_cases {
+            eprintln!("Test case: {:?}", case);
+            let parsed = target_to_filename(&case.0).unwrap();
+            assert_eq!(parsed, case.1);
+        }
+    }
+}

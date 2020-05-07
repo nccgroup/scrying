@@ -11,6 +11,7 @@ use std::fs::File;
 mod argparse;
 mod parsing;
 mod rdp;
+mod util;
 mod web;
 
 fn main() {
