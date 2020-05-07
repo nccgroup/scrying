@@ -12,6 +12,14 @@ pub enum Target {
     Url(Url),
 }
 
+// InputLists moved above the impl on Target because the impl is
+// pretty long
+#[derive(Default, Debug, PartialEq)]
+pub struct InputLists {
+    pub rdp_targets: Vec<Target>,
+    pub web_targets: Vec<Target>,
+}
+
 impl Target {
     fn parse(input: &str, mode: Mode) -> Result<Vec<Self>, &str> {
         // Parse a &str into a Target using the mode hint to guide output.
@@ -64,6 +72,16 @@ impl Target {
                 }
 
                 _ => return Err("Invalid scheme"),
+            }
+        } else {
+            // Handle the case where rdp://2001:db8::100 drops through
+            // to the forced-prefix stage when it should fail as an
+            // invalid URL
+            if input.starts_with("rdp://")
+                || input.starts_with("https://")
+                || input.starts_with("http://")
+            {
+                return Err("Parsing error");
             }
         }
 
@@ -123,12 +141,6 @@ impl Target {
             }
         }
     }
-}
-
-#[derive(Default, Debug)]
-pub struct InputLists {
-    pub rdp_targets: Vec<Target>,
-    pub web_targets: Vec<Target>,
 }
 
 fn domain_to_sockaddr(
@@ -406,6 +418,152 @@ mod test {
             assert_eq!(parsed.len(), 2, "Parsed wrong number of addresses");
 
             assert_eq!(parsed, case.1,);
+        }
+    }
+
+    #[test]
+    fn parse_invalid_addresses() {
+        use Mode::{Rdp, Web};
+        let test_cases: Vec<(&str, Mode)> = vec![
+            ("http://192.0.2.4", Rdp),
+            ("http://192.0.2.5:3390", Rdp),
+            ("rdp://2001:db8::100", Web),
+            ("rdp://[2001:db8::101]:3000", Web),
+            // These get treated as hostnames and time out on DNS
+            // resolution, which is probably okay
+            //("10.0.0.0.0.1", Rdp),
+            //("2001:db8", Web),
+        ];
+
+        for case in test_cases {
+            eprintln!("Test case: {:?}", case);
+
+            let result = Target::parse(case.0, case.1);
+            eprintln!("Result: {:?}", result);
+            assert!(result.is_err());
+        }
+    }
+
+    #[test]
+    fn target_lists_from_cli_target() {
+        use Mode::{Auto, Rdp, Web};
+        // Don't need to do such thorough testing a for Target::parse
+        // because a lot of the code is the same. Just need valid web
+        // and RDP addresses for the dedicated and auto modes, as well
+        // a sample of invalid cases
+        let mut opts: Opts = Default::default();
+
+        let test_cases: Vec<(&str, InputLists, Mode)> = vec![
+            ("rdp://192.0.2.1", Default::default(), Web),
+            ("http://192.0.2.1", Default::default(), Rdp),
+            (
+                "rdp://[2001:db8::6]:3300",
+                InputLists {
+                    rdp_targets: vec![Target::Address(
+                        "[2001:db8::6]:3300"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    )],
+                    web_targets: Vec::new(),
+                },
+                Rdp,
+            ),
+            (
+                "rdp://[2001:db8::6]:3300",
+                InputLists {
+                    rdp_targets: vec![Target::Address(
+                        "[2001:db8::6]:3300"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    )],
+                    web_targets: Vec::new(),
+                },
+                Auto,
+            ),
+            (
+                "https://[2001:db8::6]:8080",
+                InputLists {
+                    rdp_targets: Vec::new(),
+                    web_targets: vec![Target::Url(
+                        Url::parse("https://[2001:db8::6]:8080").unwrap(),
+                    )],
+                },
+                Web,
+            ),
+            (
+                "https://[2001:db8::6]",
+                InputLists {
+                    rdp_targets: Vec::new(),
+                    web_targets: vec![Target::Url(
+                        Url::parse("https://[2001:db8::6]").unwrap(),
+                    )],
+                },
+                Auto,
+            ),
+            (
+                "2001:db8::6",
+                InputLists {
+                    rdp_targets: Vec::new(),
+                    web_targets: vec![
+                        Target::Url(
+                            Url::parse("https://[2001:db8::6]").unwrap(),
+                        ),
+                        Target::Url(
+                            Url::parse("http://[2001:db8::6]").unwrap(),
+                        ),
+                    ],
+                },
+                Web,
+            ),
+            (
+                "[2001:db8::6]:3300",
+                InputLists {
+                    rdp_targets: vec![Target::Address(
+                        "[2001:db8::6]:3300"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    )],
+                    web_targets: Vec::new(),
+                },
+                Rdp,
+            ),
+            (
+                "[2001:db8::6]:3300",
+                InputLists {
+                    rdp_targets: vec![Target::Address(
+                        "[2001:db8::6]:3300"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    )],
+                    web_targets: vec![
+                        Target::Url(
+                            Url::parse("https://[2001:db8::6]:3300").unwrap(),
+                        ),
+                        Target::Url(
+                            Url::parse("http://[2001:db8::6]:3300").unwrap(),
+                        ),
+                    ],
+                },
+                Auto,
+            ),
+        ];
+
+        for (input, input_lists, mode) in test_cases {
+            eprintln!("Test case: {:?}", (input, &input_lists, mode));
+            opts.target = Some(input.into());
+            opts.mode = mode;
+
+            let parsed = generate_target_lists(&opts);
+
+            assert_eq!(parsed, input_lists);
         }
     }
 }
