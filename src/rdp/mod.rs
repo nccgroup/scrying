@@ -238,10 +238,10 @@ pub fn capture(target: &Target, output_dir: &Path) -> Result<(), ()> {
                 "Received image in {} chunks",
                 rdp_image.filled_progress.iter().count()
             );
-            info!("Saving image");
             let filename = target_to_filename(&target).unwrap();
             let filename = format!("{}.png", filename);
             let filepath = output_dir.join(filename);
+            info!("Saving image as {}", filepath.display());
             di.save(filepath).unwrap();
         }
         _ => unimplemented!(),
