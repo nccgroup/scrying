@@ -58,19 +58,64 @@ impl Target {
                     return Ok(vec![Target::Address(address)]);
                 }
 
-                _ => unimplemented!(),
+                _ => return Err("Invalid scheme"),
             }
         }
 
         match mode {
             Rdp => {
-                // stuff
+                // if no port specified then assume 3389, otherwise take
+                // the provided port
+
+                // Try forcing a parse that includes the port
+                if let Ok(addr) = ip_port_to_sockaddr(&input) {
+                    return Ok(vec![Target::Address(addr)]);
+                }
+
+                // If that didn't work then try parsing it as just an address
+                if let Ok(addr) = domain_to_sockaddr(&input, 3389) {
+                    return Ok(vec![Target::Address(addr)]);
+                }
+
+                // If none of these worked then it's probably not salvageable
+                return Err("Unable to parse target");
             }
             Web => {
-                unimplemented!();
+                // add URLs for HTTP and HTTPS because we don't know
+                // ahead of time which protocol it uses
+                let mut targets = Vec::new();
+
+                // Try parsing as https://$INPUT
+                // if that fails then try https://[$INPUT] in case it is
+                // a v6 address without square brackets
+
+                // Try slapping an HTTP:// on the front and see whether
+                // it parses
+                if let Ok(u) = Url::parse(&format!("https://{}", input)) {
+                    targets.push(Target::Url(u));
+                } else {
+                    if let Ok(u) = Url::parse(&format!("https://[{}]", input)) {
+                        targets.push(Target::Url(u));
+                    } else {
+                        //TODO include error string
+                        return Err("Unable to parse HTTPS URL");
+                    }
+                }
+
+                if let Ok(u) = Url::parse(&format!("http://{}", input)) {
+                    targets.push(Target::Url(u));
+                } else {
+                    if let Ok(u) = Url::parse(&format!("http://[{}]", input)) {
+                        targets.push(Target::Url(u));
+                    } else {
+                        //TODO include error string
+                        return Err("Unable to parse HTTP URL");
+                    }
+                }
+
+                return Ok(targets);
             }
         }
-        Err("Reached end of parsing function without success")
     }
 }
 
@@ -113,6 +158,19 @@ fn domain_to_sockaddr(
     Err(io::Error::new(
         io::ErrorKind::Other,
         "Unknown error resolving domain",
+    ))
+}
+
+fn ip_port_to_sockaddr(input: &str) -> Result<SocketAddr, io::Error> {
+    let mut addrs = input.to_socket_addrs()?;
+
+    if let Some(sockaddr) = addrs.next() {
+        return Ok(sockaddr);
+    }
+
+    Err(io::Error::new(
+        io::ErrorKind::Other,
+        "Invalid sockaddr string",
     ))
 }
 
@@ -209,5 +267,112 @@ mod test {
             possible_addresses.contains(&parsed[0]),
             "Unable to resolve URL to address"
         );
+    }
+
+    #[test]
+    fn parse_target_from_ip() {
+        use Mode::{Rdp, Web};
+
+        let test_cases: Vec<(&str, Target, Mode)> = vec![
+            (
+                "192.0.2.4",
+                Target::Address(
+                    "192.0.2.4:3389".to_socket_addrs().unwrap().next().unwrap(),
+                ),
+                Rdp,
+            ),
+            (
+                "192.0.2.5:3390",
+                Target::Address(
+                    "192.0.2.5:3390".to_socket_addrs().unwrap().next().unwrap(),
+                ),
+                Rdp,
+            ),
+            (
+                "2001:db8::100",
+                Target::Address(
+                    "[2001:db8::100]:3389"
+                        .to_socket_addrs()
+                        .unwrap()
+                        .next()
+                        .unwrap(),
+                ),
+                Rdp,
+            ),
+            (
+                "[2001:db8::101]:3000",
+                Target::Address(
+                    "[2001:db8::101]:3000"
+                        .to_socket_addrs()
+                        .unwrap()
+                        .next()
+                        .unwrap(),
+                ),
+                Rdp,
+            ),
+        ];
+        let vec_test_cases: Vec<(&str, Vec<Target>, Mode)> = vec![
+            (
+                "2001:db8::1",
+                vec![
+                    Target::Url(Url::parse("https://[2001:db8::1]").unwrap()),
+                    Target::Url(Url::parse("http://[2001:db8::1]").unwrap()),
+                ],
+                Web,
+            ),
+            (
+                "[2001:db8::1]",
+                vec![
+                    Target::Url(Url::parse("https://[2001:db8::1]").unwrap()),
+                    Target::Url(Url::parse("http://[2001:db8::1]").unwrap()),
+                ],
+                Web,
+            ),
+            (
+                "[2001:db8::1]:8080",
+                vec![
+                    Target::Url(
+                        Url::parse("https://[2001:db8::1]:8080").unwrap(),
+                    ),
+                    Target::Url(
+                        Url::parse("http://[2001:db8::1]:8080").unwrap(),
+                    ),
+                ],
+                Web,
+            ),
+            (
+                "192.0.2.14",
+                vec![
+                    Target::Url(Url::parse("https://192.0.2.14").unwrap()),
+                    Target::Url(Url::parse("http://192.0.2.14").unwrap()),
+                ],
+                Web,
+            ),
+            (
+                "192.0.2.14:8443",
+                vec![
+                    Target::Url(Url::parse("https://192.0.2.14:8443").unwrap()),
+                    Target::Url(Url::parse("http://192.0.2.14:8443").unwrap()),
+                ],
+                Web,
+            ),
+        ];
+
+        for case in test_cases {
+            eprintln!("Test case: {:?}", case);
+            let parsed = Target::parse(&case.0, case.2).unwrap();
+            assert_eq!(parsed.len(), 1, "Parsed wrong number of addresses");
+            assert_eq!(parsed[0], case.1,);
+        }
+
+        for case in vec_test_cases {
+            eprintln!("Test case: {:?}", case);
+            let parsed = Target::parse(&case.0, case.2).unwrap();
+
+            // Each address should result in an HTTPS and HTTP URL
+            assert_eq!(parsed.len(), 2, "Parsed wrong number of addresses");
+
+            assert_eq!(parsed, case.1,);
+        }
     }
 }
