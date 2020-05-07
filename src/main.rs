@@ -1,7 +1,10 @@
+use std::fs::create_dir_all;
+use std::path::Path;
+
 use argparse::Mode;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use parsing::generate_target_lists;
+use parsing::{generate_target_lists, InputLists};
 use simplelog::{
     CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
@@ -54,9 +57,37 @@ fn main() {
     let targets = generate_target_lists(&opts);
     println!("target list: {:?}", targets);
 
+    // Create output directories if they do not exist
+    let rdp_output_dir = Path::new("./output/rdp");
+    let web_output_dir = Path::new("./output/web");
+    if !rdp_output_dir.is_dir() {
+        create_dir_all(rdp_output_dir).expect(&format!(
+            "Error creating directory {}",
+            rdp_output_dir.display()
+        ));
+    }
+    if !web_output_dir.is_dir() {
+        create_dir_all(web_output_dir).expect(&format!(
+            "Error creating directory {}",
+            web_output_dir.display()
+        ));
+    }
+
     match opts.mode {
-        Mode::Rdp => rdp::capture(&opts),
-        Mode::Web => web::capture(&opts),
+        Mode::Rdp => rdp_worker(&targets, &rdp_output_dir).unwrap(),
+        Mode::Web => web_worker(&targets, &web_output_dir).unwrap(),
         Mode::Auto => unimplemented!(),
     }
+}
+
+fn rdp_worker(targets: &InputLists, output_dir: &Path) -> Result<(), ()> {
+    for target in &targets.rdp_targets {
+        rdp::capture(&target, output_dir)?;
+    }
+
+    Ok(())
+}
+
+fn web_worker(_targets: &InputLists, _output_dir: &Path) -> Result<(), ()> {
+    Ok(())
 }

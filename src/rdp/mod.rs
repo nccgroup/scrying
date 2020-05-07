@@ -1,14 +1,15 @@
-use image::{DynamicImage, ImageBuffer, Rgba, RgbaImage};
+use crate::parsing::Target;
+use crate::util::target_to_filename;
+use image::{DynamicImage, ImageBuffer, Rgba};
 use rdp::core::client::Connector;
 use rdp::core::event::RdpEvent;
 use rdp::core::event::{PointerButton, PointerEvent};
 use std::collections::HashMap;
-use std::net::{SocketAddr, TcpStream};
+use std::net::TcpStream;
+use std::path::Path;
 
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-
-use crate::argparse::Opts;
 
 //TODO maybe make this configurable
 const IMAGE_WIDTH: u16 = 1280;
@@ -137,10 +138,14 @@ impl Image {
     }
 }
 
-pub fn capture(opts: &Opts) {
-    let ip = opts.target.clone().unwrap();
+pub fn capture(target: &Target, output_dir: &Path) -> Result<(), ()> {
+    //let ip = opts.target.clone().unwrap();
+    let addr = match target {
+        Target::Address(sock_addr) => sock_addr,
+        Target::Url(_) => return Err(()),
+    };
 
-    let addr = ip.parse::<SocketAddr>().unwrap();
+    //let addr = ip.parse::<SocketAddr>().unwrap();
     let tcp = TcpStream::connect(&addr).unwrap();
 
     let mut connector = Connector::new()
@@ -234,8 +239,13 @@ pub fn capture(opts: &Opts) {
                 rdp_image.filled_progress.iter().count()
             );
             info!("Saving image");
-            di.save("/tmp/image.png").unwrap();
+            let filename = target_to_filename(&target).unwrap();
+            let filename = format!("{}.png", filename);
+            let filepath = output_dir.join(filename);
+            di.save(filepath).unwrap();
         }
         _ => unimplemented!(),
     }
+
+    Ok(())
 }
