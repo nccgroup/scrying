@@ -1040,6 +1040,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed3d612bc64430efeb3f7ee6ef26d590dce0c43249217bddc62112540c7941e1"
 
 [[package]]
+name = "scamper"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "image",
+ "log",
+ "rdp-rs",
+ "simplelog",
+ "url",
+]
+
+[[package]]
 name = "schannel"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1275,18 +1287,6 @@ name = "unicode-xid"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
-
-[[package]]
-name = "universal-screenshooter"
-version = "0.1.0"
-dependencies = [
- "clap",
- "image",
- "log",
- "rdp-rs",
- "simplelog",
- "url",
-]
 
 [[package]]
 name = "url"
