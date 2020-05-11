@@ -36,7 +36,7 @@ mod util;
 mod web;
 
 fn main() {
-    println!("Starting NCC Group AutoSnap...");
+    println!("Starting NCC Group Scamper...");
     let opts = argparse::parse();
 
     // Configure logging
