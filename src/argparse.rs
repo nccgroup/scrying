@@ -54,6 +54,9 @@ pub struct Opts {
     pub input: Option<String>,
 
     #[clap(short, long)]
+    pub file: Option<String>,
+
+    #[clap(short, long)]
     pub target: Option<String>,
 
     #[clap(short, long, default_value = "auto")]

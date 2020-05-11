@@ -20,7 +20,8 @@
 use crate::argparse::{Mode, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use std::io;
+use std::fs::File;
+use std::io::{self, prelude::*, BufReader};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use url::{Host, Url};
 
@@ -250,6 +251,112 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         if !parse_successful {
             warn!("Unable to parse {}", t);
         }
+    }
+
+    // Process the optional input file
+    if let Some(file_name) = &opts.file {
+        let mut parse_successful_count: usize = 0;
+        let mut parse_total_count: usize = 0;
+        let mut parse_unsuccessful_count: usize = 0;
+        // This is horribly deep nesting, but it has to try opening the
+        // provided file, iterate over a reader, parse each line into a
+        // string type and then behave slightly differently depending on
+        // the selected mode, failing gracefully at each stage if any
+        // errors occur.
+        match File::open(file_name) {
+            Ok(file) => {
+                let reader = BufReader::new(file);
+                for line in reader.lines() {
+                    debug!("Reading target {:?}", line);
+                    match line {
+                        Ok(t) => {
+                            // Try tp parse the line into a Target
+                            parse_total_count += 1;
+
+                            match &opts.mode {
+                                Auto => {
+                                    // Try parsing as both web and RDP,
+                                    // saving any that stick
+                                    let mut success = false;
+                                    if let Ok(mut targets) =
+                                        Target::parse(&t, Rdp)
+                                    {
+                                        input_lists
+                                            .rdp_targets
+                                            .append(&mut targets);
+                                        parse_successful_count += 1;
+                                        success = true;
+                                        info!("{} loaded as RDP target", t);
+                                    }
+                                    if let Ok(mut targets) =
+                                        Target::parse(&t, Web)
+                                    {
+                                        input_lists
+                                            .web_targets
+                                            .append(&mut targets);
+                                        parse_successful_count += 1;
+                                        success = true;
+                                        info!("{} loaded as Web target", t);
+                                    }
+                                    if !success {
+                                        warn!("Unable to parse {}", t);
+                                        parse_unsuccessful_count += 1;
+                                    }
+                                }
+                                Web => {
+                                    if let Ok(mut targets) =
+                                        Target::parse(&t, Web)
+                                    {
+                                        input_lists
+                                            .web_targets
+                                            .append(&mut targets);
+                                        parse_successful_count += 1;
+                                        info!("{} loaded as Web target", t);
+                                    } else {
+                                        warn!(
+                                            "{} is not a valid Web target",
+                                            t
+                                        );
+                                        parse_unsuccessful_count += 1;
+                                    }
+                                }
+                                Rdp => {
+                                    if let Ok(mut targets) =
+                                        Target::parse(&t, Rdp)
+                                    {
+                                        input_lists
+                                            .rdp_targets
+                                            .append(&mut targets);
+                                        parse_successful_count += 1;
+                                        info!("{} loaded as RDP target", t);
+                                    } else {
+                                        warn!(
+                                            "{} is not a valid RDP target",
+                                            t
+                                        );
+                                        parse_unsuccessful_count += 1;
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            warn!("Error reading line {}", e);
+                            parse_unsuccessful_count += 1;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Error opening file: {:?}", e);
+            }
+        }
+        info!(
+            "Loaded {} targets from {} lines from {} with {} errors",
+            parse_successful_count,
+            parse_total_count,
+            file_name,
+            parse_unsuccessful_count,
+        );
     }
 
     input_lists
