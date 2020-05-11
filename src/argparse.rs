@@ -62,6 +62,9 @@ pub struct Opts {
     #[clap(short, long, default_value = "auto")]
     pub mode: Mode,
 
+    #[clap(long, default_value = "10")]
+    pub timeout: usize,
+
     #[clap(short, long)]
     pub log_file: Option<String>,
 

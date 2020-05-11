@@ -19,13 +19,17 @@
 
 use crate::parsing::Target;
 use crate::util::target_to_filename;
+use crate::ThreadStatus;
 use image::{DynamicImage, ImageBuffer, Rgba};
 use rdp::core::client::Connector;
 use rdp::core::event::RdpEvent;
 use rdp::core::event::{PointerButton, PointerEvent};
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
 use std::net::TcpStream;
 use std::path::Path;
+use std::sync::mpsc;
 
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
@@ -33,6 +37,15 @@ use log::{debug, error, info, trace, warn};
 //TODO maybe make this configurable
 const IMAGE_WIDTH: u16 = 1280;
 const IMAGE_HEIGHT: u16 = 1024;
+
+#[derive(Debug)]
+struct RdpError;
+impl fmt::Display for RdpError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "An RDP error has occurred")
+    }
+}
+impl Error for RdpError {}
 
 struct BitmapChunk {
     width: u32,
@@ -157,8 +170,13 @@ impl Image {
     }
 }
 
-pub fn capture(target: &Target, output_dir: &Path) -> Result<(), ()> {
+pub fn capture(
+    target: &Target,
+    output_dir: &Path,
+    tx: mpsc::Sender<ThreadStatus>,
+) -> Result<(), ()> {
     //let ip = opts.target.clone().unwrap();
+    info!("Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
         Target::Url(_) => return Err(()),
@@ -266,5 +284,6 @@ pub fn capture(target: &Target, output_dir: &Path) -> Result<(), ()> {
         _ => unimplemented!(),
     }
 
+    tx.send(ThreadStatus::Complete).unwrap();
     Ok(())
 }

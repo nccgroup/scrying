@@ -25,7 +25,7 @@ use std::io::{self, prelude::*, BufReader};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use url::{Host, Url};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Target {
     Address(SocketAddr),
     //  Hostname(String),
