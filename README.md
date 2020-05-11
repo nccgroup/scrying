@@ -14,7 +14,7 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Automatically create output directory if it does not already exist
 * ✔️ Save images with consistent and unique filenames derived from the host/IP
 * ✔️ Full support for IPv6 and IPv4 literals as well as hostnames
-* Read file of RDP hosts, web hosts, or automatic hosts
+* ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
 * RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image
 * HTTP
 * VNC
