@@ -1,4 +1,4 @@
-# Universal Screenshooter (name to be decided)
+# NCC Group Scamper
 A new tool for collecting RDP, web and VNC screenshots all in one place
 
 # Motivation
