@@ -124,7 +124,9 @@ impl Image {
         }
 
         // Put average pixel value into hashmap
-        let avg = pixval_acc / (self.width.unwrap() * self.height.unwrap());
+        let chunk_width = chunk.right - chunk.left;
+        let chunk_height = chunk.bottom - chunk.top;
+        let avg = pixval_acc / (chunk_width * chunk_height);
         self.filled_progress.insert((chunk.top, chunk.left), avg);
 
         Ok(())
@@ -163,6 +165,7 @@ impl Image {
         // If ∃ k s.t. hash[k] = 0 then return false
         if self.filled_progress.values().any(|x| *x == 0) {
             trace!("∃ null chunk");
+            trace!("Filled progress: {:?}", self.filled_progress);
             return false;
         }
         // else return true
@@ -225,7 +228,7 @@ pub fn capture(
                 chunk.data = data;
 
                 debug!(
-                    "Received {}x{} bmp pos {}, {}, {}, {}, bpp: {}, len {}, compress {}",
+                    "Received {}x{} bmp pos {}, {}, {}, {}, bpp: {}, len {}",
                     chunk.width,
                     chunk.height,
                     chunk.left,
@@ -234,9 +237,17 @@ pub fn capture(
                     chunk.bottom,
                     chunk.bpp,
                     chunk.data.len(),
-                    true, //bitmap.is_compress,
                 );
 
+                // If the chunk is destined for (0, 0) then determine
+                // whether the image looks "complete" before accepting.
+                // This ensures that the image is vaguely synchronised
+                if (chunk.left, chunk.top) == (0, 0) {
+                    trace!("Chunk is destined for (0, 0)");
+                    if rdp_image.is_complete() {
+                        debug!("Image looks complete, stopping the receiver");
+                    }
+                }
                 if !rdp_image.is_complete() {
                     rdp_image.add_chunk(&chunk).unwrap();
                 } else {
@@ -252,7 +263,7 @@ pub fn capture(
             Err(e) => {
                 error!("{:?}", e);
                 exit_count = 999;
-            },
+            }
         }
 
         // send a mouse event
