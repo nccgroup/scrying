@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.80 scan initiated Tue May 12 15:46:21 2020 as: nmap -p 443 -oX test/davi.dyoung.tech.xml davi.dyoung.tech -->
+<nmaprun scanner="nmap" args="nmap -p 443 -oX test/davi.dyoung.tech.xml davi.dyoung.tech" start="1589294781" startstr="Tue May 12 15:46:21 2020" version="7.80" xmloutputversion="1.04">
+<scaninfo type="syn" protocol="tcp" numservices="1" services="443"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<taskprogress task="Parallel DNS resolution of 1 host." time="1589294782" percent="0.00"/>
+<host starttime="1589294782" endtime="1589294782"><status state="up" reason="reset" reason_ttl="128"/>
+<address addr="151.236.222.35" addrtype="ipv4"/>
+<hostnames>
+<hostname name="davi.dyoung.tech" type="user"/>
+<hostname name="social.dyoung.tech" type="PTR"/>
+</hostnames>
+<ports><port protocol="tcp" portid="443"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="https" method="table" conf="3"/></port>
+</ports>
+<times srtt="3239" rttvar="8879" to="100000"/>
+</host>
+<runstats><finished time="1589294783" timestr="Tue May 12 15:46:23 2020" elapsed="1.07" summary="Nmap done at Tue May 12 15:46:23 2020; 1 IP address (1 host up) scanned in 1.07 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>

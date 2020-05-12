@@ -20,7 +20,8 @@
 use crate::argparse::{Mode, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use std::fs::File;
+use nmap_xml_parser::NmapResults;
+use std::fs::{self, File};
 use std::io::{self, prelude::*, BufReader};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use url::{Host, Url};
@@ -359,6 +360,34 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         );
     }
 
+    // Parse nmap file
+    if let Some(file) = &opts.nmap {
+        info!("Loading nmap file {}", file);
+
+        match fs::read_to_string(file) {
+        	Err(e) => {
+        		warn!("Error opening file: {}", e);
+        	}
+        	Ok(content) => {
+        		match NmapResults::parse(&content) {
+        			Err(e) => {
+        				warn!("Error parsing nmap file: {}", e);
+        			}
+        			Ok(results) => {
+        				debug!("Successfully parsed file");
+        				for host in results.hosts {
+        					// for each host check for some common open ports
+        					//TODO service discovery for ports identified as
+        					// "web", etc.
+        					debug!("Parsing host with IP {}", host.ip_address);
+        				}
+        			}
+        		}
+        	}
+        }
+        unimplemented!();
+    }
+
     input_lists
 }
 
@@ -690,6 +719,32 @@ mod test {
             let parsed = generate_target_lists(&opts);
 
             assert_eq!(parsed, input_lists);
+        }
+    }
+
+    #[test]
+    fn load_from_nmap_xml() {
+        // Load xml from a file and parse it
+        let test_cases = vec![(
+            "nmap.xml",
+            InputLists {
+                rdp_targets: vec![Target::Address(
+                    "[2001:db8::6]:3300"
+                        .to_socket_addrs()
+                        .unwrap()
+                        .next()
+                        .unwrap(),
+                )],
+                web_targets: Vec::new(),
+            },
+        )];
+        let mut opts: Opts = Default::default();
+        for case in test_cases {
+            eprintln!("Test case: {:?}", case);
+            opts.nmap = Some(case.0.into());
+            let parsed = generate_target_lists(&opts);
+
+            assert_eq!(parsed, case.1);
         }
     }
 }
