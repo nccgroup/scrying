@@ -164,8 +164,10 @@ fn rdp_worker(
     }
     println!("At the join part");
     for w in workers {
-        print!("J");
-        w.join().unwrap().unwrap();
+        print!("Joining {:?}", w);
+        if w.join().unwrap().is_err() {
+            warn!("Thread terminated with error");
+        }
     }
 
     Ok(())
