@@ -25,3 +25,4 @@ Features with ticks next to them have been implemented, others are TODO
 * OCR on RDP usernames, either live or on a directory of images
 * Readme has pretty pictures of the output
 * NLA/auth to test credentials
+* Parse Dirble JSON output to grab screenshots of an entire website
