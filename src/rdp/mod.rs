@@ -88,6 +88,12 @@ impl Image {
 
         //TODO assert that the buffer is the right length etc.
 
+        // If the chunk has zero size then we have a problem
+        if chunk.left == chunk.right || chunk.top == chunk.bottom {
+            warn!("Received zero-size chunk");
+            return Err(());
+        }
+
         // Initialise an accumulator for calculating the average pixel value
         // 64x64 chunk with 16-bit RGB values (ignoring A) fits inside a u32:
         // 64*64*3*2*255 = 6266880 << 2^32 = 4294967296
@@ -162,6 +168,7 @@ impl Image {
             trace!("Image empty");
             return false;
         }
+
         // If ∃ k s.t. hash[k] = 0 then return false
         if self.filled_progress.values().any(|x| *x == 0) {
             trace!("∃ null chunk");
@@ -249,7 +256,9 @@ pub fn capture(
                     }
                 }
                 if !rdp_image.is_complete() {
-                    rdp_image.add_chunk(&chunk).unwrap();
+                    if rdp_image.add_chunk(&chunk).is_err() {
+                        warn!("Attempted to add invalid chunk");
+                    }
                 } else {
                     trace!("Image complete, ignoring chunk");
                 }
