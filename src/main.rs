@@ -49,9 +49,18 @@ fn main() {
     let mut log_dests: Vec<Box<dyn SharedLogger>> = Vec::new();
 
     if let Some(log_file) = &opts.log_file {
-        // Enable logging to a file at INFO level
+        // Enable logging to a file at INFO level by default
+        // Increasing global log verbosity increases log file verbosity
+        // accordingly. Combinations such as --silent -vv make sense
+        // when using a log file as the file will get TRACE messages
+        // while the terminal only gets WARN and higher.
+        let level_filter = match opts.verbose {
+            0 => LevelFilter::Info,
+            1 => LevelFilter::Debug,
+            _ => LevelFilter::Trace,
+        };
         log_dests.push(WriteLogger::new(
-            LevelFilter::Info,
+            level_filter,
             Config::default(),
             File::create(log_file).unwrap(),
         ));
