@@ -20,11 +20,13 @@
 use crate::argparse::{Mode, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use nmap_xml_parser::NmapResults;
+use nmap_xml_parser::host::Host;
+use nmap_xml_parser::port::Port;
+use nmap_xml_parser::{port::PortState, NmapResults};
 use std::fs::{self, File};
 use std::io::{self, prelude::*, BufReader};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
-use url::{Host, Url};
+use url::Url;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Target {
@@ -41,8 +43,16 @@ pub struct InputLists {
     pub web_targets: Vec<Target>,
 }
 
+impl InputLists {
+    fn append(&mut self, list: &mut Self) {
+        self.rdp_targets.append(&mut list.rdp_targets);
+        self.web_targets.append(&mut list.web_targets);
+    }
+}
+
 impl Target {
     fn parse(input: &str, mode: Mode) -> Result<Vec<Self>, &str> {
+        use url::Host;
         // Parse a &str into a Target using the mode hint to guide output.
         // It doesn't make much sense to use a URL for RDP, etc.
         use Mode::{Auto, Rdp, Web};
@@ -375,20 +385,45 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                     }
                     Ok(results) => {
                         debug!("Successfully parsed file");
-                        for (_host, port) in results.iter_ports() {
+                        for (host, port) in results.iter_ports() {
                             // for each host check for some common open ports
-                            //TODO service discovery for ports identified as
-                            // "web", etc.
-                            debug!("Parsing host {:?}", port);
+                            // and add relevant ones to the list
+
+                            // this has been broken out into a separate function
+                            // for readability
+                            input_lists
+                                .append(&mut lists_from_nmap(host, port));
                         }
                     }
                 }
             }
         }
-        unimplemented!();
     }
 
     input_lists
+}
+
+fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
+    let mut list: InputLists = Default::default();
+
+    //TODO service discovery for ports identified as
+    // "web", etc.
+    //TODO break this out into a function
+    debug!("Parsing host {:?}", (host, port));
+    if port.status.state == PortState::Open {
+        debug!("open port");
+        // Found an open port, now add it to the
+        // input lists if it is appropriate
+        //TODO identify Web
+        match (port.port_number, port.service_info.name.as_str()) {
+            (3389, _) | (_, "ms-wbt-server") => {
+                debug!("Identified RDP");
+                //match Target::parse_from_nmap(host, port)
+            }
+            _ => {}
+        }
+    }
+    list
 }
 
 #[cfg(test)]
