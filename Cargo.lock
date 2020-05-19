@@ -598,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "nmap_xml_parser"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9646a6a6b7e31f70ac492abfb515392c1761cfef48d891c5c72a90a767f99f07"
+checksum = "6ec1c37276deca17bbf138c5d340d7b689913fd175d56f1320ac3c5d7da42220"
 dependencies = [
  "roxmltree",
  "strum",

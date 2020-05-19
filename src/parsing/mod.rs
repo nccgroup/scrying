@@ -365,25 +365,25 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         info!("Loading nmap file {}", file);
 
         match fs::read_to_string(file) {
-        	Err(e) => {
-        		warn!("Error opening file: {}", e);
-        	}
-        	Ok(content) => {
-        		match NmapResults::parse(&content) {
-        			Err(e) => {
-        				warn!("Error parsing nmap file: {}", e);
-        			}
-        			Ok(results) => {
-        				debug!("Successfully parsed file");
-        				for host in results.hosts {
-        					// for each host check for some common open ports
-        					//TODO service discovery for ports identified as
-        					// "web", etc.
-        					debug!("Parsing host with IP {}", host.ip_address);
-        				}
-        			}
-        		}
-        	}
+            Err(e) => {
+                warn!("Error opening file: {}", e);
+            }
+            Ok(content) => {
+                match NmapResults::parse(&content) {
+                    Err(e) => {
+                        warn!("Error parsing nmap file: {}", e);
+                    }
+                    Ok(results) => {
+                        debug!("Successfully parsed file");
+                        for (_host, port) in results.iter_ports() {
+                            // for each host check for some common open ports
+                            //TODO service discovery for ports identified as
+                            // "web", etc.
+                            debug!("Parsing host {:?}", port);
+                        }
+                    }
+                }
+            }
         }
         unimplemented!();
     }
@@ -520,6 +520,14 @@ mod test {
                 ],
                 Web,
             ),
+            /*( // TODO
+                "fe80::24%ens0",
+                vec![
+                    Target::Url(Url::parse("https://[2001:db8::1]").unwrap()),
+                    Target::Url(Url::parse("http://[2001:db8::1]").unwrap()),
+                ],
+                Web,
+            ),*/
             (
                 "[2001:db8::1]",
                 vec![
