@@ -68,6 +68,9 @@ pub struct Opts {
     #[clap(short, long)]
     pub log_file: Option<String>,
 
+    #[clap(long)]
+    pub nmap: Option<String>,
+
     #[clap(short, long, default_value = "output")]
     pub output_dir: String,
 
