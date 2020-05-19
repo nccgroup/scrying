@@ -20,6 +20,7 @@
 use crate::argparse::{Mode, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
+use nmap_xml_parser::host::Address;
 use nmap_xml_parser::host::Host;
 use nmap_xml_parser::port::Port;
 use nmap_xml_parser::{port::PortState, NmapResults};
@@ -385,6 +386,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                     }
                     Ok(results) => {
                         debug!("Successfully parsed file");
+                        //TODO filter for host being UP
                         for (host, port) in results.iter_ports() {
                             // for each host check for some common open ports
                             // and add relevant ones to the list
@@ -418,7 +420,40 @@ fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
         match (port.port_number, port.service_info.name.as_str()) {
             (3389, _) | (_, "ms-wbt-server") => {
                 debug!("Identified RDP");
-                //match Target::parse_from_nmap(host, port)
+                let port = port.port_number;
+                // Iterate over the host's addresses. It may have multiple
+                // IPv6, IPv4, and MAC addresses and we want to add them
+                // all (well, maybe not the MAC addresses)
+                for address in host.addresses() {
+                    let target_string = match address {
+                        Address::IpAddr(IpAddr::V6(a)) => {
+                            trace!("address: {:?}", a);
+                            format!("[{}]:{}", a, port)
+                        }
+                        Address::IpAddr(IpAddr::V4(a)) => {
+                            trace!("legacy address: {:?}", a);
+                            format!("{}:{}", a, port)
+                        }
+                        Address::MacAddr(a) => {
+                            trace!("Ignoring MAC address {}", a);
+                            // Ignore the MAC address and move on
+                            continue;
+                        }
+                    };
+
+                    // target_string now contains a string sockaddr
+                    // representation, so we parse it as RDP and see what
+                    // happens
+                    match Target::parse(&target_string, Mode::Rdp) {
+                        Ok(mut target) => {
+                            debug!("Successfully parsed as RDP");
+                            list.rdp_targets.append(&mut target);
+                        }
+                        Err(e) => {
+                            warn!("Error parsing target as RDP: {}", e);
+                        }
+                    }
+                }
             }
             _ => {}
         }
@@ -769,10 +804,10 @@ mod test {
     fn load_from_nmap_xml() {
         // Load xml from a file and parse it
         let test_cases = vec![(
-            "nmap.xml",
+            "test/nmap.xml",
             InputLists {
                 rdp_targets: vec![Target::Address(
-                    "[2001:db8::6]:3300"
+                    "192.168.59.138:3389"
                         .to_socket_addrs()
                         .unwrap()
                         .next()
@@ -786,6 +821,7 @@ mod test {
             eprintln!("Test case: {:?}", case);
             opts.nmap = Some(case.0.into());
             let parsed = generate_target_lists(&opts);
+            eprintln!("Parsed: {:?}", parsed);
 
             assert_eq!(parsed, case.1);
         }
