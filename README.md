@@ -15,6 +15,7 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Save images with consistent and unique filenames derived from the host/IP
 * ✔️ Full support for IPv6 and IPv4 literals as well as hostnames
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
+* Full cross-platform support (pending github action config to build & test on windows and mac)
 * RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image
 * HTTP
 * VNC
