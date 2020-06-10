@@ -16,12 +16,6 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install rustfmt
-        run: rustup component add rustfmt
-
-      - name: Install clippy
-        run: rustup component add clippy
-
       - name: Install cargo-outdated
         run: cargo install cargo-outdated
 
