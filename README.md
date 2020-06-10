@@ -15,15 +15,16 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Save images with consistent and unique filenames derived from the host/IP
 * ✔️ Full support for IPv6 and IPv4 literals as well as hostnames
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
-* Full cross-platform support (pending github action config to build & test on windows and mac)
+* ✔️ Parse targets smartly from nmap output
+* ✔️ HTTP - currently implemented by shelling out to wkhtmltoimage, see #3
+* Full cross-platform support - pending working out web screenshotting properly
 * RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image
-* HTTP - currently implemented by shelling out to wkhtmltoimage, see #3
 * VNC
 * Video streams
 * option for timestamps in filenames
 * Read targets from a msf services -o csv output
-* Parse targets smartly from nessus and nmap output
+* Parse targets smartly from nessus output - [WIP](https://github.com/sciguy16/nessus_xml_parser-rs)
 * OCR on RDP usernames, either live or on a directory of images
 * Readme has pretty pictures of the output
 * NLA/auth to test credentials
-* Parse Dirble JSON output to grab screenshots of an entire website
+* Parse Dirble JSON output to grab screenshots of an entire website - waiting for nccgroup/dirble#51
