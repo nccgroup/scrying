@@ -3,6 +3,12 @@ A new tool for collecting RDP, web and VNC screenshots all in one place
 
 This tool is still a work-in-progress and should be mostly usable but is not yet complete.
 Please file any bugs or feature requests as [GitHub issues](https://github.com/nccgroup/scamper/issues)
+
+## Caveats
+* [RDP screenshotting is unreliable](https://github.com/nccgroup/scamper/issues/2)
+* Web screenshotting relies on wkhtmltopdf being installed
+* VNC has not been implemented
+
 ## Motivation
 Since Eyewitness recently [dropped support for RDP](https://github.com/FortyNorthSecurity/EyeWitness/issues/422#issuecomment-539690698) there isn't a working CLI tool for capturing RDP screenshots.
 Nessus still works, but it's a pain to get the images out and they're not included in the export file.
