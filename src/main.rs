@@ -76,10 +76,11 @@ fn main() {
         LevelFilter::Warn
     };
 
-    log_dests.push(
-        TermLogger::new(level_filter, Config::default(), TerminalMode::Mixed)
-            .unwrap(),
-    );
+    log_dests.push(TermLogger::new(
+        level_filter,
+        Config::default(),
+        TerminalMode::Mixed,
+    ));
 
     CombinedLogger::init(log_dests).unwrap();
 
