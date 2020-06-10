@@ -74,6 +74,7 @@ Features with ticks next to them have been implemented, others are TODO
 * Parse Dirble JSON output to grab screenshots of an entire website - waiting for [nccgroup/dirble#51](https://github.com/nccgroup/dirble/issues/51)
 
 ## Help text
+```
 USAGE:
     scamper [FLAGS] [OPTIONS]
 
@@ -91,4 +92,4 @@ OPTIONS:
     -o, --output-dir <output-dir>     [default: output]
     -t, --target <target>
         --timeout <timeout>           [default: 10]
-
+```
