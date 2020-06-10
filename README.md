@@ -39,6 +39,14 @@ rdp://192.0.2.1
 $ cargo run --release -- -f targets.txt
 ```
 
+Image files are saved as PNG in the following directory structure:
+```output
+├── rdp
+│   └── 192.0.2.1-3389.png
+└── web
+    └── https_example.com.png
+```
+
 ## Features:
 Features with ticks next to them have been implemented, others are TODO
 * ✔️ Automatically decide whether an input should be treated as a web address or RDP server
