@@ -1,12 +1,32 @@
 # NCC Group Scamper
 A new tool for collecting RDP, web and VNC screenshots all in one place
 
-# Motivation
+## Motivation
 Since Eyewitness recently [dropped support for RDP](https://github.com/FortyNorthSecurity/EyeWitness/issues/422#issuecomment-539690698) there isn't a working CLI tool for capturing RDP screenshots.
 Nessus still works, but it's a pain to get the images out and they're not included in the export file.
 
 I thought this was a good opportunity to write a fresh tool that's more powerful than those that came before. Check out the feature list!
 
+## Usage
+Grab a single web page or RDP server:
+```
+$ cargo run --release -- -t http://example.com
+$ cargo run --release -- -t rdp://192.0.2.1
+$ cargo run --release -- -t 2001:db8::5 --mode web
+$ cargo run --release -- -t 2001:db8::5 --mode rdp
+$ cargo run --release -- -t 192.0.2.2
+```
+
+Automatically grab screenshots from an nmap output:
+```
+$ nmap -iL targets.txt -p 80,443,8080,8443,3389 -oX targets.xml
+$ cargo run --release -- --nmap targets.xml
+```
+
+Choose a different output directory for images:
+```
+$ cargo run --release -- -t 2001:db8::3 --output-dir /tmp/scamper_outputs
+```
 
 ## Features:
 Features with ticks next to them have been implemented, others are TODO
@@ -28,3 +48,24 @@ Features with ticks next to them have been implemented, others are TODO
 * Readme has pretty pictures of the output
 * NLA/auth to test credentials
 * Parse Dirble JSON output to grab screenshots of an entire website - waiting for nccgroup/dirble#51
+
+## Help text
+USAGE:
+    scamper [FLAGS] [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -s, --silent
+    -v, --verbose
+    -V, --version    Prints version information
+
+OPTIONS:
+    -f, --file <file>
+    -i, --input <input>
+    -l, --log-file <log-file>
+    -m, --mode <mode>                 [default: auto]
+        --nmap <nmap>
+    -o, --output-dir <output-dir>     [default: output]
+    -t, --target <target>
+        --timeout <timeout>           [default: 10]
+
