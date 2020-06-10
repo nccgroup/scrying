@@ -63,9 +63,9 @@ pub fn target_to_filename(target: &Target) -> Result<String, &str> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use std::net::ToSocketAddrs;
     use url::Url;
-    use super::*;
     #[test]
     fn test_target_to_filename() {
         let test_cases: Vec<(Target, &str)> = vec![
