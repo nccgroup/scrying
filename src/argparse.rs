@@ -51,9 +51,6 @@ impl FromStr for Mode {
 #[clap(version = "0.1", author = "David Y. <david.young@nccgroup.com>")]
 pub struct Opts {
     #[clap(short, long)]
-    pub input: Option<String>,
-
-    #[clap(short, long)]
     pub file: Option<String>,
 
     #[clap(short, long)]
