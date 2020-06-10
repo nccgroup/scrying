@@ -135,7 +135,7 @@ impl Target {
                 }
 
                 // If none of these worked then it's probably not salvageable
-                return Err("Unable to parse target");
+                Err("Unable to parse target")
             }
             Web => {
                 // add URLs for HTTP and HTTPS because we don't know
@@ -150,27 +150,26 @@ impl Target {
                 // it parses
                 if let Ok(u) = Url::parse(&format!("https://{}", input)) {
                     targets.push(Target::Url(u));
+                } else if let Ok(u) =
+                    Url::parse(&format!("https://[{}]", input))
+                {
+                    targets.push(Target::Url(u));
                 } else {
-                    if let Ok(u) = Url::parse(&format!("https://[{}]", input)) {
-                        targets.push(Target::Url(u));
-                    } else {
-                        //TODO include error string
-                        return Err("Unable to parse HTTPS URL");
-                    }
+                    //TODO include error string
+                    return Err("Unable to parse HTTPS URL");
                 }
 
                 if let Ok(u) = Url::parse(&format!("http://{}", input)) {
                     targets.push(Target::Url(u));
+                } else if let Ok(u) = Url::parse(&format!("http://[{}]", input))
+                {
+                    targets.push(Target::Url(u));
                 } else {
-                    if let Ok(u) = Url::parse(&format!("http://[{}]", input)) {
-                        targets.push(Target::Url(u));
-                    } else {
-                        //TODO include error string
-                        return Err("Unable to parse HTTP URL");
-                    }
+                    //TODO include error string
+                    return Err("Unable to parse HTTP URL");
                 }
 
-                return Ok(targets);
+                Ok(targets)
             }
         }
     }

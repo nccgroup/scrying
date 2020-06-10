@@ -58,6 +58,7 @@ struct BitmapChunk {
     data: Vec<u8>,
 }
 
+#[allow(dead_code)]
 enum ColourMode {
     Rgb,
     Rgba,
@@ -138,7 +139,7 @@ impl Image {
         Ok(())
     }
 
-    fn initialise_buffer(&mut self, chunk: &BitmapChunk) -> Result<(), ()> {
+    fn initialise_buffer(&mut self, _chunk: &BitmapChunk) -> Result<(), ()> {
         //TODO get these values properly
         // IMAGE_WIDTH and IMAGE_HEIGHT are u16
         self.width = Some(IMAGE_WIDTH as u32);

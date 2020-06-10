@@ -18,8 +18,7 @@
 */
 
 use crate::parsing::Target;
-use std::net::{SocketAddr, ToSocketAddrs};
-use url::Url;
+use std::net::SocketAddr;
 
 //TODO maybe move this to impl fmt::Display rather than a function
 pub fn target_to_filename(target: &Target) -> Result<String, &str> {
@@ -27,7 +26,7 @@ pub fn target_to_filename(target: &Target) -> Result<String, &str> {
         Target::Address(SocketAddr::V4(addr)) => {
             let converted = format!("{}", addr).replace(":", "-");
 
-            return Ok(converted);
+            Ok(converted)
         }
         Target::Address(SocketAddr::V6(addr)) => {
             let converted = format!("{}", addr)
@@ -35,7 +34,7 @@ pub fn target_to_filename(target: &Target) -> Result<String, &str> {
                 .replace("[", "")
                 .replace(":", "_");
 
-            return Ok(converted);
+            Ok(converted)
         }
         Target::Url(u) => {
             // The :// scheme separator is converted to a hyphen
@@ -52,18 +51,20 @@ pub fn target_to_filename(target: &Target) -> Result<String, &str> {
                 .replace("[", "") // Remove the square brackets as they are not
                 .replace("]", "") // needed for uniqueness
                 ;
-            while converted.ends_with("-") {
+            while converted.ends_with('-') {
                 // remove the trailing - if the URL had a trailing /
                 converted.pop();
             }
 
-            return Ok(converted);
+            Ok(converted)
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use std::net::ToSocketAddrs;
+    use url::Url;
     use super::*;
     #[test]
     fn test_target_to_filename() {

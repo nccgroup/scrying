@@ -66,16 +66,15 @@ fn main() {
         ));
     }
 
-    let level_filter;
-    if !opts.silent {
-        level_filter = match opts.verbose {
+    let level_filter = if !opts.silent {
+        match opts.verbose {
             0 => LevelFilter::Info,
             1 => LevelFilter::Debug,
             _ => LevelFilter::Trace,
-        };
+        }
     } else {
-        level_filter = LevelFilter::Warn;
-    }
+        LevelFilter::Warn
+    };
 
     log_dests.push(
         TermLogger::new(level_filter, Config::default(), TerminalMode::Mixed)
@@ -94,16 +93,14 @@ fn main() {
     let rdp_output_dir = Path::new("./output/rdp");
     let web_output_dir = Path::new("./output/web");
     if !rdp_output_dir.is_dir() {
-        create_dir_all(rdp_output_dir).expect(&format!(
-            "Error creating directory {}",
-            rdp_output_dir.display()
-        ));
+        create_dir_all(rdp_output_dir).unwrap_or_else(|_| {
+            panic!("Error creating directory {}", rdp_output_dir.display())
+        });
     }
     if !web_output_dir.is_dir() {
-        create_dir_all(web_output_dir).expect(&format!(
-            "Error creating directory {}",
-            web_output_dir.display()
-        ));
+        create_dir_all(web_output_dir).unwrap_or_else(|_| {
+            panic!("Error creating directory {}", web_output_dir.display())
+        });
     }
 
     // Spawn tokio workers to iterate over the targets
@@ -113,7 +110,8 @@ fn main() {
         debug!("Starting RDP worker threads");
         rdp_worker(targets_clone, rdp_output_dir)
     });
-    let targets_clone = targets.clone();
+    // clone here will be more useful when there are more target types
+    let targets_clone = targets; //.clone();
     let web_handle = thread::spawn(move || {
         debug!("Starting Web worker threads");
         web_worker(targets_clone, &web_output_dir).unwrap()
@@ -139,6 +137,10 @@ fn rdp_worker(
     ) = mpsc::channel();
     loop {
         // check for status messages
+        // Turn off clippy's single_match warning here because match
+        // matches the intuition for how try_recv is processed better
+        // than an if let.
+        #[allow(clippy::single_match)]
         match thread_status_rx.try_recv() {
             Ok(ThreadStatus::Complete) => {
                 info!("Thread complete, yay");
