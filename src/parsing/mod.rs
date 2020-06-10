@@ -24,6 +24,7 @@ use nmap_xml_parser::host::Address;
 use nmap_xml_parser::host::Host;
 use nmap_xml_parser::port::Port;
 use nmap_xml_parser::{port::PortState, NmapResults};
+use std::fmt::Display;
 use std::fs::{self, File};
 use std::io::{self, prelude::*, BufReader};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
@@ -171,6 +172,18 @@ impl Target {
 
                 return Ok(targets);
             }
+        }
+    }
+}
+
+impl Display for Target {
+    fn fmt(
+        &self,
+        fmt: &mut std::fmt::Formatter<'_>,
+    ) -> Result<(), std::fmt::Error> {
+        match self {
+            Target::Address(addr) => write!(fmt, "{}", addr),
+            Target::Url(url) => write!(fmt, "{}", url),
         }
     }
 }
@@ -824,6 +837,39 @@ mod test {
             eprintln!("Parsed: {:?}", parsed);
 
             assert_eq!(parsed, case.1);
+        }
+    }
+
+    #[test]
+    fn display_impl_for_target() {
+        let test_cases = vec![
+            (
+                Target::Url(Url::parse("https://[2001:db8::6]").unwrap()),
+                "https://[2001:db8::6]/",
+            ),
+            (
+                Target::Url(Url::parse("https://192.0.2.3").unwrap()),
+                "https://192.0.2.3/",
+            ),
+            (
+                Target::Address(
+                    "[::1]:3389".to_socket_addrs().unwrap().next().unwrap(),
+                ),
+                "[::1]:3389",
+            ),
+            (
+                Target::Address(
+                    "127.0.0.1:3389".to_socket_addrs().unwrap().next().unwrap(),
+                ),
+                "127.0.0.1:3389",
+            ),
+        ];
+
+        for case in test_cases {
+            eprintln!("Test case: {:?}", case);
+
+            let disp = format!("{}", case.0);
+            assert_eq!(disp, case.1);
         }
     }
 }
