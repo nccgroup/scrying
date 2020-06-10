@@ -174,8 +174,19 @@ fn rdp_worker(
 }
 
 fn web_worker(
-    _targets: Arc<InputLists>,
-    _output_dir: &Path,
+    targets: Arc<InputLists>,
+    output_dir: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // Fail if compiled witout the wkhtmltoimage feature
+    #[cfg(not(feature = "wkhtmltoimage"))]
+    return Err("no");
+
+    // Find the path to the wkhtmltoimage binary
+    #[cfg(feature = "wkhtmltoimage")]
+    let wkhtmltoimage_path = web::get_wkhtmltoimage_path().unwrap();
+
+    for target in &targets.web_targets {
+        web::capture(target, output_dir, &wkhtmltoimage_path).unwrap();
+    }
     Ok(())
 }

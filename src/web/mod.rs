@@ -17,8 +17,58 @@
  *   along with Scamper.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::Opts;
+use crate::parsing::Target;
+use crate::util::target_to_filename;
+#[allow(unused)]
+use log::{debug, error, info, trace, warn};
+use std::path::Path;
+use std::path::PathBuf;
 
-pub fn capture(opts: &Opts) -> Result<(), ()> {
+use std::process::Command;
+
+// Fail if compiled witout the wkhtmltoimage feature
+#[cfg(not(feature = "wkhtmltoimage"))]
+pub fn capture(
+    _target: &Target,
+    _output_dir: &Path,
+    _wkhtmltoimage_path: &Path,
+) -> Result<(), ()> {
     unimplemented!();
+}
+
+#[cfg(feature = "wkhtmltoimage")]
+pub fn capture(
+    target: &Target,
+    output_dir: &Path,
+    wkhtmltoimage_path: &Path,
+) -> Result<(), ()> {
+    info!("Processing {}", target);
+
+    let filename = target_to_filename(&target).unwrap();
+    let filename = format!("{}.png", filename);
+    let output_file = output_dir.join(filename).display().to_string();
+    info!("Saving image as {}", output_file);
+
+    let target = format!("{}", target);
+    // Call the external wkhtmltoimage program
+    Command::new(wkhtmltoimage_path)
+        .args(&[target, output_file])
+        .output()
+        .expect("failed to execute wkhtmltoimage");
+
+    Ok(())
+}
+
+#[cfg(feature = "wkhtmltoimage")]
+pub fn get_wkhtmltoimage_path() -> Option<PathBuf> {
+    //TODO windows?? other paths??
+    let possible_paths = vec!["/usr/bin/wkhtmltoimage"];
+    for possible in possible_paths {
+        let path = Path::new(possible);
+        if path.is_file() {
+            // exists, so return it
+            return Some(path.to_path_buf());
+        }
+    }
+    None
 }
