@@ -17,7 +17,7 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
 * Full cross-platform support (pending github action config to build & test on windows and mac)
 * RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image
-* HTTP
+* HTTP - currently implemented by shelling out to wkhtmltoimage, see #3
 * VNC
 * Video streams
 * option for timestamps in filenames
