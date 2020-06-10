@@ -67,7 +67,6 @@ FLAGS:
 
 OPTIONS:
     -f, --file <file>
-    -i, --input <input>
     -l, --log-file <log-file>
     -m, --mode <mode>                 [default: auto]
         --nmap <nmap>
