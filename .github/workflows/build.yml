@@ -106,7 +106,7 @@ jobs:
           override: true
 
       - name: Install wkhtmltopdf
-        run: brew install wkhtmltopdf
+        run: brew cask install wkhtmltopdf
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
