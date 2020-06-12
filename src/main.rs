@@ -181,11 +181,11 @@ fn web_worker(
     output_dir: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Fail if compiled witout the wkhtmltoimage feature
-    #[cfg(not(feature = "wkhtmltoimage"))]
+    #[cfg(not(feature = "wkhtmltoimage_bin"))]
     return Err("no");
 
     // Find the path to the wkhtmltoimage binary
-    #[cfg(feature = "wkhtmltoimage")]
+    #[cfg(feature = "wkhtmltoimage_bin")]
     let wkhtmltoimage_path = web::get_wkhtmltoimage_path().unwrap();
 
     for target in &targets.web_targets {

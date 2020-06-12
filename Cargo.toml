@@ -8,9 +8,9 @@ license = "GPL-3.0-or-later"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["wkhtmltoimage"]
+default = ["wkhtmltoimage_bin"]
 
-wkhtmltoimage = [ ]
+wkhtmltoimage_bin = [ ]
 
 [dependencies]
 clap = "3.0.0-beta.1"

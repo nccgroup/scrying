@@ -27,7 +27,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 // Fail if compiled witout the wkhtmltoimage feature
-#[cfg(not(feature = "wkhtmltoimage"))]
+#[cfg(not(feature = "wkhtmltoimage_bin"))]
 pub fn capture(
     _target: &Target,
     _output_dir: &Path,
@@ -36,7 +36,7 @@ pub fn capture(
     unimplemented!();
 }
 
-#[cfg(feature = "wkhtmltoimage")]
+#[cfg(feature = "wkhtmltoimage_bin")]
 pub fn capture(
     target: &Target,
     output_dir: &Path,
@@ -59,7 +59,7 @@ pub fn capture(
     Ok(())
 }
 
-#[cfg(feature = "wkhtmltoimage")]
+#[cfg(feature = "wkhtmltoimage_bin")]
 pub fn get_wkhtmltoimage_path() -> Option<PathBuf> {
     //TODO windows?? other paths??
     let possible_paths = vec!["/usr/bin/wkhtmltoimage"];
