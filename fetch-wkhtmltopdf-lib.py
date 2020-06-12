@@ -18,7 +18,7 @@
 #   along with Scamper.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
-import itertools
+#import itertools
 import os
 import pathlib
 import requests
@@ -55,11 +55,11 @@ def main():
 		print("Saving as " + filepath)
 
 		with open(filepath, "wb") as file:
-			spinner = itertools.cycle(['-', '/', '|', '\\'])
+			#spinner = itertools.cycle(['-', '/', '|', '\\'])
 			for chunk in response.iter_content(1024):
-				sys.stdout.write(next(spinner))
-				sys.stdout.flush()
-				sys.stdout.write('\b')
+				#sys.stdout.write(next(spinner))
+				#sys.stdout.flush()
+				#sys.stdout.write('\b')
 				file.write(chunk)
 	else:
 		print("File already exists, skipping download")
