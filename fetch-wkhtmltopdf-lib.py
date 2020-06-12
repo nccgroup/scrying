@@ -72,7 +72,7 @@ def main():
 		os.chdir("target/shared_lib")
 		os.system("7z e " + filename)
 		os.chdir(oldpwd)
-		os.system("copy target/shared_lib/wkhtmltox.lib .")
+		os.system("copy target\\shared_lib\\wkhtmltox.lib .")
 	elif args.os == "macos":
 		oldpwd = os.getcwd()
 		os.chdir("target/shared_lib")
