@@ -22,11 +22,11 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install cargo-outdated
-        run: cargo install cargo-outdated
+#      - name: Install cargo-outdated
+#        run: cargo install cargo-outdated
 
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
+#      - name: Install cargo-audit
+#        run: cargo install cargo-audit
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
@@ -45,16 +45,16 @@ jobs:
           command: clippy
           args: -- -D warnings
 
-      - name: Run cargo outdated
-        uses: actions-rs/cargo@v1
-        with:
-          command: outdated
-          args: --exit-code 1
+#      - name: Run cargo outdated
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: outdated
+#          args: --exit-code 1
 
-      - name: Run cargo audit
-        uses: actions-rs/cargo@v1
-        with:
-          command: audit
+#      - name: Run cargo audit
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: audit
 
   test_ubuntu:
     name: Run tests on ubuntu-latest
