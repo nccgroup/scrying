@@ -67,7 +67,7 @@ def main():
 	print("Download complete, extracting library...")
 	if args.os == "linux":
 		os.system("dpkg-deb -x " + filepath + " target/shared_lib/")
-		shutil.copy("target/shared_lib/usr/local/lib/libwkhtmltox.so", ".")
+		shutil.copy("target/shared_lib/usr/local/lib/libwkhtmltox.so.0", ".")
 	elif args.os == "windows":
 		oldpwd = os.getcwd()
 		os.chdir("target/shared_lib")
