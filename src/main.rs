@@ -31,6 +31,9 @@ use simplelog::{
 };
 use std::fs::File;
 use std::sync::Arc;
+
+#[cfg(feature = "wkhtmltoimage")]
+use wkhtmltopdf::ImageApplication;
 mod argparse;
 mod parsing;
 mod rdp;
@@ -181,14 +184,24 @@ fn web_worker(
     output_dir: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Fail if compiled witout the wkhtmltoimage feature
-    #[cfg(not(feature = "wkhtmltoimage_bin"))]
+    #[cfg(not(any(
+        feature = "wkhtmltoimage",
+        feature = "wkhtmltoimage_bin"
+    )))]
     return Err("no");
 
     // Find the path to the wkhtmltoimage binary
     #[cfg(feature = "wkhtmltoimage_bin")]
     let wkhtmltoimage_path = web::get_wkhtmltoimage_path().unwrap();
 
+    #[cfg(feature = "wkhtmltoimage")]
+    let image_app =
+        ImageApplication::new().expect("Failed to init image application");
+
     for target in &targets.web_targets {
+        #[cfg(feature = "wkhtmltoimage")]
+        web::capture(target, output_dir, &image_app).unwrap();
+        #[cfg(feature = "wkhtmltoimage_bin")]
         web::capture(target, output_dir, &wkhtmltoimage_path).unwrap();
     }
     Ok(())

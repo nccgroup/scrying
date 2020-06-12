@@ -22,18 +22,50 @@ use crate::util::target_to_filename;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::path::Path;
+
+#[cfg(feature = "wkhtmltoimage_bin")]
 use std::path::PathBuf;
 
+#[cfg(feature = "wkhtmltoimage_bin")]
 use std::process::Command;
 
+#[cfg(feature = "wkhtmltoimage")]
+use wkhtmltopdf::{ImageApplication, ImageFormat};
+
 // Fail if compiled witout the wkhtmltoimage feature
-#[cfg(not(feature = "wkhtmltoimage_bin"))]
+#[cfg(not(any(feature = "wkhtmltoimage", feature = "wkhtmltoimage_bin")))]
 pub fn capture(
     _target: &Target,
     _output_dir: &Path,
     _wkhtmltoimage_path: &Path,
 ) -> Result<(), ()> {
     unimplemented!();
+}
+
+#[cfg(feature = "wkhtmltoimage")]
+pub fn capture(
+    target: &Target,
+    output_dir: &Path,
+    image_app: &ImageApplication,
+) -> Result<(), ()> {
+    info!("Processing {}", target);
+
+    let filename = target_to_filename(&target).unwrap();
+    let filename = format!("{}.png", filename);
+    let output_file = output_dir.join(filename).display().to_string();
+    info!("Saving image as {}", output_file);
+
+    if let Target::Url(target) = target {
+        // Call the wkhtmltoimage library
+        let mut out = image_app
+            .builder()
+            .format(ImageFormat::Png)
+            .screen_width(1280)
+            .build_from_url(target)
+            .expect("failed to build image");
+        out.save(output_file).expect("failed to save image");
+    }
+    Ok(())
 }
 
 #[cfg(feature = "wkhtmltoimage_bin")]
