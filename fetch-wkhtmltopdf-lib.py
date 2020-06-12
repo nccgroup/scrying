@@ -22,7 +22,6 @@ import argparse
 import os
 import pathlib
 import requests
-import shutil
 import sys
 
 # URLs of the built wkhtmltopdf artefacts
@@ -67,13 +66,13 @@ def main():
 	print("Download complete, extracting library...")
 	if args.os == "linux":
 		os.system("dpkg-deb -x " + filepath + " target/shared_lib/")
-		shutil.copy("target/shared_lib/usr/local/lib/libwkhtmltox.so.0", ".")
+		os.system("cp target/shared_lib/usr/local/lib/* .")
 	elif args.os == "windows":
 		oldpwd = os.getcwd()
 		os.chdir("target/shared_lib")
 		os.system("7z e " + filename)
 		os.chdir(oldpwd)
-		shutil.copy("target/shared_lib/wkhtmltox.lib", ".")
+		os.system("copy target/shared_lib/wkhtmltox.lib .")
 	elif args.os == "macos":
 		oldpwd = os.getcwd()
 		os.chdir("target/shared_lib")
@@ -82,7 +81,7 @@ def main():
 		os.chdir("usr/local/share/wkhtmltox-installer")
 		os.system("tar -xzf wkhtmltox.tar.gz")
 		os.chdir(oldpwd)
-		shutil.copy("target/shared_lib/usr/local/share/wkhtmltox-installer/lib/libwkhtmltox.0.dylib", ".")
+		os.system("cp target/shared_lib/usr/local/share/wkhtmltox-installer/lib/* .")
 	print("Extraction complete!")
 
 	
