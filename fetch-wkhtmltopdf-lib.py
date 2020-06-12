@@ -74,6 +74,16 @@ def main():
 		os.system("7z e " + filename)
 		os.chdir(oldpwd)
 		shutil.copy("target/shared_lib/wkhtmltox.dll", ".")
+	elif args.os == "macos":
+		oldpwd = os.getcwd()
+		os.chdir("target/shared_lib")
+		os.system("xar -xf " + filename)
+		os.system("tar -xzf Payload")
+		os.chdir("usr/local/share/wkhtmltox-installer")
+		os.system("tar -xzf wkhtmltox.tar.gz")
+		os.chdir(oldpwd)
+		shutil.copy("target/shared_lib/usr/local/share/wkhtmltox-installer/lib/libwkhtmltox.dylib", ".")
+	print("Extraction complete!")
 
 	
 if __name__ == "__main__":
