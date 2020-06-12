@@ -63,7 +63,7 @@ jobs:
           toolchain: stable
           override: true
 
-      -name: Install wkhtmltopdf
+      - name: Install wkhtmltopdf
         run: sudo apt-get install -y wkhtmltopdf
 
       - name: Run cargo test
@@ -84,7 +84,7 @@ jobs:
           toolchain: stable
           override: true
 
-      -name: Install wkhtmltopdf
+      - name: Install wkhtmltopdf
         run: choco install wkhtmltopdf
 
       - name: Run cargo test
@@ -105,7 +105,7 @@ jobs:
           toolchain: stable
           override: true
 
-      -name: Install wkhtmltopdf
+      - name: Install wkhtmltopdf
         run: brew install wkhtmltopdf
 
       - name: Run cargo test
