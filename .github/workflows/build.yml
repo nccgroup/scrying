@@ -72,13 +72,12 @@ jobs:
       - name: Fetch shared library
         run: ./fetch-wkhtmltopdf-lib.py linux
 
-      - name: Set environment variable
-        run: export RUSTFLAGS='-L .'
-
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
+        env:
+          RUSTFLAGS: -L .
 
   test_windows:
     name: Run tests on windows-latest
@@ -96,13 +95,12 @@ jobs:
       - name: Fetch shared library
         run: python fetch-wkhtmltopdf-lib.py windows
 
-      - name: Set environment variable
-        run: set RUSTFLAGS='-L .'
-
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
+        env:
+          RUSTFLAGS: -L .
 
   test_macos:
     name: Run tests on macOS-latest
@@ -120,10 +118,9 @@ jobs:
       - name: Fetch shared library
         run: ./fetch-wkhtmltopdf-lib.py macos
 
-      - name: Set environment variable
-        run: export RUSTFLAGS='-L .'
-
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
+        env:
+          RUSTFLAGS: -L .
