@@ -82,7 +82,7 @@ def main():
 		os.chdir("usr/local/share/wkhtmltox-installer")
 		os.system("tar -xzf wkhtmltox.tar.gz")
 		os.chdir(oldpwd)
-		shutil.copy("target/shared_lib/usr/local/share/wkhtmltox-installer/lib/libwkhtmltox.dylib", ".")
+		shutil.copy("target/shared_lib/usr/local/share/wkhtmltox-installer/lib/libwkhtmltox.0.dylib", ".")
 	print("Extraction complete!")
 
 	

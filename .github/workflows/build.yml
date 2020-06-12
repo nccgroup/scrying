@@ -111,8 +111,11 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install wkhtmltopdf
-        run: brew cask install wkhtmltopdf
+      - name: Fetch shared library
+        run: ./fetch-wkhtmltopdf-lib.py macos
+
+      - name: Set environment variable
+        run: export RUSTFLAGS='-L .'
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
