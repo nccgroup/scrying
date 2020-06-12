@@ -92,6 +92,9 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Install python dependencies
+        run: python -m pip install -r fetch-wkhtmltopdf-lib-requirements.txt
+
       - name: Fetch shared library
         run: python fetch-wkhtmltopdf-lib.py windows
 
@@ -114,6 +117,9 @@ jobs:
         with:
           toolchain: stable
           override: true
+
+      - name: Install python dependencies
+        run: python -m pip install -r fetch-wkhtmltopdf-lib-requirements.txt
 
       - name: Fetch shared library
         run: ./fetch-wkhtmltopdf-lib.py macos
