@@ -78,6 +78,7 @@ jobs:
           command: test
         env:
           RUSTFLAGS: -L .
+          LD_LIBRARY_PATH: .
 
   test_windows:
     name: Run tests on windows-latest
