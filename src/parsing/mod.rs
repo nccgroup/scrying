@@ -430,6 +430,7 @@ fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
         // input lists if it is appropriate
         //TODO identify Web
         match (port.port_number, port.service_info.name.as_str()) {
+            // RDP signatures
             (3389, _) | (_, "ms-wbt-server") => {
                 debug!("Identified RDP");
                 let port = port.port_number;
@@ -463,6 +464,56 @@ fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
                         }
                         Err(e) => {
                             warn!("Error parsing target as RDP: {}", e);
+                        }
+                    }
+                }
+            }
+            // HTTP(S) signatures
+            (80, _)
+            | (443, _)
+            | (631, _)
+            | (7443, _)
+            | (8080, _)
+            | (8443, _)
+            | (8000, _)
+            | (3000, _)
+            | (_, "http")
+            | (_, "http-mgt")
+            | (_, "https")
+            | (_, "http-alt")
+            | (_, "https-alt") => {
+                debug!("Idenfified web");
+                let port = port.port_number;
+                // Iterate over the host's addresses. It may have multiple
+                // IPv6, IPv4, and MAC addresses and we want to add them
+                // all (well, maybe not the MAC addresses)
+                for address in host.addresses() {
+                    let target_string = match address {
+                        Address::IpAddr(IpAddr::V6(a)) => {
+                            trace!("address: {:?}", a);
+                            format!("[{}]:{}", a, port)
+                        }
+                        Address::IpAddr(IpAddr::V4(a)) => {
+                            trace!("legacy address: {:?}", a);
+                            format!("{}:{}", a, port)
+                        }
+                        Address::MacAddr(a) => {
+                            trace!("Ignoring MAC address {}", a);
+                            // Ignore the MAC address and move on
+                            continue;
+                        }
+                    };
+
+                    // target_string now contains a string sockaddr
+                    // representation, so we parse it as Web and see what
+                    // happens
+                    match Target::parse(&target_string, Mode::Web) {
+                        Ok(mut target) => {
+                            debug!("Successfully parsed as Web");
+                            list.web_targets.append(&mut target);
+                        }
+                        Err(e) => {
+                            warn!("Error parsing target as Web: {}", e);
                         }
                     }
                 }
@@ -818,14 +869,34 @@ mod test {
         let test_cases = vec![(
             "test/nmap.xml",
             InputLists {
-                rdp_targets: vec![Target::Address(
-                    "192.168.59.138:3389"
-                        .to_socket_addrs()
-                        .unwrap()
-                        .next()
-                        .unwrap(),
-                )],
-                web_targets: Vec::new(),
+                rdp_targets: vec![
+                    Target::Address(
+                        "172.24.5.57:3389"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    ),
+                    Target::Address(
+                        "192.168.59.146:3389"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    ),
+                ],
+                web_targets: vec![
+                    Target::Url(
+                        Url::parse("https://192.168.59.128:8000/").unwrap(),
+                    ),
+                    Target::Url(
+                        Url::parse("http://192.168.59.128:8000/").unwrap(),
+                    ),
+                    Target::Url(
+                        Url::parse("https://192.168.59.146:80/").unwrap(),
+                    ),
+                    Target::Url(Url::parse("http://192.168.59.146/").unwrap()),
+                ],
             },
         )];
         let mut opts: Opts = Default::default();

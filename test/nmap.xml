@@ -1,19 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE nmaprun>
 <?xml-stylesheet href="file:///usr/bin/../share/nmap/nmap.xsl" type="text/xsl"?>
-<!-- Nmap 7.80 scan initiated Tue May 12 15:08:55 2020 as: nmap -p 3389 -oX nmap.xml 192.168.59.138 -->
-<nmaprun scanner="nmap" args="nmap -p 3389 -oX nmap.xml 192.168.59.138" start="1589292535" startstr="Tue May 12 15:08:55 2020" version="7.80" xmloutputversion="1.04">
-<scaninfo type="syn" protocol="tcp" numservices="1" services="3389"/>
-<verbose level="0"/>
+<!-- Nmap 7.80 scan initiated Mon Jun 15 13:12:23 2020 as: nmap -oX nmap.xml -iL /tmp/nmap-targets.lst -v -p 8000,8080,80,443,3389 -->
+<nmaprun scanner="nmap" args="nmap -oX nmap.xml -iL /tmp/nmap-targets.lst -v -p 8000,8080,80,443,3389" start="1592223143" startstr="Mon Jun 15 13:12:23 2020" version="7.80" xmloutputversion="1.04">
+<scaninfo type="syn" protocol="tcp" numservices="5" services="80,443,3389,8000,8080"/>
+<verbose level="1"/>
 <debugging level="0"/>
-<host starttime="1589292535" endtime="1589292535"><status state="up" reason="arp-response" reason_ttl="0"/>
-<address addr="192.168.59.138" addrtype="ipv4"/>
-<address addr="00:0C:29:71:23:2B" addrtype="mac" vendor="VMware"/>
-<hostnames/>
-<ports><port protocol="tcp" portid="3389"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="ms-wbt-server" method="table" conf="3"/></port>
+<taskbegin task="Parallel DNS resolution of 1 host." time="1592223143"/>
+<taskend task="Parallel DNS resolution of 1 host." time="1592223143"/>
+<taskbegin task="ARP Ping Scan" time="1592223143"/>
+<taskend task="ARP Ping Scan" time="1592223143" extrainfo="1 total hosts"/>
+<taskbegin task="Parallel DNS resolution of 1 host." time="1592223144"/>
+<taskend task="Parallel DNS resolution of 1 host." time="1592223144"/>
+<taskbegin task="SYN Stealth Scan" time="1592223144"/>
+<taskend task="SYN Stealth Scan" time="1592223144" extrainfo="5 total ports"/>
+<host starttime="1592223144" endtime="1592223144"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.59.128" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="80"><state state="closed" reason="reset" reason_ttl="64"/><service name="http" method="table" conf="3"/></port>
+<port protocol="tcp" portid="443"><state state="closed" reason="reset" reason_ttl="64"/><service name="https" method="table" conf="3"/></port>
+<port protocol="tcp" portid="3389"><state state="closed" reason="reset" reason_ttl="64"/><service name="ms-wbt-server" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8000"><state state="open" reason="syn-ack" reason_ttl="64"/><service name="http-alt" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8080"><state state="closed" reason="reset" reason_ttl="64"/><service name="http-proxy" method="table" conf="3"/></port>
 </ports>
-<times srtt="507" rttvar="4017" to="100000"/>
+<times srtt="54" rttvar="1621" to="100000"/>
 </host>
-<runstats><finished time="1589292536" timestr="Tue May 12 15:08:56 2020" elapsed="0.39" summary="Nmap done at Tue May 12 15:08:56 2020; 1 IP address (1 host up) scanned in 0.39 seconds" exit="success"/><hosts up="1" down="0" total="1"/>
+<taskbegin task="ARP Ping Scan" time="1592223144"/>
+<taskend task="ARP Ping Scan" time="1592223144" extrainfo="1 total hosts"/>
+<taskbegin task="Parallel DNS resolution of 1 host." time="1592223144"/>
+<taskend task="Parallel DNS resolution of 1 host." time="1592223144"/>
+<taskbegin task="SYN Stealth Scan" time="1592223144"/>
+<taskend task="SYN Stealth Scan" time="1592223145" extrainfo="5 total ports"/>
+<host starttime="1592223143" endtime="1592223145"><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="172.24.5.57" addrtype="ipv4"/>
+<address addr="00:0C:29:71:23:2B" addrtype="mac" vendor="VMware"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="80"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="http" method="table" conf="3"/></port>
+<port protocol="tcp" portid="443"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="https" method="table" conf="3"/></port>
+<port protocol="tcp" portid="3389"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="ms-wbt-server" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8000"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="http-alt" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8080"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="http-proxy" method="table" conf="3"/></port>
+</ports>
+<times srtt="1012" rttvar="3884" to="100000"/>
+</host>
+<taskbegin task="SYN Stealth Scan" time="1592223145"/>
+<taskend task="SYN Stealth Scan" time="1592223147" extrainfo="5 total ports"/>
+<host starttime="1592223144" endtime="1592223147"><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.59.146" addrtype="ipv4"/>
+<address addr="00:0C:29:F7:14:3A" addrtype="mac" vendor="VMware"/>
+<hostnames>
+</hostnames>
+<ports><port protocol="tcp" portid="80"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="http" method="table" conf="3"/></port>
+<port protocol="tcp" portid="443"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="https" method="table" conf="3"/></port>
+<port protocol="tcp" portid="3389"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="ms-wbt-server" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8000"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="http-alt" method="table" conf="3"/></port>
+<port protocol="tcp" portid="8080"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="http-proxy" method="table" conf="3"/></port>
+</ports>
+<times srtt="486" rttvar="2928" to="100000"/>
+</host>
+<runstats><finished time="1592223147" timestr="Mon Jun 15 13:12:27 2020" elapsed="3.34" summary="Nmap done at Mon Jun 15 13:12:27 2020; 3 IP addresses (3 hosts up) scanned in 3.34 seconds" exit="success"/><hosts up="3" down="0" total="3"/>
 </runstats>
 </nmaprun>
