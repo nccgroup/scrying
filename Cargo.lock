@@ -984,6 +984,7 @@ dependencies = [
  "nmap_xml_parser",
  "rdp-rs",
  "simplelog",
+ "thiserror",
  "url",
  "wkhtmltopdf",
 ]

@@ -35,6 +35,7 @@ use std::sync::Arc;
 #[cfg(feature = "wkhtmltoimage")]
 use wkhtmltopdf::ImageApplication;
 mod argparse;
+mod error;
 mod parsing;
 mod rdp;
 mod util;

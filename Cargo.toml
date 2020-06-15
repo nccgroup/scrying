@@ -19,6 +19,7 @@ rdp-rs = "0.1.0"
 image = "0.23.4"
 simplelog = "0.8"
 log = "0.4.8"
+thiserror = "1.0"
 url = "2.1.1"
 nmap_xml_parser = "0.2.0"
 wkhtmltopdf = { "optional" = true, "git" = "https://github.com/sciguy16/wkhtmltopdf-rs", branch = "image-implementation" }

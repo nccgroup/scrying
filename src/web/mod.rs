@@ -17,6 +17,7 @@
  *   along with Scamper.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::error::Error;
 use crate::parsing::Target;
 use crate::util::target_to_filename;
 #[allow(unused)]
@@ -47,7 +48,7 @@ pub fn capture(
     target: &Target,
     output_dir: &Path,
     image_app: &ImageApplication,
-) -> Result<(), ()> {
+) -> Result<(), Error> {
     info!("Processing {}", target);
 
     let filename = target_to_filename(&target).unwrap();
@@ -61,9 +62,8 @@ pub fn capture(
             .builder()
             .format(ImageFormat::Png)
             .screen_width(1280)
-            .build_from_url(target)
-            .expect("failed to build image");
-        out.save(output_file).expect("failed to save image");
+            .build_from_url(target)?;
+        out.save(output_file)?;
     }
     Ok(())
 }
