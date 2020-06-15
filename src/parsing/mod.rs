@@ -241,7 +241,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     let mut input_lists: InputLists = Default::default();
 
     // Process the optional command-line target argument
-    if let Some(t) = &opts.target {
+    for t in &opts.target {
         let mut parse_successful = false;
         match &opts.mode {
             Auto => {
@@ -278,7 +278,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     }
 
     // Process the optional input file
-    if let Some(file_name) = &opts.file {
+    for file_name in &opts.file {
         let mut parse_successful_count: usize = 0;
         let mut parse_total_count: usize = 0;
         let mut parse_unsuccessful_count: usize = 0;
@@ -384,7 +384,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     }
 
     // Parse nmap file
-    if let Some(file) = &opts.nmap {
+    for file in &opts.nmap {
         info!("Loading nmap file {}", file);
 
         match fs::read_to_string(file) {

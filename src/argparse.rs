@@ -51,10 +51,10 @@ impl FromStr for Mode {
 #[clap(version = "0.1", author = "David Y. <david.young@nccgroup.com>")]
 pub struct Opts {
     #[clap(short, long)]
-    pub file: Option<String>,
+    pub file: Vec<String>,
 
     #[clap(short, long)]
-    pub target: Option<String>,
+    pub target: Vec<String>,
 
     #[clap(short, long, default_value = "auto")]
     pub mode: Mode,
@@ -66,7 +66,7 @@ pub struct Opts {
     pub log_file: Option<String>,
 
     #[clap(long)]
-    pub nmap: Option<String>,
+    pub nmap: Vec<String>,
 
     #[clap(short, long, default_value = "output")]
     pub output_dir: String,
