@@ -405,8 +405,9 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
 
                             // this has been broken out into a separate function
                             // for readability
-                            input_lists
-                                .append(&mut lists_from_nmap(host, port));
+                            input_lists.append(&mut lists_from_nmap(
+                                host, port, &opts.mode,
+                            ));
                         }
                     }
                 }
@@ -417,7 +418,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     input_lists
 }
 
-fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
+fn lists_from_nmap(host: &Host, port: &Port, mode: &Mode) -> InputLists {
     let mut list: InputLists = Default::default();
 
     //TODO service discovery for ports identified as
@@ -431,7 +432,7 @@ fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
         //TODO identify Web
         match (port.port_number, port.service_info.name.as_str()) {
             // RDP signatures
-            (3389, _) | (_, "ms-wbt-server") => {
+            (3389, _) | (_, "ms-wbt-server") if mode.selected(Mode::Rdp) => {
                 debug!("Identified RDP");
                 let port = port.port_number;
                 // Iterate over the host's addresses. It may have multiple
@@ -481,7 +482,9 @@ fn lists_from_nmap(host: &Host, port: &Port) -> InputLists {
             | (_, "http-mgt")
             | (_, "https")
             | (_, "http-alt")
-            | (_, "https-alt") => {
+            | (_, "https-alt")
+                if mode.selected(Mode::Web) =>
+            {
                 debug!("Idenfified web");
                 let port = port.port_number;
                 // Iterate over the host's addresses. It may have multiple
@@ -854,7 +857,7 @@ mod test {
 
         for (input, input_lists, mode) in test_cases {
             eprintln!("Test case: {:?}", (input, &input_lists, mode));
-            opts.target = vec!(input.into());
+            opts.target = vec![input.into()];
             opts.mode = mode;
 
             let parsed = generate_target_lists(&opts);
@@ -902,7 +905,7 @@ mod test {
         let mut opts: Opts = Default::default();
         for case in test_cases {
             eprintln!("Test case: {:?}", case);
-            opts.nmap = vec!(case.0.into());
+            opts.nmap = vec![case.0.into()];
             let parsed = generate_target_lists(&opts);
             eprintln!("Parsed: {:?}", parsed);
 

@@ -27,6 +27,17 @@ pub enum Mode {
     Rdp,
 }
 
+impl Mode {
+    /// Determine whether the supplied mode filter is valid for the
+    /// current mode. Combinations are:
+    /// Mode::Auto -> all filters valid
+    /// Mode::X -> only X and auto are valid
+    pub fn selected(&self, filter: Self) -> bool {
+        use Mode::*;
+        self == &Auto || self == &filter || filter == Auto
+    }
+}
+
 impl Default for Mode {
     fn default() -> Self {
         Mode::Auto
@@ -80,4 +91,28 @@ pub struct Opts {
 
 pub fn parse() -> Opts {
     Opts::parse()
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn mode_filter() {
+        use super::Mode::*;
+
+        let auto = Auto;
+        let rdp = Rdp;
+        let web = Web;
+
+        assert!(auto.selected(Auto));
+        assert!(auto.selected(Rdp));
+        assert!(auto.selected(Web));
+
+        assert!(rdp.selected(Auto));
+        assert!(rdp.selected(Rdp));
+        assert!(!rdp.selected(Web));
+
+        assert!(web.selected(Auto));
+        assert!(!web.selected(Rdp));
+        assert!(web.selected(Web));
+    }
 }
