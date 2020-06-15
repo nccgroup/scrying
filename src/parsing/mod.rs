@@ -854,7 +854,7 @@ mod test {
 
         for (input, input_lists, mode) in test_cases {
             eprintln!("Test case: {:?}", (input, &input_lists, mode));
-            opts.target = Some(input.into());
+            opts.target = vec!(input.into());
             opts.mode = mode;
 
             let parsed = generate_target_lists(&opts);
@@ -902,7 +902,7 @@ mod test {
         let mut opts: Opts = Default::default();
         for case in test_cases {
             eprintln!("Test case: {:?}", case);
-            opts.nmap = Some(case.0.into());
+            opts.nmap = vec!(case.0.into());
             let parsed = generate_target_lists(&opts);
             eprintln!("Parsed: {:?}", parsed);
 
