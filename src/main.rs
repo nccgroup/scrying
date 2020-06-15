@@ -17,11 +17,11 @@
  *   along with Scamper.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use error::Error;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
-use error::Error;
 //use argparse::Mode;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
