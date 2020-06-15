@@ -21,6 +21,7 @@ use std::fs::create_dir_all;
 use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
+use error::Error;
 //use argparse::Mode;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
@@ -201,7 +202,20 @@ fn web_worker(
 
     for target in &targets.web_targets {
         #[cfg(feature = "wkhtmltoimage")]
-        web::capture(target, output_dir, &image_app).unwrap();
+        if let Err(e) = web::capture(target, output_dir, &image_app) {
+            match e {
+                Error::IoError(e) => {
+                    // Should probably abort on an IO error
+                    error!("IO error: {}", e);
+                    break;
+                }
+                Error::WkhtmltoimageError(e) => {
+                    // non-fatal error, probably just a nonresponsive
+                    // server
+                    info!("Failed to capture image: {}", e);
+                }
+            }
+        }
         #[cfg(feature = "wkhtmltoimage_bin")]
         web::capture(target, output_dir, &wkhtmltoimage_path).unwrap();
     }
