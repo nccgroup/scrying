@@ -93,7 +93,7 @@ fn main() {
 
     // Load in the target lists, parsed from arguments, files, and nmap
     let targets = Arc::new(generate_target_lists(&opts));
-    println!("target list: {:?}", targets);
+    println!("{}", targets);
 
     if opts.test_import {
         info!("--test-import was supplied, exiting");

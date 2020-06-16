@@ -187,6 +187,33 @@ impl Display for Target {
     }
 }
 
+impl Display for InputLists {
+    fn fmt(
+        &self,
+        fmt: &mut std::fmt::Formatter<'_>,
+    ) -> Result<(), std::fmt::Error> {
+        // Format the targets as separate lists for the different target
+        // types.
+        write!(fmt, "RDP targets:")?;
+        if self.rdp_targets.is_empty() {
+            write!(fmt, " None")?;
+        }
+        for t in &self.rdp_targets {
+            write!(fmt, "\n    {}", t)?;
+        }
+
+        write!(fmt, "\nWeb targets:")?;
+        if self.web_targets.is_empty() {
+            write!(fmt, " None")?;
+        }
+        for t in &self.web_targets {
+            write!(fmt, "\n    {}", t)?;
+        }
+
+        Ok(())
+    }
+}
+
 fn domain_to_sockaddr(
     domain: &str,
     port: u16,
