@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["David Young <david.young@nccgroup.com>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
+description = "A new tool for collecting RDP, web and VNC screenshots all in one place"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,3 +22,14 @@ url = "2.1.1"
 nmap_xml_parser = "0.2.0"
 headless_chrome = "0.9"
 failure = "0.1"
+
+[package.metadata.deb]
+depends = "$auto, chromium"
+extended-description = """\
+A new tool for collecting RDP, web and VNC screenshots all in one place\
+"""
+section = "net"
+priority = "optional"
+assets = [
+	["target/release/scamper", "usr/bin", "755"]
+]
