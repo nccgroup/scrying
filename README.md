@@ -98,5 +98,6 @@ OPTIONS:
         --nmap <nmap>...             Nmap XML file
     -o, --output-dir <output-dir>    Directory to save the captured images in [default: output]
     -t, --target <target>...         Target, e.g. http://example.com
+        --threads <threads>          Number of worker threads for each target type [default: 3]
         --timeout <timeout>           [default: 10]
 ```

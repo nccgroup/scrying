@@ -124,7 +124,7 @@ fn main() {
         let targets_clone = targets.clone();
         Some(thread::spawn(move || {
             debug!("Starting RDP worker threads");
-            rdp_worker(targets_clone, rdp_output_dir)
+            rdp_worker(targets_clone, rdp_output_dir, opts.threads)
         }))
     } else {
         None
@@ -153,9 +153,9 @@ fn main() {
 fn rdp_worker(
     targets: Arc<InputLists>,
     output_dir: &'static Path,
+    max_workers: usize,
 ) -> Result<(), ()> {
     use mpsc::{Receiver, Sender};
-    let max_workers: usize = 3;
     let mut num_workers: usize = 0;
     let mut targets_iter = targets.rdp_targets.iter();
     let mut workers: Vec<_> = Vec::new();

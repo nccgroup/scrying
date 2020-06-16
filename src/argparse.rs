@@ -78,6 +78,13 @@ pub struct Opts {
     #[clap(long, default_value = "10")]
     pub timeout: usize,
 
+    #[clap(
+        long,
+        default_value = "3",
+        about = "Number of worker threads for each target type"
+    )]
+    pub threads: usize,
+
     #[clap(short, long, about = "Save logs to file")]
     pub log_file: Option<String>,
 
