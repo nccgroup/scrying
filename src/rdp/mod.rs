@@ -185,7 +185,7 @@ pub fn capture(
     };
 
     //let addr = ip.parse::<SocketAddr>().unwrap();
-    let tcp = TcpStream::connect(&addr).unwrap();
+    let tcp = TcpStream::connect(&addr).map_err(|e| Error::RdpError(e.to_string()))?;
 
     let mut connector = Connector::new()
         .screen(IMAGE_WIDTH, IMAGE_HEIGHT)
