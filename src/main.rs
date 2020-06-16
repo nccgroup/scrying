@@ -195,9 +195,7 @@ fn rdp_worker(
     println!("At the join part");
     for w in workers {
         print!("Joining {:?}", w);
-        if let Err(e) = w.join().unwrap() {
-            warn!("Thread terminated with error: {}", e);
-        }
+        w.join().unwrap();
     }
 
     Ok(())

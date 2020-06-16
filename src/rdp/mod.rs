@@ -172,11 +172,7 @@ impl Image {
     }
 }
 
-pub fn capture(
-    target: &Target,
-    output_dir: &Path,
-    tx: mpsc::Sender<ThreadStatus>,
-) -> Result<(), Error> {
+fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
     //let ip = opts.target.clone().unwrap();
     info!("Connecting to {:?}", target);
     let addr = match target {
@@ -185,13 +181,12 @@ pub fn capture(
             return Err(Error::RdpError(format!(
                 "Invalid RDP target: {}",
                 target
-            )))
+            )));
         }
     };
 
     //let addr = ip.parse::<SocketAddr>().unwrap();
-    let tcp = TcpStream::connect(&addr)
-        .map_err(|e| Error::RdpError(e.to_string()))?;
+    let tcp = TcpStream::connect(&addr)?;
 
     let mut connector = Connector::new()
         .screen(IMAGE_WIDTH, IMAGE_HEIGHT)
@@ -302,6 +297,17 @@ pub fn capture(
         _ => unimplemented!(),
     }
 
-    tx.send(ThreadStatus::Complete).unwrap();
     Ok(())
+}
+
+pub fn capture(
+    target: &Target,
+    output_dir: &Path,
+    tx: mpsc::Sender<ThreadStatus>,
+) {
+    if let Err(e) = capture_worker(target, output_dir) {
+        warn!("error: {}", e);
+    }
+
+    tx.send(ThreadStatus::Complete).unwrap();
 }
