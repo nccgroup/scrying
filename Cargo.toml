@@ -8,8 +8,9 @@ license = "GPL-3.0-or-later"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["wkhtmltoimage"]
+default = ["headlesschrome"]
 
+headlesschrome = ["headless_chrome", "failure"]
 wkhtmltoimage = ["wkhtmltopdf"]
 wkhtmltoimage_bin = [ ]
 
@@ -23,3 +24,5 @@ thiserror = "1.0"
 url = "2.1.1"
 nmap_xml_parser = "0.2.0"
 wkhtmltopdf = { "optional" = true, "git" = "https://github.com/sciguy16/wkhtmltopdf-rs", branch = "image-implementation" }
+headless_chrome = { "optional" = true, "version" = "0.9" }
+failure = { "optional" = true, "version" = "0.1" }

@@ -33,14 +33,48 @@ use std::process::Command;
 #[cfg(feature = "wkhtmltoimage")]
 use wkhtmltopdf::{ImageApplication, ImageFormat};
 
+#[cfg(feature = "headlesschrome")]
+use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
+
+#[cfg(feature = "headlesschrome")]
+use std::{fs::File, io::Write};
+
 // Fail if compiled witout the wkhtmltoimage feature
-#[cfg(not(any(feature = "wkhtmltoimage", feature = "wkhtmltoimage_bin")))]
+#[cfg(not(any(
+    feature = "wkhtmltoimage",
+    feature = "wkhtmltoimage_bin",
+    feature = "headlesschrome"
+)))]
 pub fn capture(
     _target: &Target,
     _output_dir: &Path,
     _wkhtmltoimage_path: &Path,
 ) -> Result<(), ()> {
     unimplemented!();
+}
+
+#[cfg(feature = "headlesschrome")]
+pub fn capture(
+    target: &Target,
+    output_dir: &Path,
+    tab: &Tab,
+) -> Result<(), Error> {
+    info!("Processing {}", target);
+
+    let filename = target_to_filename(&target).unwrap();
+    let filename = format!("{}.png", filename);
+    let output_file = output_dir.join(filename).display().to_string();
+    info!("Saving image as {}", output_file);
+    if let Target::Url(target) = target {
+        tab.navigate_to(target.as_str())?;
+        tab.wait_until_navigated()?;
+        let png_data = tab
+            .capture_screenshot(ScreenshotFormat::PNG, None, true)
+            .expect("error making screenshot");
+        let mut file = File::create(output_file)?;
+        file.write_all(&png_data)?;
+    }
+    Ok(())
 }
 
 #[cfg(feature = "wkhtmltoimage")]

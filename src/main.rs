@@ -33,6 +33,9 @@ use simplelog::{
 use std::fs::File;
 use std::sync::Arc;
 
+#[cfg(feature = "headlesschrome")]
+use headless_chrome::Browser;
+
 #[cfg(feature = "wkhtmltoimage")]
 use wkhtmltopdf::ImageApplication;
 mod argparse;
@@ -188,7 +191,8 @@ fn web_worker(
     // Fail if compiled witout the wkhtmltoimage feature
     #[cfg(not(any(
         feature = "wkhtmltoimage",
-        feature = "wkhtmltoimage_bin"
+        feature = "wkhtmltoimage_bin",
+        feature = "headlesschrome"
     )))]
     return Err("no");
 
@@ -199,6 +203,10 @@ fn web_worker(
     #[cfg(feature = "wkhtmltoimage")]
     let image_app =
         ImageApplication::new().expect("Failed to init image application");
+
+    #[cfg(feature = "headlesschrome")]
+    let browser = Browser::default().expect("failed to init chrome");
+    let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
 
     for target in &targets.web_targets {
         #[cfg(feature = "wkhtmltoimage")]
@@ -218,6 +226,20 @@ fn web_worker(
         }
         #[cfg(feature = "wkhtmltoimage_bin")]
         web::capture(target, output_dir, &wkhtmltoimage_path).unwrap();
+
+        #[cfg(feature = "headlesschrome")]
+        if let Err(e) = web::capture(target, output_dir, &tab) {
+            match e {
+                Error::IoError(e) => {
+                    // Should probably abort on an IO error
+                    error!("IO error: {}", e);
+                    break;
+                }
+                Error::ChromeError(e) => {
+                    warn!("Failed to capture image: {}", e);
+                }
+            }
+        }
     }
     Ok(())
 }
