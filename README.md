@@ -85,10 +85,11 @@ USAGE:
     scamper [FLAGS] [OPTIONS]
 
 FLAGS:
-    -h, --help       Prints help information
+    -h, --help           Prints help information
     -s, --silent
+        --test-import    Exit after importing targets
     -v, --verbose
-    -V, --version    Prints version information
+    -V, --version        Prints version information
 
 OPTIONS:
     -f, --file <file>...

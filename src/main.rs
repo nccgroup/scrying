@@ -95,6 +95,11 @@ fn main() {
     let targets = Arc::new(generate_target_lists(&opts));
     println!("target list: {:?}", targets);
 
+    if opts.test_import {
+        info!("--test-import was supplied, exiting");
+        return;
+    }
+
     // Create output directories if they do not exist
     let rdp_output_dir = Path::new("./output/rdp");
     let web_output_dir = Path::new("./output/web");

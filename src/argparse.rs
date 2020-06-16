@@ -87,6 +87,9 @@ pub struct Opts {
 
     #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,
+
+    #[clap(long, about = "Exit after importing targets")]
+    pub test_import: bool,
 }
 
 pub fn parse() -> Opts {
