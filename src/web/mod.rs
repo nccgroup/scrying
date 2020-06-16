@@ -35,7 +35,7 @@ pub fn capture(
 ) -> Result<(), Error> {
     info!("Processing {}", target);
 
-    let filename = target_to_filename(&target).unwrap();
+    let filename = target_to_filename(&target);
     let filename = format!("{}.png", filename);
     let output_file = output_dir.join(filename).display().to_string();
     info!("Saving image as {}", output_file);

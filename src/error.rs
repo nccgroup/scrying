@@ -27,3 +27,9 @@ impl From<rdp::model::error::Error> for Error {
         Self::RdpError(format!("{:?}", e))
     }
 }
+
+impl From<image::error::ImageError> for Error {
+    fn from(e: image::error::ImageError) -> Self {
+        Self::RdpError(format!("Image error: {}", e.to_string()))
+    }
+}

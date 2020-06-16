@@ -221,7 +221,9 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
                 };
 
                 let data = if bitmap.is_compress {
-                    bitmap.decompress().unwrap()
+                    bitmap
+                        .decompress()
+                        .expect("Error decompressing bitmap chunk")
                 } else {
                     bitmap.data
                 };
@@ -288,11 +290,11 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
                 "Received image in {} chunks",
                 rdp_image.filled_progress.iter().count()
             );
-            let filename = target_to_filename(&target).unwrap();
+            let filename = target_to_filename(&target);
             let filename = format!("{}.png", filename);
             let filepath = output_dir.join(filename);
             info!("Saving image as {}", filepath.display());
-            di.save(filepath).unwrap();
+            di.save(filepath)?;
         }
         _ => unimplemented!(),
     }

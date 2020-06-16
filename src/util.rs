@@ -21,21 +21,15 @@ use crate::parsing::Target;
 use std::net::SocketAddr;
 
 //TODO maybe move this to impl fmt::Display rather than a function
-pub fn target_to_filename(target: &Target) -> Result<String, &str> {
+pub fn target_to_filename(target: &Target) -> String {
     match target {
         Target::Address(SocketAddr::V4(addr)) => {
-            let converted = format!("{}", addr).replace(":", "-");
-
-            Ok(converted)
+            format!("{}", addr).replace(":", "-")
         }
-        Target::Address(SocketAddr::V6(addr)) => {
-            let converted = format!("{}", addr)
-                .replace("]:", "-")
-                .replace("[", "")
-                .replace(":", "_");
-
-            Ok(converted)
-        }
+        Target::Address(SocketAddr::V6(addr)) => format!("{}", addr)
+            .replace("]:", "-")
+            .replace("[", "")
+            .replace(":", "_"),
         Target::Url(u) => {
             // The :// scheme separator is converted to a hyphen
             // Any slashes in the URL are converted into hyphens
@@ -56,7 +50,7 @@ pub fn target_to_filename(target: &Target) -> Result<String, &str> {
                 converted.pop();
             }
 
-            Ok(converted)
+            converted
         }
     }
 }
@@ -122,7 +116,7 @@ mod test {
 
         for case in test_cases {
             eprintln!("Test case: {:?}", case);
-            let parsed = target_to_filename(&case.0).unwrap();
+            let parsed = target_to_filename(&case.0);
             assert_eq!(parsed, case.1);
         }
     }

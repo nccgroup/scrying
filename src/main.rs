@@ -103,20 +103,16 @@ fn main() {
     // Create output directories if they do not exist
 
     let rdp_output_dir = Path::new("./output/rdp");
-    if !targets.rdp_targets.is_empty() {
-        if !rdp_output_dir.is_dir() {
-            create_dir_all(rdp_output_dir).unwrap_or_else(|_| {
-                panic!("Error creating directory {}", rdp_output_dir.display())
-            });
-        }
+    if !targets.rdp_targets.is_empty() && !rdp_output_dir.is_dir() {
+        create_dir_all(rdp_output_dir).unwrap_or_else(|_| {
+            panic!("Error creating directory {}", rdp_output_dir.display())
+        });
     }
     let web_output_dir = Path::new("./output/web");
-    if !targets.rdp_targets.is_empty() {
-        if !web_output_dir.is_dir() {
-            create_dir_all(web_output_dir).unwrap_or_else(|_| {
-                panic!("Error creating directory {}", web_output_dir.display())
-            });
-        }
+    if !targets.rdp_targets.is_empty() && !web_output_dir.is_dir() {
+        create_dir_all(web_output_dir).unwrap_or_else(|_| {
+            panic!("Error creating directory {}", web_output_dir.display())
+        });
     }
 
     // Spawn threads to iterate over the targets
