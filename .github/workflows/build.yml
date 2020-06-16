@@ -69,16 +69,10 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Fetch shared library
-        run: ./fetch-wkhtmltopdf-lib.py linux
-
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
-        env:
-          RUSTFLAGS: -L .
-          LD_LIBRARY_PATH: .
 
   test_windows:
     name: Run tests on windows-latest
@@ -93,18 +87,10 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install python dependencies
-        run: python -m pip install -r fetch-wkhtmltopdf-lib-requirements.txt
-
-      - name: Fetch shared library
-        run: python fetch-wkhtmltopdf-lib.py windows
-
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
-        env:
-          RUSTFLAGS: -L .
 
   test_macos:
     name: Run tests on macOS-latest
@@ -119,15 +105,8 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install python dependencies
-        run: python3 -m pip install -r fetch-wkhtmltopdf-lib-requirements.txt
-
-      - name: Fetch shared library
-        run: ./fetch-wkhtmltopdf-lib.py macos
-
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
           command: test
         env:
-          RUSTFLAGS: -L .
