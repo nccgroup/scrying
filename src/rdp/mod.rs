@@ -17,10 +17,10 @@
  *   along with Scamper.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::error::Error;
 use crate::parsing::Target;
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
-use crate::error::Error;
 use image::{DynamicImage, ImageBuffer, Rgba};
 use rdp::core::client::Connector;
 use rdp::core::event::RdpEvent;
@@ -181,11 +181,17 @@ pub fn capture(
     info!("Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
-        Target::Url(_) => return Err(Error::RdpError(format!("Invalid RDP target: {}", target))),
+        Target::Url(_) => {
+            return Err(Error::RdpError(format!(
+                "Invalid RDP target: {}",
+                target
+            )))
+        }
     };
 
     //let addr = ip.parse::<SocketAddr>().unwrap();
-    let tcp = TcpStream::connect(&addr).map_err(|e| Error::RdpError(e.to_string()))?;
+    let tcp = TcpStream::connect(&addr)
+        .map_err(|e| Error::RdpError(e.to_string()))?;
 
     let mut connector = Connector::new()
         .screen(IMAGE_WIDTH, IMAGE_HEIGHT)
