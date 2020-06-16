@@ -5,6 +5,9 @@ pub enum Error {
 
     #[error("IO error: {0}")]
     IoError(String),
+
+    #[error("RDP error: {0}")]
+    RdpError(String),
 }
 
 impl From<failure::Error> for Error {
@@ -16,5 +19,11 @@ impl From<failure::Error> for Error {
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Self::IoError(e.to_string())
+    }
+}
+
+impl From<rdp::model::error::Error> for Error {
+    fn from(e: rdp::model::error::Error) -> Self {
+        Self::RdpError(format!("{:?}", e))
     }
 }

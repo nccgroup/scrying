@@ -221,6 +221,7 @@ fn web_worker(
                 Error::ChromeError(e) => {
                     warn!("Failed to capture image: {}", e);
                 }
+                Error::RdpError(_) => unreachable!(),
             }
         }
     }
