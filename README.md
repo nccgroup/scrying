@@ -6,7 +6,7 @@ Please file any bugs or feature requests as [GitHub issues](https://github.com/n
 
 ## Caveats
 * [RDP screenshotting is unreliable](https://github.com/nccgroup/scamper/issues/2)
-* Web screenshotting relies on wkhtmltopdf being installed
+* Web screenshotting relies on Chromium or Google Chrome being installed
 * VNC has not been implemented
 
 ## Motivation
@@ -16,8 +16,7 @@ Nessus still works, but it's a pain to get the images out and they're not includ
 I thought this was a good opportunity to write a fresh tool that's more powerful than those that came before. Check out the feature list!
 
 ## Prerequisites
-For web screenshotting, scamper currently depends on wkhtmltopdf.
-This can be installed from [their website](https://wkhtmltopdf.org/downloads.html) or via `pacman -S wkhtmltopdf`
+For web screenshotting, scamper currently depends on there being an installation of Chromium or Google Chrome. Install with `pacman -S chromium` or the equivalent for your OS.
 
 ## Usage
 Grab a single web page or RDP server:
@@ -66,8 +65,8 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Full support for IPv6 and IPv4 literals as well as hostnames
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
 * ✔️ Parse targets smartly from nmap output
-* ✔️ HTTP - currently implemented by shelling out to wkhtmltoimage, see [#3](https://github.com/nccgroup/scamper/issues/3)
-* Full cross-platform support - pending working out web screenshotting properly
+* ✔️ HTTP - uses Chromium/Chrome in headless mode
+* ✔️ Full cross-platform support - tested on Linux, Windows and Mac
 * RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image, see [#2](https://github.com/nccgroup/scamper/issues/2)
 * VNC - tracking issue [#6](https://github.com/nccgroup/scamper/issues/6)
 * Video streams - tracking issue [#5](https://github.com/nccgroup/scamper/issues/5)
@@ -92,11 +91,11 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -f, --file <file>
+    -f, --file <file>...
     -l, --log-file <log-file>
     -m, --mode <mode>                 [default: auto]
-        --nmap <nmap>
+        --nmap <nmap>...
     -o, --output-dir <output-dir>     [default: output]
-    -t, --target <target>
+    -t, --target <target>...
         --timeout <timeout>           [default: 10]
 ```
