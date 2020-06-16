@@ -1406,7 +1406,6 @@ dependencies = [
  "simplelog",
  "thiserror",
  "url 2.1.1",
- "wkhtmltopdf",
 ]
 
 [[package]]
@@ -1648,17 +1647,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "thread-id"
-version = "3.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7fbf4c9d56b320106cd64fd024dadfa0be7cb4706725fc44a7d7ce952d820c1"
-dependencies = [
- "libc",
- "redox_syscall",
- "winapi",
-]
-
-[[package]]
 name = "thread_local"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1883,25 +1871,6 @@ checksum = "b2986deb581c4fe11b621998a5e53361efe6b48a151178d0cd9eeffa4dc6acc9"
 dependencies = [
  "winapi",
 ]
-
-[[package]]
-name = "wkhtmltopdf"
-version = "0.3.0"
-source = "git+https://github.com/sciguy16/wkhtmltopdf-rs?branch=image-implementation#f6f441a6fad0acbb720fed333845105957173532"
-dependencies = [
- "lazy_static",
- "log 0.4.8",
- "quick-error",
- "thread-id",
- "url 2.1.1",
- "wkhtmltox-sys",
-]
-
-[[package]]
-name = "wkhtmltox-sys"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab0405f2aa72bed0966b1bf52964ab82035ff4d420bda535f162461875ab1b1d"
 
 [[package]]
 name = "x509-parser"
