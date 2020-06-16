@@ -101,36 +101,53 @@ fn main() {
     }
 
     // Create output directories if they do not exist
+
     let rdp_output_dir = Path::new("./output/rdp");
-    let web_output_dir = Path::new("./output/web");
-    if !rdp_output_dir.is_dir() {
-        create_dir_all(rdp_output_dir).unwrap_or_else(|_| {
-            panic!("Error creating directory {}", rdp_output_dir.display())
-        });
+    if !targets.rdp_targets.is_empty() {
+        if !rdp_output_dir.is_dir() {
+            create_dir_all(rdp_output_dir).unwrap_or_else(|_| {
+                panic!("Error creating directory {}", rdp_output_dir.display())
+            });
+        }
     }
-    if !web_output_dir.is_dir() {
-        create_dir_all(web_output_dir).unwrap_or_else(|_| {
-            panic!("Error creating directory {}", web_output_dir.display())
-        });
+    let web_output_dir = Path::new("./output/web");
+    if !targets.rdp_targets.is_empty() {
+        if !web_output_dir.is_dir() {
+            create_dir_all(web_output_dir).unwrap_or_else(|_| {
+                panic!("Error creating directory {}", web_output_dir.display())
+            });
+        }
     }
 
-    // Spawn tokio workers to iterate over the targets
-    //let rdp_output_dir_arc = Arc::new(rdp_output_dir);
-    let targets_clone = targets.clone();
-    let rdp_handle = thread::spawn(move || {
-        debug!("Starting RDP worker threads");
-        rdp_worker(targets_clone, rdp_output_dir)
-    });
-    // clone here will be more useful when there are more target types
-    let targets_clone = targets; //.clone();
-    let web_handle = thread::spawn(move || {
-        debug!("Starting Web worker threads");
-        web_worker(targets_clone, &web_output_dir).unwrap()
-    });
+    // Spawn threads to iterate over the targets
+    let rdp_handle = if !targets.rdp_targets.is_empty() {
+        let targets_clone = targets.clone();
+        Some(thread::spawn(move || {
+            debug!("Starting RDP worker threads");
+            rdp_worker(targets_clone, rdp_output_dir)
+        }))
+    } else {
+        None
+    };
+
+    let web_handle = if !targets.web_targets.is_empty() {
+        // clone here will be more useful when there are more target types
+        let targets_clone = targets; //.clone();
+        Some(thread::spawn(move || {
+            debug!("Starting Web worker threads");
+            web_worker(targets_clone, &web_output_dir).unwrap()
+        }))
+    } else {
+        None
+    };
 
     // wait for the workers to complete
-    rdp_handle.join().unwrap().unwrap();
-    web_handle.join().unwrap();
+    if let Some(h) = rdp_handle {
+        h.join().unwrap().unwrap();
+    }
+    if let Some(h) = web_handle {
+        h.join().unwrap();
+    }
 }
 
 fn rdp_worker(
