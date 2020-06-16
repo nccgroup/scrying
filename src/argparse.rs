@@ -61,31 +61,46 @@ impl FromStr for Mode {
 #[derive(Clap, Debug, Default)]
 #[clap(version = "0.1", author = "David Y. <david.young@nccgroup.com>")]
 pub struct Opts {
-    #[clap(short, long)]
+    #[clap(short, long, about = "Targets file, one per line")]
     pub file: Vec<String>,
 
-    #[clap(short, long)]
+    #[clap(short, long, about = "Target, e.g. http://example.com")]
     pub target: Vec<String>,
 
-    #[clap(short, long, default_value = "auto")]
+    #[clap(
+        short,
+        long,
+        default_value = "auto",
+        about = "Force `web` or `rdp`"
+    )]
     pub mode: Mode,
 
     #[clap(long, default_value = "10")]
     pub timeout: usize,
 
-    #[clap(short, long)]
+    #[clap(short, long, about = "Save logs to file")]
     pub log_file: Option<String>,
 
-    #[clap(long)]
+    #[clap(long, about = "Nmap XML file")]
     pub nmap: Vec<String>,
 
-    #[clap(short, long, default_value = "output")]
+    #[clap(
+        short,
+        long,
+        default_value = "output",
+        about = "Directory to save the captured images in"
+    )]
     pub output_dir: String,
 
-    #[clap(short, long)]
+    #[clap(short, long, about = "Suppress most log messages")]
     pub silent: bool,
 
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(
+        short,
+        long,
+        parse(from_occurrences),
+        about = "Increase log verbosity"
+    )]
     pub verbose: u8,
 
     #[clap(long, about = "Exit after importing targets")]

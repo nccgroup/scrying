@@ -86,17 +86,17 @@ USAGE:
 
 FLAGS:
     -h, --help           Prints help information
-    -s, --silent
+    -s, --silent         Suppress most log messages
         --test-import    Exit after importing targets
-    -v, --verbose
+    -v, --verbose        Increase log verbosity
     -V, --version        Prints version information
 
 OPTIONS:
-    -f, --file <file>...
-    -l, --log-file <log-file>
-    -m, --mode <mode>                 [default: auto]
-        --nmap <nmap>...
-    -o, --output-dir <output-dir>     [default: output]
-    -t, --target <target>...
+    -f, --file <file>...             Targets file, one per line
+    -l, --log-file <log-file>        Save logs to file
+    -m, --mode <mode>                Force `web` or `rdp` [default: auto]
+        --nmap <nmap>...             Nmap XML file
+    -o, --output-dir <output-dir>    Directory to save the captured images in [default: output]
+    -t, --target <target>...         Target, e.g. http://example.com
         --timeout <timeout>           [default: 10]
 ```
