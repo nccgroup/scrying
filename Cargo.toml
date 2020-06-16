@@ -31,5 +31,5 @@ A new tool for collecting RDP, web and VNC screenshots all in one place\
 section = "net"
 priority = "optional"
 assets = [
-	["target/release/scamper", "usr/bin", "755"]
+	["target/release/scamper", "usr/bin/", "755"]
 ]
