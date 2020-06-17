@@ -20,10 +20,10 @@
 use crate::argparse::Opts;
 use error::Error;
 use std::collections::HashMap;
+use std::ffi::OsStr;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::sync::mpsc;
-use std::ffi::OsStr;
 use std::thread;
 //use argparse::Mode;
 #[allow(unused)]
