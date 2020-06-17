@@ -24,7 +24,7 @@ headless_chrome = "0.9"
 failure = "0.1"
 
 [package.metadata.deb]
-depends = "$auto, chromium"
+depends = "chromium"
 extended-description = """\
 A new tool for collecting RDP, web and VNC screenshots all in one place\
 """
