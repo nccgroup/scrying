@@ -112,7 +112,7 @@ fn main() {
         });
     }
     let web_output_dir = Path::new("./output/web");
-    if !targets.rdp_targets.is_empty() && !web_output_dir.is_dir() {
+    if !targets.web_targets.is_empty() && !web_output_dir.is_dir() {
         create_dir_all(web_output_dir).unwrap_or_else(|_| {
             panic!("Error creating directory {}", web_output_dir.display())
         });
