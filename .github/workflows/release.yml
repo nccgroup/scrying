@@ -23,7 +23,7 @@ jobs:
           BODY=$(sed -n "/$VERSION/,/^## /p" Changelog.md)
           # URL-encode percent, LF, CR
           BODY="${BODY//'%'/'%25'}"
-          BODY="${BODY//$'\n'/'%0A'}""
+          BODY="${BODY//$'\n'/'%0A'}"
           BODY="${BODY//$'\r'/'%0D'}"
           # Store the release body for the next step
           echo "::set-output name=BODY::${BODY}"
