@@ -69,7 +69,12 @@ jobs:
         run: |
           cargo deb
 
-      - name: Upload release asset
+      - name: Zip binary
+        run: |
+          zip scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.zip \
+           -xi target/release/scamper
+
+      - name: Upload deb
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,3 +83,13 @@ jobs:
           asset_path: target/debian/scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
+
+      - name: Upload zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_new_release.outputs.upload_url }}
+          asset_path: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.zip
+          asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.zip
+          asset_content_type: application/zip
