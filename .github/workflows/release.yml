@@ -18,7 +18,7 @@ jobs:
           VERSION: ${{ github.ref }}
         run: |
           # Grab the current release section from the changelog
-          BODY=$(sed -n "/$tag/,/^## /p" Changelog.md)
+          BODY=$(sed -n "/$VERSION/,/^## /p" Changelog.md)
           # URL-encode percent, LF, CR
           BODY="${BODY//'%'/'%25'}"
           BODY="${BODY//$'\n'/'%0A'}
