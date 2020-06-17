@@ -83,7 +83,7 @@ jobs:
           asset_path: |
             target/debian/scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_name: |
-          scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
 
       - name: Upload zip
