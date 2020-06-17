@@ -17,6 +17,8 @@ jobs:
         env:
           VERSION: ${{ github.ref }}
         run: |
+          # Extract the tag name from the github ref (e.g. revs/tags/v0.1.0)
+          VERSION=${VERSION:10}
           # Grab the current release section from the changelog
           BODY=$(sed -n "/$VERSION/,/^## /p" Changelog.md)
           # URL-encode percent, LF, CR
