@@ -200,7 +200,7 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
                 Ok(chunk) => {
                     if rdp_image.add_chunk(&chunk).is_err() {
                         warn!("Attempted to add invalid chunk");
-                        break;
+                        //break;
                     }
                 }
             }
