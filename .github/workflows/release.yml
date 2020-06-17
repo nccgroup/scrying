@@ -75,7 +75,7 @@ jobs:
           mkdir scamper
           cp README.md scamper/
           cp target/release/scamper scamper/
-          zip \
+          zip -r \
             scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip \
             scamper
 
@@ -162,7 +162,8 @@ jobs:
           mkdir scamper
           cp README.md scamper/
           cp target/release/scamper scamper/
-          zip scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
+          zip -r \
+            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
             scamper
 
       - name: Upload zip
