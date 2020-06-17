@@ -8,6 +8,10 @@ jobs:
   create_new_release:
     name: Create release
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.parse_changelog.outputs.version }}
+      version_num: ${{ steps.parse_changelog.outputs.version_num }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -19,6 +23,8 @@ jobs:
         run: |
           # Extract the tag name from the github ref (e.g. revs/tags/v0.1.0)
           VERSION=${VERSION:10}
+          # VERSION_NUM is the version but without the v on the front
+          VERSION_NUM=${VERSION:1}
           # Grab the current release section from the changelog
           BODY=$(sed -n "/$VERSION/,/^## /p" Changelog.md)
           # URL-encode percent, LF, CR
@@ -27,6 +33,8 @@ jobs:
           BODY="${BODY//$'\r'/'%0D'}"
           # Store the release body for the next step
           echo "::set-output name=BODY::${BODY}"
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=version_num::${VERSION_NUM}"
 
       - name: Create release
         id: create_release
@@ -39,3 +47,34 @@ jobs:
           body: ${{ steps.parse_changelog.outputs.BODY }}
           draft: true
           prerelease: false
+
+  build_linux_release:
+    name: Build Linux releases
+    runs-on: ubuntu-latest
+    needs: create_new_release
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build debian package
+        run: |
+          cargo deb
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_new_release.outputs.upload_url }}
+          asset_path: target/debian/scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+          asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
