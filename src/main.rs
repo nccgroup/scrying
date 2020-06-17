@@ -181,7 +181,7 @@ fn rdp_worker(
         if num_workers < max_workers {
             if let Some(target) = targets_iter.next() {
                 let target = target.clone();
-                println!("Adding worker for {:?}", target);
+                info!("Adding worker for {:?}", target);
                 let tx = thread_status_tx.clone();
                 let handle = thread::spawn(move || {
                     rdp::capture(&target, &output_dir, tx)
@@ -194,9 +194,9 @@ fn rdp_worker(
             }
         }
     }
-    println!("At the join part");
+    debug!("At the join part");
     for w in workers {
-        print!("Joining {:?}", w);
+        debug!("Joining {:?}", w);
         w.join().unwrap();
     }
 
