@@ -133,7 +133,7 @@ fn main() {
     let web_handle = if !targets.web_targets.is_empty() {
         // clone here will be more useful when there are more target types
         let targets_clone = targets; //.clone();
-        let opts_clone = opts.clone();
+        let opts_clone = opts; //.clone();
         Some(thread::spawn(move || {
             debug!("Starting Web worker threads");
             web_worker(targets_clone, &web_output_dir, opts_clone).unwrap()
