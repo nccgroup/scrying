@@ -8,7 +8,6 @@ jobs:
   create_new_release:
     name: Create release
     runs-on: ubuntu-latest
-    id: create_release
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
