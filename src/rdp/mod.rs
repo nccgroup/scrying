@@ -30,6 +30,7 @@ use std::io::Read;
 use std::io::Write;
 use std::net::TcpStream;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
 use std::thread;
 use std::time::Duration;
@@ -228,7 +229,8 @@ fn bmp_thread<T: Read + Write>(
     mut client: RdpClient<T>,
     sender: Sender<BitmapChunk>,
 ) {
-    loop {
+    let break_cond = AtomicBool::new(false);
+    while !break_cond.load(Ordering::Relaxed) {
         match client.read(|rdp_event| match rdp_event {
             RdpEvent::Bitmap(bitmap) => {
                 // numbers all come in as u16
@@ -264,7 +266,12 @@ fn bmp_thread<T: Read + Write>(
                     chunk.data.len(),
                 );
 
-                sender.send(chunk).unwrap();
+                if sender.send(chunk).is_err() {
+                    // Recevier disconnected, most likely because the timeout
+                    // was reached
+                    info!("Bitmap channel disconnected");
+                    break_cond.store(true, Ordering::Relaxed);
+                }
             }
             RdpEvent::Pointer(_) => info!("Pointer event!"),
             RdpEvent::Key(_) => info!("Key event!"),
