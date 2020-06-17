@@ -99,6 +99,9 @@ pub struct Opts {
     )]
     pub output_dir: String,
 
+    #[clap(long, about = "Proxy to use for web requests")]
+    pub web_proxy: Option<String>,
+
     #[clap(short, long, about = "Suppress most log messages")]
     pub silent: bool,
 

@@ -17,10 +17,13 @@
  *   along with Scamper.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::argparse::Opts;
 use error::Error;
+use std::collections::HashMap;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::sync::mpsc;
+use std::ffi::OsStr;
 use std::thread;
 //use argparse::Mode;
 #[allow(unused)]
@@ -33,7 +36,7 @@ use simplelog::{
 use std::fs::File;
 use std::sync::Arc;
 
-use headless_chrome::Browser;
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 
 mod argparse;
 mod error;
@@ -48,7 +51,7 @@ pub enum ThreadStatus {
 
 fn main() {
     println!("Starting NCC Group Scamper...");
-    let opts = argparse::parse();
+    let opts = Arc::new(argparse::parse());
 
     // Configure logging
     let mut log_dests: Vec<Box<dyn SharedLogger>> = Vec::new();
@@ -118,9 +121,10 @@ fn main() {
     // Spawn threads to iterate over the targets
     let rdp_handle = if !targets.rdp_targets.is_empty() {
         let targets_clone = targets.clone();
+        let opts_clone = opts.clone();
         Some(thread::spawn(move || {
             debug!("Starting RDP worker threads");
-            rdp_worker(targets_clone, rdp_output_dir, opts.threads)
+            rdp_worker(targets_clone, rdp_output_dir, opts_clone)
         }))
     } else {
         None
@@ -129,9 +133,10 @@ fn main() {
     let web_handle = if !targets.web_targets.is_empty() {
         // clone here will be more useful when there are more target types
         let targets_clone = targets; //.clone();
+        let opts_clone = opts.clone();
         Some(thread::spawn(move || {
             debug!("Starting Web worker threads");
-            web_worker(targets_clone, &web_output_dir).unwrap()
+            web_worker(targets_clone, &web_output_dir, opts_clone).unwrap()
         }))
     } else {
         None
@@ -149,9 +154,10 @@ fn main() {
 fn rdp_worker(
     targets: Arc<InputLists>,
     output_dir: &'static Path,
-    max_workers: usize,
+    opts: Arc<Opts>,
 ) -> Result<(), ()> {
     use mpsc::{Receiver, Sender};
+    let max_workers = opts.threads;
     let mut num_workers: usize = 0;
     let mut targets_iter = targets.rdp_targets.iter();
     let mut workers: Vec<_> = Vec::new();
@@ -200,8 +206,20 @@ fn rdp_worker(
 fn web_worker(
     targets: Arc<InputLists>,
     output_dir: &Path,
+    opts: Arc<Opts>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let browser = Browser::default().expect("failed to init chrome");
+    let mut chrome_env = HashMap::new();
+    if let Some(p) = &opts.web_proxy {
+        chrome_env.insert("http_proxy".to_string(), p.clone());
+        chrome_env.insert("https_proxy".to_string(), p.clone());
+    }
+    let launch_options = LaunchOptionsBuilder::default()
+        .headless(true)
+        .window_size(Some((1280, 720)))
+        .process_envs(Some(chrome_env))
+        .args(vec![OsStr::new("--ignore-certificate-errors")])
+        .build()?;
+    let browser = Browser::new(launch_options).expect("failed to init chrome");
     let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
 
     for target in &targets.web_targets {

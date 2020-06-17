@@ -20,7 +20,7 @@ log = "0.4.8"
 thiserror = "1.0"
 url = "2.1.1"
 nmap_xml_parser = "0.2.0"
-headless_chrome = "0.9"
+headless_chrome = { "git" = "https://github.com/jeprojects/rust-headless-chrome", "rev" = "c4bb66a1" }
 failure = "0.1"
 
 [package.metadata.deb]

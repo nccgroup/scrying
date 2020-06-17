@@ -50,6 +50,12 @@ rdp://192.0.2.1
 $ scamper -f targets.txt
 ```
 
+Run through a web proxy:
+```
+$ scamper -t http://example.com --web-proxy http://127.0.0.1:8080
+$ scamper -t http://example.com --web-proxy socks5://\[::1\]:1080
+```
+
 Image files are saved as PNG in the following directory structure:
 ```
 output
