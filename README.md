@@ -23,22 +23,22 @@ Download the latest release from (the releases tab)[https://github.com/nccgroup/
 ## Usage
 Grab a single web page or RDP server:
 ```
-$ cargo run --release -- -t http://example.com
-$ cargo run --release -- -t rdp://192.0.2.1
-$ cargo run --release -- -t 2001:db8::5 --mode web
-$ cargo run --release -- -t 2001:db8::5 --mode rdp
-$ cargo run --release -- -t 192.0.2.2
+$ scamper -t http://example.com
+$ scamper -t rdp://192.0.2.1
+$ scamper -t 2001:db8::5 --mode web
+$ scamper -t 2001:db8::5 --mode rdp
+$ scamper -t 192.0.2.2
 ```
 
 Automatically grab screenshots from an nmap output:
 ```
 $ nmap -iL targets.txt -p 80,443,8080,8443,3389 -oX targets.xml
-$ cargo run --release -- --nmap targets.xml
+$ scamper --nmap targets.xml
 ```
 
 Choose a different output directory for images:
 ```
-$ cargo run --release -- -t 2001:db8::3 --output-dir /tmp/scamper_outputs
+$ scamper -t 2001:db8::3 --output-dir /tmp/scamper_outputs
 ```
 
 Run from a targets file:
@@ -47,7 +47,7 @@ $ cat targets.txt
 http://example.com
 rdp://192.0.2.1
 2001:db8::5
-$ cargo run --release -- -f targets.txt
+$ scamper -f targets.txt
 ```
 
 Image files are saved as PNG in the following directory structure:
