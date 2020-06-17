@@ -71,7 +71,7 @@ jobs:
 
       - name: Zip binary
         run: |
-          zip scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.zip \
+          zip scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip \
            -xi target/release/scamper
 
       - name: Upload deb
@@ -80,8 +80,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
-          asset_path: target/debian/scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
-          asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+          asset_path: |
+            target/debian/scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+          asset_name: |
+          scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
 
       - name: Upload zip
@@ -90,6 +92,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
-          asset_path: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.zip
-          asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.zip
+          asset_path: |
+            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip
+          asset_name: |
+            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip
+          asset_content_type: application/zip
+
+  build_windows_release:
+    name: Build Windows release
+    runs-on: windows-latest
+    needs: create_new_release
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - name: Zip binary
+        shell: powershell
+        run: |
+          Compress-Archive `
+            target/release/scamper.exe `
+            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
+
+      - name: Upload zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_new_release.outputs.upload_url }}
+          asset_path: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
+          asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
           asset_content_type: application/zip
