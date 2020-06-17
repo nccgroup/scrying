@@ -145,7 +145,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimalS
+          profile: minimal
           toolchain: stable
 
       - name: Build
