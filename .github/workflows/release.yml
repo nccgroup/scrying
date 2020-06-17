@@ -119,7 +119,7 @@ jobs:
         shell: powershell
         run: |
           $opts = @{
-            Path = ".\target\debug\scamper.exe", ".\README.md"
+            Path = ".\target\release\scamper.exe", ".\README.md"
             DestinationPath = "scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip"
           }
           Compress-Archive @opts
