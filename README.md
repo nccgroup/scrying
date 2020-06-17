@@ -18,7 +18,7 @@ I thought this was a good opportunity to write a fresh tool that's more powerful
 ## Installation
 For web screenshotting, scamper currently depends on there being an installation of Chromium or Google Chrome. Install with `pacman -S chromium` or the equivalent for your OS.
 
-Download the latest release from (the releases tab)[https://github.com/nccgroup/scamper/releases). There's a Debian package available for distros that use them (install with `sudo dpkg -i scamper*.deb`), and zipped binaries for Windows, Mac, and other Linuxes.
+Download the latest release from [the releases tab](https://github.com/nccgroup/scamper/releases). There's a Debian package available for distros that use them (install with `sudo dpkg -i scamper*.deb`), and zipped binaries for Windows, Mac, and other Linuxes.
 
 ## Usage
 Grab a single web page or RDP server:
