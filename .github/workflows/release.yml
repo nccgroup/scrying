@@ -72,7 +72,7 @@ jobs:
       - name: Zip binary
         run: |
           zip scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip \
-           -xi target/release/scamper
+           -xi target/release/scamper README.md
 
       - name: Upload deb
         uses: actions/upload-release-asset@v1
@@ -118,9 +118,11 @@ jobs:
       - name: Zip binary
         shell: powershell
         run: |
-          Compress-Archive `
-            target/release/scamper.exe `
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
+          $opts = @{
+            Path = ".\target\debug\scamper.exe", ".\README.md"
+            DestinationPath = "scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip"
+          }
+          Compress-Archive @opts
 
       - name: Upload zip
         uses: actions/upload-release-asset@v1
@@ -143,7 +145,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
+          profile: minimalS
           toolchain: stable
 
       - name: Build
@@ -152,7 +154,7 @@ jobs:
       - name: Zip binary
         run: |
           zip scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
-           -xi target/release/scamper
+           -xi target/release/scamper README.md
 
       - name: Upload zip
         uses: actions/upload-release-asset@v1
