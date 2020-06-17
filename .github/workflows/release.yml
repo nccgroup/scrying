@@ -5,12 +5,27 @@ on:
     tags:
       - 'v*'
 jobs:
-  create_release:
+  create_new_release:
     name: Create release
     runs-on: ubuntu-latest
+    id: create_release
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
+
+      - name: Parse changelog
+        id: parse_changelog
+        env:
+          VERSION: ${{ github.ref }}
+        run: |
+          # Grab the current release section from the changelog
+          BODY=$(sed -n "/$tag/,/^## /p" Changelog.md)
+          # URL-encode percent, LF, CR
+          BODY="${BODY//'%'/'%25'}"
+          BODY="${BODY//$'\n'/'%0A'}
+          BODY="${BODY//$'\r'/'%0D'}"
+          # Store the release body for the next step
+          echo "::set-output name=BODY::${BODY}"
 
       - name: Create release
         id: create_release
@@ -20,6 +35,6 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-          body: Release body
-          draft: false
+          body: ${{ steps.parse_changelog.outputs.BODY }}
+          draft: true
           prerelease: false
