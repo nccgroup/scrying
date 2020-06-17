@@ -158,7 +158,7 @@ jobs:
 
       - name: Zip binary
         run: |
-        # Stick the binary and readme into a directory and zip the directory
+          # Stick the binary and readme into a directory and zip the directory
           mkdir scamper
           cp README.md scamper/
           cp target/release/scamper scamper/
