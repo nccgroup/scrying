@@ -23,13 +23,16 @@ use crate::util::target_to_filename;
 use crate::ThreadStatus;
 use image::{DynamicImage, ImageBuffer, Rgba};
 use rdp::core::client::Connector;
+use rdp::core::client::RdpClient;
 use rdp::core::event::RdpEvent;
-use rdp::core::event::{PointerButton, PointerEvent};
 use std::collections::HashMap;
-
+use std::io::Read;
+use std::io::Write;
 use std::net::TcpStream;
 use std::path::Path;
-use std::sync::mpsc;
+use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
+use std::thread;
+use std::time::Duration;
 
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
@@ -104,7 +107,13 @@ impl Image {
                     img.put_pixel(
                         x,
                         y,
-                        Rgba([pixel[0], pixel[1], pixel[2], 255 - pixel[3]]),
+                        Rgba([
+                            pixel[0], pixel[1], pixel[2],
+                            0xff,
+                            //TODO: alpha pixel[3],
+                            // Sometimes pixel[3] is correct, sometimes
+                            // 0xff - pixel[3] is correct.
+                        ]),
                     );
                     pixval_acc +=
                         pixel[0] as u32 + pixel[1] as u32 + pixel[2] as u32;
@@ -125,6 +134,7 @@ impl Image {
         let chunk_width = chunk.right - chunk.left;
         let chunk_height = chunk.bottom - chunk.top;
         let avg = pixval_acc / (chunk_width * chunk_height);
+        debug!("avg: {}", avg);
         self.filled_progress.insert((chunk.top, chunk.left), avg);
 
         Ok(())
@@ -147,33 +157,9 @@ impl Image {
 
         Ok(())
     }
-
-    fn is_complete(&self) -> bool {
-        //TODO This method kinda relies on the server sending at least one blank
-        // frame before the desktop to ensure that the hashmap is never in a
-        // state where it has, say, four filled frames and no blanks. Can this
-        // be better? Set minimum = size/size of first frame divided by some
-        // conservative approximation?
-
-        // If the hashmap is zero length return false
-        if self.filled_progress.iter().count() == 0 {
-            trace!("Image empty");
-            return false;
-        }
-
-        // If ∃ k s.t. hash[k] = 0 then return false
-        if self.filled_progress.values().any(|x| *x == 0) {
-            trace!("∃ null chunk");
-            trace!("Filled progress: {:?}", self.filled_progress);
-            return false;
-        }
-        // else return true
-        true
-    }
 }
 
 fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
-    //let ip = opts.target.clone().unwrap();
     info!("Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
@@ -185,7 +171,6 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
         }
     };
 
-    //let addr = ip.parse::<SocketAddr>().unwrap();
     let tcp = TcpStream::connect(&addr)?;
 
     let mut connector = Connector::new()
@@ -194,18 +179,56 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
         .check_certificate(false)
         .blank_creds(true)
         .credentials("".to_string(), "".to_string(), "".to_string());
-    let mut client = connector.connect(tcp)?;
+    let client = connector.connect(tcp)?;
 
     let mut rdp_image: Image = Default::default();
+    {
+        // Spawn a thread to listen for bitmap events
+        let (bmp_sender, bmp_receiver): (Sender<BitmapChunk>, Receiver<_>) =
+            mpsc::channel();
+        let _bmp_thread_handle = thread::spawn(move || {
+            bmp_thread(client, bmp_sender);
+        });
 
-    let mut exit_count = 0_usize;
-    //while exit_count < 230 {
-    // A 320-chunk image might need several frames' worth of loops.
-    // TODO implement a timeout, probably via tokio later?
-    // TODO work out why the captured image sometimes is missing the bottom
-    // right corner (all black) and sometimes the top section is overwritten
-    // with an orangey-brown colour
-    while !rdp_image.is_complete() && exit_count < 800 {
+        let timeout = Duration::from_secs(2);
+        loop {
+            match bmp_receiver.recv_timeout(timeout) {
+                Err(_) => {
+                    warn!("Timeout reached");
+                    break;
+                }
+                Ok(chunk) => {
+                    if rdp_image.add_chunk(&chunk).is_err() {
+                        warn!("Attempted to add invalid chunk");
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    match rdp_image.buffer {
+        Some(di) => {
+            info!(
+                "Received image in {} chunks",
+                rdp_image.filled_progress.iter().count()
+            );
+            let filename = target_to_filename(&target);
+            let filename = format!("{}.png", filename);
+            let filepath = output_dir.join(filename);
+            info!("Saving image as {}", filepath.display());
+            di.save(filepath)?;
+        }
+        _ => unimplemented!(),
+    }
+
+    Ok(())
+}
+
+fn bmp_thread<T: Read + Write>(
+    mut client: RdpClient<T>,
+    sender: Sender<BitmapChunk>,
+) {
+    loop {
         match client.read(|rdp_event| match rdp_event {
             RdpEvent::Bitmap(bitmap) => {
                 // numbers all come in as u16
@@ -241,24 +264,7 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
                     chunk.data.len(),
                 );
 
-                // If the chunk is destined for (0, 0) then determine
-                // whether the image looks "complete" before accepting.
-                // This ensures that the image is vaguely synchronised
-                if (chunk.left, chunk.top) == (0, 0) {
-                    trace!("Chunk is destined for (0, 0)");
-                    if rdp_image.is_complete() {
-                        debug!("Image looks complete, stopping the receiver");
-                    }
-                }
-                if !rdp_image.is_complete() {
-                    if rdp_image.add_chunk(&chunk).is_err() {
-                        warn!("Attempted to add invalid chunk");
-                    }
-                } else {
-                    trace!("Image complete, ignoring chunk");
-                }
-                exit_count += 1;
-                trace!("exit count is {}", exit_count);
+                sender.send(chunk).unwrap();
             }
             RdpEvent::Pointer(_) => info!("Pointer event!"),
             RdpEvent::Key(_) => info!("Key event!"),
@@ -266,40 +272,10 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
             Ok(_) => (),
             Err(e) => {
                 error!("{:?}", e);
-                exit_count = 999;
+                break;
             }
         }
-
-        // send a mouse event
-        client
-            .write(RdpEvent::Pointer(PointerEvent {
-                x: exit_count as u16,
-                y: 100_u16,
-                button: PointerButton::None,
-                down: false,
-            }))
-            .unwrap();
     }
-    if exit_count > 300 {
-        info!("Exit count is {}", exit_count);
-    }
-
-    match rdp_image.buffer {
-        Some(di) => {
-            info!(
-                "Received image in {} chunks",
-                rdp_image.filled_progress.iter().count()
-            );
-            let filename = target_to_filename(&target);
-            let filename = format!("{}.png", filename);
-            let filepath = output_dir.join(filename);
-            info!("Saving image as {}", filepath.display());
-            di.save(filepath)?;
-        }
-        _ => unimplemented!(),
-    }
-
-    Ok(())
 }
 
 pub fn capture(

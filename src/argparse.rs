@@ -75,8 +75,12 @@ pub struct Opts {
     )]
     pub mode: Mode,
 
-    #[clap(long, default_value = "10")]
-    pub timeout: usize,
+    #[clap(
+        long,
+        default_value = "10",
+        about = "How long after last bitmap to wait before saving image"
+    )]
+    pub rdp_timeout: usize,
 
     #[clap(
         long,

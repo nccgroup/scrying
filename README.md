@@ -5,7 +5,6 @@ This tool is still a work-in-progress and should be mostly usable but is not yet
 Please file any bugs or feature requests as [GitHub issues](https://github.com/nccgroup/scamper/issues)
 
 ## Caveats
-* [RDP screenshotting is unreliable](https://github.com/nccgroup/scamper/issues/2)
 * Web screenshotting relies on Chromium or Google Chrome being installed
 * VNC has not been implemented
 

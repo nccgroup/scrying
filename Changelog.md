@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+* Fixed bug where RDP images were not received properly. [nccgroup/scamper#2](https://github.com/nccgroup/scamper/issues/2)
 
 ### Security
 
