@@ -787,8 +787,7 @@ dependencies = [
 [[package]]
 name = "nmap_xml_parser"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ec1c37276deca17bbf138c5d340d7b689913fd175d56f1320ac3c5d7da42220"
+source = "git+https://github.com/sciguy16/nmap_xml_parser?branch=host-missing-starttime#97fd77cf5e5b3bc47d57efa8f524fffc40202c23"
 dependencies = [
  "roxmltree",
  "strum",
