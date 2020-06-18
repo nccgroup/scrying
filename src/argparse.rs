@@ -59,7 +59,7 @@ impl FromStr for Mode {
 }
 
 #[derive(Clap, Debug, Default)]
-#[clap(version = "0.1", author = "David Y. <david.young@nccgroup.com>")]
+#[clap(version = "0.3.0", author = "David Y. <david.young@nccgroup.com>")]
 pub struct Opts {
     #[clap(short, long, about = "Targets file, one per line")]
     pub file: Vec<String>,
