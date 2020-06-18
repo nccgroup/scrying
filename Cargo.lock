@@ -1345,22 +1345,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef703b7cb59335eae2eb93ceb664c0eb7ea6bf567079d843e09420219668e072"
 
 [[package]]
-name = "scamper"
-version = "0.2.0"
-dependencies = [
- "clap",
- "failure",
- "headless_chrome",
- "image",
- "log 0.4.8",
- "nmap_xml_parser",
- "rdp-rs",
- "simplelog",
- "thiserror",
- "url 2.1.1",
-]
-
-[[package]]
 name = "schannel"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1381,6 +1365,22 @@ name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
+
+[[package]]
+name = "scrying"
+version = "0.2.0"
+dependencies = [
+ "clap",
+ "failure",
+ "headless_chrome",
+ "image",
+ "log 0.4.8",
+ "nmap_xml_parser",
+ "rdp-rs",
+ "simplelog",
+ "thiserror",
+ "url 2.1.1",
+]
 
 [[package]]
 name = "security-framework"

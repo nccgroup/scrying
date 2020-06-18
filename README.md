@@ -1,8 +1,8 @@
-# NCC Group Scamper
+# NCC Group Scrying
 A new tool for collecting RDP, web and VNC screenshots all in one place
 
 This tool is still a work-in-progress and should be mostly usable but is not yet complete.
-Please file any bugs or feature requests as [GitHub issues](https://github.com/nccgroup/scamper/issues)
+Please file any bugs or feature requests as [GitHub issues](https://github.com/nccgroup/scrying/issues)
 
 ## Caveats
 * Web screenshotting relies on Chromium or Google Chrome being installed
@@ -15,29 +15,29 @@ Nessus still works, but it's a pain to get the images out and they're not includ
 I thought this was a good opportunity to write a fresh tool that's more powerful than those that came before. Check out the feature list!
 
 ## Installation
-For web screenshotting, scamper currently depends on there being an installation of Chromium or Google Chrome. Install with `pacman -S chromium` or the equivalent for your OS.
+For web screenshotting, scrying currently depends on there being an installation of Chromium or Google Chrome. Install with `pacman -S chromium` or the equivalent for your OS.
 
-Download the latest release from [the releases tab](https://github.com/nccgroup/scamper/releases). There's a Debian package available for distros that use them (install with `sudo dpkg -i scamper*.deb`), and zipped binaries for Windows, Mac, and other Linuxes.
+Download the latest release from [the releases tab](https://github.com/nccgroup/scrying/releases). There's a Debian package available for distros that use them (install with `sudo dpkg -i scrying*.deb`), and zipped binaries for Windows, Mac, and other Linuxes.
 
 ## Usage
 Grab a single web page or RDP server:
 ```
-$ scamper -t http://example.com
-$ scamper -t rdp://192.0.2.1
-$ scamper -t 2001:db8::5 --mode web
-$ scamper -t 2001:db8::5 --mode rdp
-$ scamper -t 192.0.2.2
+$ scrying -t http://example.com
+$ scrying -t rdp://192.0.2.1
+$ scrying -t 2001:db8::5 --mode web
+$ scrying -t 2001:db8::5 --mode rdp
+$ scrying -t 192.0.2.2
 ```
 
 Automatically grab screenshots from an nmap output:
 ```
 $ nmap -iL targets.txt -p 80,443,8080,8443,3389 -oX targets.xml
-$ scamper --nmap targets.xml
+$ scrying --nmap targets.xml
 ```
 
 Choose a different output directory for images:
 ```
-$ scamper -t 2001:db8::3 --output-dir /tmp/scamper_outputs
+$ scrying -t 2001:db8::3 --output-dir /tmp/scrying_outputs
 ```
 
 Run from a targets file:
@@ -46,13 +46,13 @@ $ cat targets.txt
 http://example.com
 rdp://192.0.2.1
 2001:db8::5
-$ scamper -f targets.txt
+$ scrying -f targets.txt
 ```
 
 Run through a web proxy:
 ```
-$ scamper -t http://example.com --web-proxy http://127.0.0.1:8080
-$ scamper -t http://example.com --web-proxy socks5://\[::1\]:1080
+$ scrying -t http://example.com --web-proxy http://127.0.0.1:8080
+$ scrying -t http://example.com --web-proxy socks5://\[::1\]:1080
 ```
 
 Image files are saved as PNG in the following directory structure:
@@ -74,9 +74,9 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Parse targets smartly from nmap output
 * ✔️ HTTP - uses Chromium/Chrome in headless mode
 * ✔️ Full cross-platform support - tested on Linux, Windows and Mac
-* RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image, see [#2](https://github.com/nccgroup/scamper/issues/2)
-* VNC - tracking issue [#6](https://github.com/nccgroup/scamper/issues/6)
-* Video streams - tracking issue [#5](https://github.com/nccgroup/scamper/issues/5)
+* RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image, see [#2](https://github.com/nccgroup/scrying/issues/2)
+* VNC - tracking issue [#6](https://github.com/nccgroup/scrying/issues/6)
+* Video streams - tracking issue [#5](https://github.com/nccgroup/scrying/issues/5)
 * option for timestamps in filenames
 * Read targets from a msf services -o csv output
 * Parse targets smartly from nessus output - [WIP](https://github.com/sciguy16/nessus_xml_parser-rs)
@@ -84,12 +84,12 @@ Features with ticks next to them have been implemented, others are TODO
 * Readme has pretty pictures of the output
 * NLA/auth to test credentials
 * Parse Dirble JSON output to grab screenshots of an entire website - waiting for [nccgroup/dirble#51](https://github.com/nccgroup/dirble/issues/51)
-* Produce an HTML report to allow easy browsing of the results - tracking issue [#7](https://github.com/nccgroup/scamper/issues/7)
+* Produce an HTML report to allow easy browsing of the results - tracking issue [#7](https://github.com/nccgroup/scrying/issues/7)
 
 ## Help text
 ```
 USAGE:
-    scamper [FLAGS] [OPTIONS]
+    scrying [FLAGS] [OPTIONS]
 
 FLAGS:
     -h, --help           Prints help information

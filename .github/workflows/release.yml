@@ -72,12 +72,12 @@ jobs:
       - name: Zip binary
         run: |
           # Stick the binary and readme into a directory and zip the directory
-          mkdir scamper
-          cp README.md scamper/
-          cp target/release/scamper scamper/
+          mkdir scrying
+          cp README.md scrying/
+          cp target/release/scrying scrying/
           zip -r \
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip \
-            scamper
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip \
+            scrying
 
       - name: Upload deb
         uses: actions/upload-release-asset@v1
@@ -86,9 +86,9 @@ jobs:
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
           asset_path: |
-            target/debian/scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+            target/debian/scrying_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_name: |
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
 
       - name: Upload zip
@@ -98,9 +98,9 @@ jobs:
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
           asset_path: |
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip
           asset_name: |
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_linux.zip
           asset_content_type: application/zip
 
   build_windows_release:
@@ -124,8 +124,8 @@ jobs:
         shell: powershell
         run: |
           $opts = @{
-            Path = ".\target\release\scamper.exe", ".\README.md"
-            DestinationPath = "scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip"
+            Path = ".\target\release\scrying.exe", ".\README.md"
+            DestinationPath = "scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip"
           }
           Compress-Archive @opts
 
@@ -135,8 +135,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
-          asset_path: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
-          asset_name: scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
+          asset_path: scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
+          asset_name: scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
           asset_content_type: application/zip
 
   build_macos_release:
@@ -159,12 +159,12 @@ jobs:
       - name: Zip binary
         run: |
           # Stick the binary and readme into a directory and zip the directory
-          mkdir scamper
-          cp README.md scamper/
-          cp target/release/scamper scamper/
+          mkdir scrying
+          cp README.md scrying/
+          cp target/release/scrying scrying/
           zip -r \
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
-            scamper
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
+            scrying
 
       - name: Upload zip
         uses: actions/upload-release-asset@v1
@@ -173,7 +173,7 @@ jobs:
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
           asset_path: |
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
           asset_name: |
-            scamper_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
           asset_content_type: application/zip

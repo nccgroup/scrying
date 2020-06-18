@@ -1,5 +1,5 @@
 [package]
-name = "scamper"
+name = "scrying"
 version = "0.2.0"
 authors = ["David Young <david.young@nccgroup.com>"]
 edition = "2018"
@@ -31,5 +31,5 @@ A new tool for collecting RDP, web and VNC screenshots all in one place\
 section = "net"
 priority = "optional"
 assets = [
-	["target/release/scamper", "usr/bin/", "755"]
+	["target/release/scrying", "usr/bin/", "755"]
 ]

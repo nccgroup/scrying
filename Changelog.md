@@ -17,12 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [v0.3.0] - 2020-06-17
+### Changed
+* Changed project name to Scrying
+
 ## [v0.2.0] - 2020-06-17
 ### Added
 * Implemented proxy support for web requests
 
 ### Fixed
-* Fixed bug where RDP images were not received properly. [#2](https://github.com/nccgroup/scamper/issues/2)
+* Fixed bug where RDP images were not received properly. [#2](https://github.com/nccgroup/scrying/issues/2)
 
 ## [v0.1.0] - 2020-06-16
 ### Added
