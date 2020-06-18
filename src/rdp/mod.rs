@@ -25,7 +25,7 @@ use image::{DynamicImage, ImageBuffer, Rgba};
 use rdp::core::client::Connector;
 use rdp::core::client::RdpClient;
 use rdp::core::event::RdpEvent;
-use std::collections::HashMap;
+
 use std::io::Read;
 use std::io::Write;
 use std::net::TcpStream;
@@ -53,31 +53,36 @@ struct BitmapChunk {
     data: Vec<u8>,
 }
 
-#[allow(dead_code)]
-enum ColourMode {
-    Rgb,
-    Rgba,
-    Bgr,
-    Bgra,
-    Luma,
-    LumaA,
+enum ImageMode {
+    //HighColor16(DynamicImage),
+    Rgba32(DynamicImage),
+}
+
+impl ImageMode {
+    fn extract(self) -> DynamicImage {
+        use ImageMode::*;
+        match self {
+            //HighColor16(di) => di,
+            Rgba32(di) => di,
+        }
+    }
 }
 
 #[derive(Default)]
 struct Image {
-    buffer: Option<DynamicImage>,
-    colour: Option<ColourMode>,
+    image: Option<ImageMode>,
+    //colour: Option<ColourMode>,
     component_width: Option<usize>,
     width: Option<u32>,
     height: Option<u32>,
-    filled_progress: HashMap<(u32, u32), u32>,
 }
 
 impl Image {
     fn add_chunk(&mut self, chunk: &BitmapChunk) -> Result<(), ()> {
+        use ImageMode::*;
         //TODO return sensible errors when things are inconsistent
 
-        if self.buffer.is_none() {
+        if self.image.is_none() {
             // Image type has not been determined yet
             self.initialise_buffer(chunk)?;
         }
@@ -90,35 +95,39 @@ impl Image {
             return Err(());
         }
 
-        // Initialise an accumulator for calculating the average pixel value
-        // 64x64 chunk with 16-bit RGB values (ignoring A) fits inside a u32:
-        // 64*64*3*2*255 = 6266880 << 2^32 = 4294967296
-        let mut pixval_acc: u32 = 0;
-
         let mut x: u32 = chunk.left;
         let mut y: u32 = chunk.top;
+
+        // the enumerate is sometimes running more times that fits into
+        // the height of the image
         for (idx, pixel) in
             chunk.data.chunks(self.component_width.unwrap()).enumerate()
         {
             trace!("idx: {}, pixel: {:?}, at ({}, {})", idx, pixel, x, y);
 
-            match &mut self.buffer {
-                Some(DynamicImage::ImageRgba8(img)) => {
+            if y > chunk.bottom {
+                warn!("Pixel out of bounds!");
+                break;
+            }
+
+            match &mut self.image {
+                Some(Rgba32(DynamicImage::ImageRgba8(img))) => {
                     //let x: usize = img;
                     img.put_pixel(
                         x,
                         y,
                         Rgba([
-                            pixel[0], pixel[1], pixel[2],
+                            pixel[2], pixel[1], pixel[0],
                             0xff,
                             //TODO: alpha pixel[3],
                             // Sometimes pixel[3] is correct, sometimes
                             // 0xff - pixel[3] is correct.
                         ]),
                     );
-                    pixval_acc +=
-                        pixel[0] as u32 + pixel[1] as u32 + pixel[2] as u32;
                 }
+                /*Some(HighColor16(DynamicImage::ImageRgb8(img))) => {
+                    img.put_pixel(x, y, Rgb([pixel[0], pixel[1], 0]))
+                }*/
                 _ => unimplemented!(),
             }
 
@@ -131,30 +140,52 @@ impl Image {
             }
         }
 
-        // Put average pixel value into hashmap
-        let chunk_width = chunk.right - chunk.left;
-        let chunk_height = chunk.bottom - chunk.top;
-        let avg = pixval_acc / (chunk_width * chunk_height);
-        debug!("avg: {}", avg);
-        self.filled_progress.insert((chunk.top, chunk.left), avg);
-
         Ok(())
     }
 
-    fn initialise_buffer(&mut self, _chunk: &BitmapChunk) -> Result<(), ()> {
+    fn initialise_buffer(&mut self, chunk: &BitmapChunk) -> Result<(), ()> {
+        use ImageMode::*;
+        println!("BITS PER PIXEL: {}", chunk.bpp);
         //TODO get these values properly
         // IMAGE_WIDTH and IMAGE_HEIGHT are u16
-        self.width = Some(IMAGE_WIDTH as u32);
-        self.height = Some(IMAGE_HEIGHT as u32);
-        self.colour = Some(ColourMode::Rgba);
-        self.component_width = Some(4);
-        self.buffer = Some(DynamicImage::ImageRgba8(ImageBuffer::<
-            Rgba<u8>,
-            Vec<u8>,
-        >::new(
-            IMAGE_WIDTH as u32,
-            IMAGE_HEIGHT as u32,
-        )));
+        let width = IMAGE_WIDTH as u32;
+        let height = IMAGE_HEIGHT as u32;
+
+        let pixel_size = 4; //chunk.data.len() as u32
+                            // / ((chunk.right - chunk.left) * (chunk.bottom - chunk.top));
+        println!("PIXEL SIZE {}", pixel_size);
+
+        // Have to do a let binding here and then transfer to the self.*
+        // variables pending https://github.com/rust-lang/rfcs/pull/2909
+        let (component_width, image) = match pixel_size {
+            /*2 => {
+                debug!("Detected HighColor16");
+                (
+                    // 16-bit RGB using 5 bits per colour; store as 8 bit colour
+                    Some(4),
+                    Some(HighColor16(DynamicImage::ImageRgb8(
+                        ImageBuffer::<Rgb<u8>, Vec<u8>>::new(width, height),
+                    ))),
+                )
+            }*/
+            4 => {
+                debug!("Detected RGBA-32");
+                (
+                    Some(4),
+                    Some(Rgba32(DynamicImage::ImageRgba8(ImageBuffer::<
+                        Rgba<u8>,
+                        Vec<u8>,
+                    >::new(
+                        width, height
+                    )))),
+                )
+            }
+            _ => unimplemented!(),
+        };
+        self.component_width = component_width;
+        self.image = image;
+        self.width = Some(width);
+        self.height = Some(height);
 
         Ok(())
     }
@@ -207,17 +238,14 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
             }
         }
     }
-    match rdp_image.buffer {
+    match rdp_image.image {
         Some(di) => {
-            info!(
-                "Received image in {} chunks",
-                rdp_image.filled_progress.iter().count()
-            );
+            info!("Successfully received image");
             let filename = target_to_filename(&target);
             let filename = format!("{}.png", filename);
             let filepath = output_dir.join(filename);
             info!("Saving image as {}", filepath.display());
-            di.save(filepath)?;
+            di.extract().save(filepath)?;
         }
         _ => unimplemented!(),
     }
