@@ -26,7 +26,7 @@ jobs:
           # VERSION_NUM is the version but without the v on the front
           VERSION_NUM=${VERSION:1}
           # Grab the current release section from the changelog
-          BODY=$(sed -n "/$VERSION/,/^## /p" Changelog.md)
+          BODY=$(sed -n "/$VERSION/,/^## /p" Changelog.md | head -n-1)
           # URL-encode percent, LF, CR
           BODY="${BODY//'%'/'%25'}"
           BODY="${BODY//$'\n'/'%0A'}"
