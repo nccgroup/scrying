@@ -48,7 +48,7 @@ impl AsReportMessage for WebOutput {
 
 pub fn capture(
     target: &Target,
-    output_dir: &Path,
+    output_dir: &str,
     tab: &Tab,
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
@@ -57,7 +57,7 @@ pub fn capture(
     let filename = format!("{}.png", target_to_filename(&target));
 
     let relative_filepath = Path::new("web").join(&filename);
-    let output_file = output_dir.join(&filename);
+    let output_file = Path::new(output_dir).join(&relative_filepath);
     info!("Saving image as {}", output_file.display());
     if let Target::Url(target) = target {
         tab.navigate_to(target.as_str())?;

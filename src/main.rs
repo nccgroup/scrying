@@ -20,14 +20,7 @@
 use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
 use error::Error;
-use std::collections::HashMap;
-use std::ffi::OsStr;
-use std::fs::create_dir_all;
-use std::path::Path;
-use std::path::PathBuf;
-use std::sync::mpsc;
-use std::thread;
-//use argparse::Mode;
+use headless_chrome::{Browser, LaunchOptionsBuilder};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use parsing::{generate_target_lists, InputLists};
@@ -35,10 +28,14 @@ use simplelog::{
     CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
 };
+use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::fs::create_dir_all;
 use std::fs::File;
+use std::path::Path;
+use std::sync::mpsc;
 use std::sync::Arc;
-
-use headless_chrome::{Browser, LaunchOptionsBuilder};
+use std::thread;
 
 mod argparse;
 mod error;
@@ -139,12 +136,7 @@ fn main() {
         let report_tx_clone = report_tx.clone();
         Some(thread::spawn(move || {
             debug!("Starting RDP worker threads");
-            rdp_worker(
-                targets_clone,
-                rdp_output_dir,
-                opts_clone,
-                report_tx_clone,
-            )
+            rdp_worker(targets_clone, opts_clone, report_tx_clone)
         }))
     } else {
         None
@@ -157,13 +149,7 @@ fn main() {
         let report_tx_clone = report_tx.clone();
         Some(thread::spawn(move || {
             debug!("Starting Web worker threads");
-            web_worker(
-                targets_clone,
-                &web_output_dir,
-                opts_clone,
-                report_tx_clone,
-            )
-            .unwrap()
+            web_worker(targets_clone, opts_clone, report_tx_clone).unwrap()
         }))
     } else {
         None
@@ -182,11 +168,9 @@ fn main() {
 
 fn rdp_worker(
     targets: Arc<InputLists>,
-    output_dir: PathBuf,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
 ) -> Result<(), ()> {
-    let output_dir = Arc::new(output_dir);
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
     let mut num_workers: usize = 0;
@@ -213,7 +197,7 @@ fn rdp_worker(
             if let Some(target) = targets_iter.next() {
                 let target = target.clone();
                 info!("Adding worker for {:?}", target);
-                let output_dir_clone = output_dir.clone();
+                let output_dir_clone = opts.output_dir.clone();
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
                 let handle = thread::spawn(move || {
@@ -243,7 +227,6 @@ fn rdp_worker(
 
 fn web_worker(
     targets: Arc<InputLists>,
-    output_dir: &Path,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -262,7 +245,8 @@ fn web_worker(
     let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
 
     for target in &targets.web_targets {
-        if let Err(e) = web::capture(target, output_dir, &tab, &report_tx) {
+        if let Err(e) = web::capture(target, &opts.output_dir, &tab, &report_tx)
+        {
             match e {
                 Error::IoError(e) => {
                     // Should probably abort on an IO error

@@ -23,10 +23,11 @@ use crate::reporting::{AsReportMessage, ReportMessage};
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
 use image::{DynamicImage, ImageBuffer, Rgba};
+#[allow(unused)]
+use log::{debug, error, info, trace, warn};
 use rdp::core::client::Connector;
 use rdp::core::client::RdpClient;
 use rdp::core::event::RdpEvent;
-
 use std::io::Read;
 use std::io::Write;
 use std::net::TcpStream;
@@ -35,9 +36,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
 use std::thread;
 use std::time::Duration;
-
-#[allow(unused)]
-use log::{debug, error, info, trace, warn};
 
 //TODO maybe make this configurable
 const IMAGE_WIDTH: u16 = 1280;
@@ -212,7 +210,7 @@ impl Image {
 
 fn capture_worker(
     target: &Target,
-    output_dir: &Path,
+    output_dir: &str,
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
     info!("Connecting to {:?}", target);
@@ -266,7 +264,7 @@ fn capture_worker(
             info!("Successfully received image");
             let filename = format!("{}.png", target_to_filename(&target));
             let relative_filepath = Path::new("rdp").join(&filename);
-            let filepath = output_dir.join(&filename);
+            let filepath = Path::new(output_dir).join(&relative_filepath);
             info!("Saving image as {}", filepath.display());
             di.extract().save(&filepath)?;
             let rdp_message = RdpOutput {
@@ -344,7 +342,7 @@ fn bmp_thread<T: Read + Write>(
 
 pub fn capture(
     target: &Target,
-    output_dir: &Path,
+    output_dir: &str,
     tx: mpsc::Sender<ThreadStatus>,
     report_tx: &mpsc::Sender<ReportMessage>,
 ) {
