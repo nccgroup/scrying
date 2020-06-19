@@ -19,6 +19,7 @@
 
 use crate::error::Error;
 use crate::parsing::Target;
+use crate::reporting::{AsReportMessage, ReportMessage};
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
 use image::{DynamicImage, ImageBuffer, Rgba};
@@ -43,7 +44,16 @@ const IMAGE_WIDTH: u16 = 1280;
 const IMAGE_HEIGHT: u16 = 1024;
 
 #[derive(Debug)]
-pub struct RdpOutput;
+pub struct RdpOutput {
+    target: String,
+    file: String,
+}
+
+impl AsReportMessage for RdpOutput {
+    fn as_report_message(self) -> ReportMessage {
+        ReportMessage::RdpOutput(self)
+    }
+}
 
 struct BitmapChunk {
     width: u32,
@@ -194,7 +204,11 @@ impl Image {
     }
 }
 
-fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
+fn capture_worker(
+    target: &Target,
+    output_dir: &Path,
+    report_tx: &mpsc::Sender<ReportMessage>,
+) -> Result<(), Error> {
     info!("Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
@@ -248,7 +262,13 @@ fn capture_worker(target: &Target, output_dir: &Path) -> Result<(), Error> {
             let filename = format!("{}.png", filename);
             let filepath = output_dir.join(filename);
             info!("Saving image as {}", filepath.display());
-            di.extract().save(filepath)?;
+            di.extract().save(&filepath)?;
+            let rdp_message = RdpOutput {
+                target: target.to_string(),
+                file: filepath.display().to_string(),
+            }
+            .as_report_message();
+            report_tx.send(rdp_message)?;
         }
         _ => unimplemented!(),
     }
@@ -320,8 +340,9 @@ pub fn capture(
     target: &Target,
     output_dir: &Path,
     tx: mpsc::Sender<ThreadStatus>,
+    report_tx: &mpsc::Sender<ReportMessage>,
 ) {
-    if let Err(e) = capture_worker(target, output_dir) {
+    if let Err(e) = capture_worker(target, output_dir, report_tx) {
         warn!("error: {}", e);
     }
 

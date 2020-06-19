@@ -215,8 +215,14 @@ fn rdp_worker(
                 info!("Adding worker for {:?}", target);
                 let output_dir_clone = output_dir.clone();
                 let tx = thread_status_tx.clone();
+                let report_tx_clone = report_tx.clone();
                 let handle = thread::spawn(move || {
-                    rdp::capture(&target, &output_dir_clone, tx)
+                    rdp::capture(
+                        &target,
+                        &output_dir_clone,
+                        tx,
+                        &report_tx_clone,
+                    )
                 });
 
                 workers.push(handle);
