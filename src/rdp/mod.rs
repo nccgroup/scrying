@@ -42,6 +42,9 @@ use log::{debug, error, info, trace, warn};
 const IMAGE_WIDTH: u16 = 1280;
 const IMAGE_HEIGHT: u16 = 1024;
 
+#[derive(Debug)]
+pub struct RdpOutput;
+
 struct BitmapChunk {
     width: u32,
     height: u32,

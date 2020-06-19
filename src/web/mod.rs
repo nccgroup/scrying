@@ -28,6 +28,9 @@ use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
 
 use std::{fs::File, io::Write};
 
+#[derive(Debug)]
+pub struct WebOutput;
+
 pub fn capture(
     target: &Target,
     output_dir: &Path,

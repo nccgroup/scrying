@@ -18,6 +18,7 @@
 */
 
 use crate::argparse::Opts;
+use crate::reporting::ReportMessage;
 use error::Error;
 use std::collections::HashMap;
 use std::ffi::OsStr;
@@ -42,6 +43,7 @@ mod argparse;
 mod error;
 mod parsing;
 mod rdp;
+mod reporting;
 mod util;
 mod web;
 
@@ -118,13 +120,30 @@ fn main() {
         });
     }
 
+    // Start report collating thread
+    let (report_tx, report_rx): (
+        mpsc::Sender<ReportMessage>,
+        mpsc::Receiver<_>,
+    ) = mpsc::channel();
+    let opts_clone = opts.clone();
+    let reporting_handle = thread::spawn(move || {
+        debug!("Starting report thread");
+        reporting::reporting_thread(report_rx, opts_clone)
+    });
+
     // Spawn threads to iterate over the targets
     let rdp_handle = if !targets.rdp_targets.is_empty() {
         let targets_clone = targets.clone();
         let opts_clone = opts.clone();
+        let report_tx_clone = report_tx.clone();
         Some(thread::spawn(move || {
             debug!("Starting RDP worker threads");
-            rdp_worker(targets_clone, rdp_output_dir, opts_clone)
+            rdp_worker(
+                targets_clone,
+                rdp_output_dir,
+                opts_clone,
+                report_tx_clone,
+            )
         }))
     } else {
         None
@@ -134,9 +153,16 @@ fn main() {
         // clone here will be more useful when there are more target types
         let targets_clone = targets; //.clone();
         let opts_clone = opts; //.clone();
+        let report_tx_clone = report_tx.clone();
         Some(thread::spawn(move || {
             debug!("Starting Web worker threads");
-            web_worker(targets_clone, &web_output_dir, opts_clone).unwrap()
+            web_worker(
+                targets_clone,
+                &web_output_dir,
+                opts_clone,
+                report_tx_clone,
+            )
+            .unwrap()
         }))
     } else {
         None
@@ -149,12 +175,15 @@ fn main() {
     if let Some(h) = web_handle {
         h.join().unwrap();
     }
+    report_tx.send(ReportMessage::GenerateReport);
+    reporting_handle.join().unwrap().unwrap();
 }
 
 fn rdp_worker(
     targets: Arc<InputLists>,
     output_dir: &'static Path,
     opts: Arc<Opts>,
+    report_tx: mpsc::Sender<ReportMessage>,
 ) -> Result<(), ()> {
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
@@ -207,6 +236,7 @@ fn web_worker(
     targets: Arc<InputLists>,
     output_dir: &Path,
     opts: Arc<Opts>,
+    report_tx: mpsc::Sender<ReportMessage>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut chrome_env = HashMap::new();
     if let Some(p) = &opts.web_proxy {
