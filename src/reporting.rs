@@ -67,7 +67,7 @@ pub fn reporting_thread(
     let report_file = Path::new(&opts.output_dir).join("report.html");
 
     let report_template = ReportTemplate {
-        targets: targets,
+        targets,
         rdp_outputs,
         web_outputs,
     };
