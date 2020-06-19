@@ -30,7 +30,7 @@ use std::io::{self, prelude::*, BufReader};
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use url::Url;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Target {
     Address(SocketAddr),
     //  Hostname(String),
@@ -39,7 +39,7 @@ pub enum Target {
 
 // InputLists moved above the impl on Target because the impl is
 // pretty long
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, Eq, PartialEq, PartialOrd)]
 pub struct InputLists {
     pub rdp_targets: Vec<Target>,
     pub web_targets: Vec<Target>,
@@ -49,6 +49,25 @@ impl InputLists {
     fn append(&mut self, list: &mut Self) {
         self.rdp_targets.append(&mut list.rdp_targets);
         self.web_targets.append(&mut list.web_targets);
+    }
+
+    fn dedup(&mut self) {
+        self.rdp_targets.sort();
+        self.rdp_targets.dedup();
+        self.web_targets.sort();
+        self.web_targets.dedup();
+    }
+}
+
+impl PartialOrd for Target {
+    fn partial_cmp(&self, rhs: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.to_string().cmp(&rhs.to_string()))
+    }
+}
+
+impl Ord for Target {
+    fn cmp(&self, rhs: &Self) -> std::cmp::Ordering {
+        self.to_string().cmp(&rhs.to_string())
     }
 }
 
@@ -442,6 +461,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         }
     }
 
+    input_lists.dedup();
     input_lists
 }
 

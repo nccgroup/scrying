@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * HTML report output ([#7](https://github.com/nccgroup/scrying/issues/7))
 
 ### Changed
+* Targets are deduplicated across all input types before processing [#18](https://github.com/nccgroup/scrying/issues/18)
 
 ### Deprecated
 
