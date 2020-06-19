@@ -6,23 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-* HTML report output [#7](https://github.com/nccgroup/scrying/issues/7)
-* SOCKSv5 proxy support for RDP conenctions [#11](https://github.com/nccgroup/scrying/issues/11)
 
 ### Changed
-* Targets are deduplicated across all input types before processing [#18](https://github.com/nccgroup/scrying/issues/18)
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
-* Fixed inverted colours on RDP images
-* Fixed bug where the output directory argument was ignored [#17](https://github.com/nccgroup/scrying/issues/17)
 
 ### Security
 
-## [v0.3.0] - 2020-06-17
+## [v0.4.0] - 2020-06-19
+### Added
+* HTML report output [#7](https://github.com/nccgroup/scrying/issues/7)
+* SOCKSv5 proxy support for RDP conenctions [#11](https://github.com/nccgroup/scrying/issues/11)
+
+### Changed
+* Targets are deduplicated across all input types before processing [#18](https://github.com/nccgroup/scrying/issues/18)
+
+### Fixed
+* Fixed inverted colours on RDP images
+* Fixed bug where the output directory argument was ignored [#17](https://github.com/nccgroup/scrying/issues/17)
+
+## [v0.3.0] - 2020-06-18
 ### Changed
 * Changed project name to Scrying
 
@@ -38,4 +45,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Implemented RDP screenshotting
 * Implemented web screenshotting via headless Chrome
 * Parse targets from Nmap XML files
-
