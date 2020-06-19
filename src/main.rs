@@ -17,6 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use std::path::PathBuf;
 use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
 use error::Error;
@@ -106,16 +107,16 @@ fn main() {
     }
 
     // Create output directories if they do not exist
-
-    let rdp_output_dir = Path::new("./output/rdp");
+    let output_base = Path::new(&opts.output_dir);
+    let rdp_output_dir = output_base.join("rdp");
     if !targets.rdp_targets.is_empty() && !rdp_output_dir.is_dir() {
-        create_dir_all(rdp_output_dir).unwrap_or_else(|_| {
+        create_dir_all(&rdp_output_dir).unwrap_or_else(|_| {
             panic!("Error creating directory {}", rdp_output_dir.display())
         });
     }
-    let web_output_dir = Path::new("./output/web");
+    let web_output_dir = output_base.join("web");
     if !targets.web_targets.is_empty() && !web_output_dir.is_dir() {
-        create_dir_all(web_output_dir).unwrap_or_else(|_| {
+        create_dir_all(&web_output_dir).unwrap_or_else(|_| {
             panic!("Error creating directory {}", web_output_dir.display())
         });
     }
@@ -175,16 +176,17 @@ fn main() {
     if let Some(h) = web_handle {
         h.join().unwrap();
     }
-    report_tx.send(ReportMessage::GenerateReport);
+    report_tx.send(ReportMessage::GenerateReport).unwrap();
     reporting_handle.join().unwrap().unwrap();
 }
 
 fn rdp_worker(
     targets: Arc<InputLists>,
-    output_dir: &'static Path,
+    output_dir: PathBuf,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
 ) -> Result<(), ()> {
+    let output_dir = Arc::new(output_dir);
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
     let mut num_workers: usize = 0;
@@ -211,9 +213,10 @@ fn rdp_worker(
             if let Some(target) = targets_iter.next() {
                 let target = target.clone();
                 info!("Adding worker for {:?}", target);
+                let output_dir_clone = output_dir.clone();
                 let tx = thread_status_tx.clone();
                 let handle = thread::spawn(move || {
-                    rdp::capture(&target, &output_dir, tx)
+                    rdp::capture(&target, &output_dir_clone, tx)
                 });
 
                 workers.push(handle);

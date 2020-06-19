@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fixed inverted colours on RDP images
+* Fixed bug where the output directory argument was ignored [17](https://github.com/nccgroup/scrying/issues/17)
 
 ### Security
 
