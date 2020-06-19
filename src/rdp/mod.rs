@@ -53,6 +53,12 @@ impl AsReportMessage for RdpOutput {
     fn as_report_message(self) -> ReportMessage {
         ReportMessage::RdpOutput(self)
     }
+    fn target(&self) -> &str {
+        &self.target
+    }
+    fn file(&self) -> &str {
+        &self.file
+    }
 }
 
 struct BitmapChunk {
@@ -258,14 +264,14 @@ fn capture_worker(
     match rdp_image.image {
         Some(di) => {
             info!("Successfully received image");
-            let filename = target_to_filename(&target);
-            let filename = format!("{}.png", filename);
-            let filepath = output_dir.join(filename);
+            let filename = format!("{}.png", target_to_filename(&target));
+            let relative_filepath = Path::new("rdp").join(&filename);
+            let filepath = output_dir.join(&filename);
             info!("Saving image as {}", filepath.display());
             di.extract().save(&filepath)?;
             let rdp_message = RdpOutput {
                 target: target.to_string(),
-                file: filepath.display().to_string(),
+                file: relative_filepath.display().to_string(),
             }
             .as_report_message();
             report_tx.send(rdp_message)?;

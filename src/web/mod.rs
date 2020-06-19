@@ -38,6 +38,12 @@ impl AsReportMessage for WebOutput {
     fn as_report_message(self) -> ReportMessage {
         ReportMessage::WebOutput(self)
     }
+    fn target(&self) -> &str {
+        &self.url
+    }
+    fn file(&self) -> &str {
+        &self.file
+    }
 }
 
 pub fn capture(
@@ -48,10 +54,11 @@ pub fn capture(
 ) -> Result<(), Error> {
     info!("Processing {}", target);
 
-    let filename = target_to_filename(&target);
-    let filename = format!("{}.png", filename);
-    let output_file = output_dir.join(filename).display().to_string();
-    info!("Saving image as {}", output_file);
+    let filename = format!("{}.png", target_to_filename(&target));
+
+    let relative_filepath = Path::new("web").join(&filename);
+    let output_file = output_dir.join(&filename);
+    info!("Saving image as {}", output_file.display());
     if let Target::Url(target) = target {
         tab.navigate_to(target.as_str())?;
         tab.wait_until_navigated()?;
@@ -62,7 +69,7 @@ pub fn capture(
         file.write_all(&png_data)?;
         let report_data = WebOutput {
             url: target.as_str().to_string(),
-            file: output_file,
+            file: relative_filepath.display().to_string(),
         }
         .as_report_message();
         report_tx.send(report_data)?;

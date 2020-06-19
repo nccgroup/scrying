@@ -30,6 +30,9 @@ pub enum Error {
 
     #[error("MPSC error: {0}")]
     MpscError(String),
+
+    #[error("Template error: {0}")]
+    TemplateError(String),
 }
 
 impl From<failure::Error> for Error {
@@ -59,5 +62,11 @@ impl From<image::error::ImageError> for Error {
 impl<T> From<std::sync::mpsc::SendError<T>> for Error {
     fn from(e: std::sync::mpsc::SendError<T>) -> Self {
         Self::MpscError(e.to_string())
+    }
+}
+
+impl From<askama::shared::Error> for Error {
+    fn from(e: askama::shared::Error) -> Self {
+        Self::TemplateError(e.to_string())
     }
 }

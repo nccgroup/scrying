@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Report for NCC Group Scrying</title>
+	</head>
+	<body>
+		<h1>Report for NCC Group Scrying</h1>
+		<div id="main">
+			<div id="rdp">{% for out in rdp_outputs %}
+				<img src="{{ out.file() }}" />
+			</div>{% endfor %}
+
+			<div id="web">{% for out in web_outputs %}
+				<img src="{{ out.file() }}" />
+			</div>{% endfor %}
+		</div>
+	</body>
+</html>
