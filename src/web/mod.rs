@@ -19,22 +19,32 @@
 
 use crate::error::Error;
 use crate::parsing::Target;
+use crate::reporting::{AsReportMessage, ReportMessage};
 use crate::util::target_to_filename;
+use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::path::Path;
-
-use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
-
+use std::sync::mpsc;
 use std::{fs::File, io::Write};
 
 #[derive(Debug)]
-pub struct WebOutput;
+pub struct WebOutput {
+    url: String,
+    file: String,
+}
+
+impl AsReportMessage for WebOutput {
+    fn as_report_message(self) -> ReportMessage {
+        ReportMessage::WebOutput(self)
+    }
+}
 
 pub fn capture(
     target: &Target,
     output_dir: &Path,
     tab: &Tab,
+    report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
     info!("Processing {}", target);
 
@@ -48,8 +58,14 @@ pub fn capture(
         let png_data = tab
             .capture_screenshot(ScreenshotFormat::PNG, None, true)
             .expect("error making screenshot");
-        let mut file = File::create(output_file)?;
+        let mut file = File::create(&output_file)?;
         file.write_all(&png_data)?;
+        let report_data = WebOutput {
+            url: target.as_str().to_string(),
+            file: output_file,
+        }
+        .as_report_message();
+        report_tx.send(report_data)?;
     }
     Ok(())
 }

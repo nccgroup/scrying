@@ -15,6 +15,10 @@ pub enum ReportMessage {
     GenerateReport,
 }
 
+pub trait AsReportMessage {
+    fn as_report_message(self) -> ReportMessage;
+}
+
 pub fn reporting_thread(
     rx: mpsc::Receiver<ReportMessage>,
     opts: Arc<Opts>,

@@ -27,6 +27,9 @@ pub enum Error {
 
     #[error("RDP error: {0}")]
     RdpError(String),
+
+    #[error("MPSC error: {0}")]
+    MpscError(String),
 }
 
 impl From<failure::Error> for Error {
@@ -50,5 +53,11 @@ impl From<rdp::model::error::Error> for Error {
 impl From<image::error::ImageError> for Error {
     fn from(e: image::error::ImageError) -> Self {
         Self::RdpError(format!("Image error: {}", e.to_string()))
+    }
+}
+
+impl<T> From<std::sync::mpsc::SendError<T>> for Error {
+    fn from(e: std::sync::mpsc::SendError<T>) -> Self {
+        Self::MpscError(e.to_string())
     }
 }

@@ -17,7 +17,6 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use std::path::PathBuf;
 use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
 use error::Error;
@@ -25,6 +24,7 @@ use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::create_dir_all;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
 //use argparse::Mode;
@@ -256,7 +256,7 @@ fn web_worker(
     let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
 
     for target in &targets.web_targets {
-        if let Err(e) = web::capture(target, output_dir, &tab) {
+        if let Err(e) = web::capture(target, output_dir, &tab, &report_tx) {
             match e {
                 Error::IoError(e) => {
                     // Should probably abort on an IO error
@@ -266,7 +266,7 @@ fn web_worker(
                 Error::ChromeError(e) => {
                     warn!("Failed to capture image: {}", e);
                 }
-                Error::RdpError(_) => unreachable!(),
+                _ => unreachable!(),
             }
         }
     }
