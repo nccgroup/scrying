@@ -58,11 +58,14 @@ $ scrying -t http://example.com --web-proxy socks5://\[::1\]:1080
 Image files are saved as PNG in the following directory structure:
 ```
 output
+├── report.html
 ├── rdp
 │   └── 192.0.2.1-3389.png
 └── web
     └── https_example.com.png
 ```
+
+Check out the report at `output/report.html`!
 
 ## Features:
 Features with ticks next to them have been implemented, others are TODO
@@ -74,17 +77,17 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Parse targets smartly from nmap output
 * ✔️ HTTP - uses Chromium/Chrome in headless mode
 * ✔️ Full cross-platform support - tested on Linux, Windows and Mac
-* RDP - mostly working, needs better heuristic for determining when it has received a full login/desktop screen image, see [#2](https://github.com/nccgroup/scrying/issues/2)
+* ✔️ Produces an HTML report to allow easy browsing of the results
+* RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
 * VNC - tracking issue [#6](https://github.com/nccgroup/scrying/issues/6)
 * Video streams - tracking issue [#5](https://github.com/nccgroup/scrying/issues/5)
 * option for timestamps in filenames
 * Read targets from a msf services -o csv output
 * Parse targets smartly from nessus output - [WIP](https://github.com/sciguy16/nessus_xml_parser-rs)
 * OCR on RDP usernames, either live or on a directory of images
-* Readme has pretty pictures of the output
 * NLA/auth to test credentials
 * Parse Dirble JSON output to grab screenshots of an entire website - waiting for [nccgroup/dirble#51](https://github.com/nccgroup/dirble/issues/51)
-* Produce an HTML report to allow easy browsing of the results - tracking issue [#7](https://github.com/nccgroup/scrying/issues/7)
+
 
 ## Help text
 ```
