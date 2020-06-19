@@ -17,6 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::argparse::Opts;
 use crate::error::Error;
 use crate::parsing::Target;
 use crate::reporting::{AsReportMessage, ReportMessage};
@@ -210,7 +211,7 @@ impl Image {
 
 fn capture_worker(
     target: &Target,
-    output_dir: &str,
+    opts: &Opts,
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
     info!("Connecting to {:?}", target);
@@ -264,7 +265,7 @@ fn capture_worker(
             info!("Successfully received image");
             let filename = format!("{}.png", target_to_filename(&target));
             let relative_filepath = Path::new("rdp").join(&filename);
-            let filepath = Path::new(output_dir).join(&relative_filepath);
+            let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
             info!("Saving image as {}", filepath.display());
             di.extract().save(&filepath)?;
             let rdp_message = RdpOutput {
@@ -342,11 +343,11 @@ fn bmp_thread<T: Read + Write>(
 
 pub fn capture(
     target: &Target,
-    output_dir: &str,
+    opts: &Opts,
     tx: mpsc::Sender<ThreadStatus>,
     report_tx: &mpsc::Sender<ReportMessage>,
 ) {
-    if let Err(e) = capture_worker(target, output_dir, report_tx) {
+    if let Err(e) = capture_worker(target, opts, report_tx) {
         warn!("error: {}", e);
     }
 

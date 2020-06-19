@@ -198,13 +198,13 @@ fn rdp_worker(
             if let Some(target) = targets_iter.next() {
                 let target = target.clone();
                 info!("Adding worker for {:?}", target);
-                let output_dir_clone = opts.output_dir.clone();
+                let opts_clone = opts.clone();
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
                 let handle = thread::spawn(move || {
                     rdp::capture(
                         &target,
-                        &output_dir_clone,
+                        &opts_clone,
                         tx,
                         &report_tx_clone,
                     )
