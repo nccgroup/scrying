@@ -202,12 +202,7 @@ fn rdp_worker(
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
                 let handle = thread::spawn(move || {
-                    rdp::capture(
-                        &target,
-                        &opts_clone,
-                        tx,
-                        &report_tx_clone,
-                    )
+                    rdp::capture(&target, &opts_clone, tx, &report_tx_clone)
                 });
 
                 workers.push(handle);

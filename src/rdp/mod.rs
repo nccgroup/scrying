@@ -29,6 +29,7 @@ use log::{debug, error, info, trace, warn};
 use rdp::core::client::Connector;
 use rdp::core::client::RdpClient;
 use rdp::core::event::RdpEvent;
+use socks::Socks5Stream;
 use std::io::Read;
 use std::io::Write;
 use std::net::TcpStream;
@@ -209,6 +210,43 @@ impl Image {
     }
 }
 
+/// Wrapper enum to hold TCP and Socks5 streams. This enum implements
+/// Read and Write transitively
+enum SocketType {
+    Socks5(Socks5Stream),
+    Tcp(TcpStream),
+}
+
+impl Read for SocketType {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
+        use SocketType::*;
+        match self {
+            Socks5(s) => s.read(buf),
+            Tcp(s) => s.read(buf),
+        }
+    }
+}
+
+impl Write for SocketType {
+    fn write(
+        &mut self,
+        buf: &[u8],
+    ) -> std::result::Result<usize, std::io::Error> {
+        use SocketType::*;
+        match self {
+            Socks5(s) => s.write(buf),
+            Tcp(s) => s.write(buf),
+        }
+    }
+    fn flush(&mut self) -> Result<(), std::io::Error> {
+        use SocketType::*;
+        match self {
+            Socks5(s) => s.flush(),
+            Tcp(s) => s.flush(),
+        }
+    }
+}
+
 fn capture_worker(
     target: &Target,
     opts: &Opts,
@@ -225,7 +263,17 @@ fn capture_worker(
         }
     };
 
-    let tcp = TcpStream::connect(&addr)?;
+    // If the proxy configuration is selected then create a Socks5
+    // connection, otherwise create a regular TCP stream. The wrapper
+    // enum is used to get around type errors and the limitation that
+    // trait objects can only have one main trait (i.e. "dyn Read +
+    // Write") is not possible.
+    let stream = if let Some(proxy) = &opts.rdp_proxy {
+        debug!("Connecting to Socks proxy");
+        SocketType::Socks5(Socks5Stream::connect(proxy, *addr)?)
+    } else {
+        SocketType::Tcp(TcpStream::connect(&addr)?)
+    };
 
     let mut connector = Connector::new()
         .screen(IMAGE_WIDTH, IMAGE_HEIGHT)
@@ -233,7 +281,7 @@ fn capture_worker(
         .check_certificate(false)
         .blank_creds(true)
         .credentials("".to_string(), "".to_string(), "".to_string());
-    let client = connector.connect(tcp)?;
+    let client = connector.connect(stream)?;
 
     let mut rdp_image: Image = Default::default();
     {

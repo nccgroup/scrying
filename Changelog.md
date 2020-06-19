@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-* HTML report output ([#7](https://github.com/nccgroup/scrying/issues/7))
+* HTML report output [#7](https://github.com/nccgroup/scrying/issues/7)
+* SOCKSv5 proxy support for RDP conenctions [#11](https://github.com/nccgroup/scrying/issues/11)
 
 ### Changed
 * Targets are deduplicated across all input types before processing [#18](https://github.com/nccgroup/scrying/issues/18)

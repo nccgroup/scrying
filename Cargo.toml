@@ -23,6 +23,7 @@ nmap_xml_parser = { "git" = "https://github.com/sciguy16/nmap_xml_parser", "bran
 headless_chrome = { "git" = "https://github.com/jeprojects/rust-headless-chrome", "rev" = "c4bb66a1" }
 failure = "0.1"
 askama = "0.9"
+socks = "0.3"
 
 [package.metadata.deb]
 depends = "chromium"

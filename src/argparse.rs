@@ -106,6 +106,9 @@ pub struct Opts {
     #[clap(long, about = "Proxy to use for web requests")]
     pub web_proxy: Option<String>,
 
+    #[clap(long, about = "Proxy to use for RDP connections")]
+    pub rdp_proxy: Option<String>,
+
     #[clap(short, long, about = "Suppress most log messages")]
     pub silent: bool,
 
