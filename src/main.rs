@@ -124,9 +124,10 @@ fn main() {
         mpsc::Receiver<_>,
     ) = mpsc::channel();
     let opts_clone = opts.clone();
+    let targets_clone = targets.clone();
     let reporting_handle = thread::spawn(move || {
         debug!("Starting report thread");
-        reporting::reporting_thread(report_rx, opts_clone)
+        reporting::reporting_thread(report_rx, opts_clone, targets_clone)
     });
 
     // Spawn threads to iterate over the targets

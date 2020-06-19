@@ -11,6 +11,7 @@
 				width: 100%;
 				display: block;
 				clear: both;
+				border-top: 1px solid;
 			}
 			.imagebox {
 				width: 300px;
@@ -65,6 +66,29 @@
 
 			<div class="section">
 				<h2 id="summary">Scan summary</h2>
+				{% if !targets.rdp_targets.is_empty() %}
+				<h3>RDP targets:</h3>
+				<ul>{% for t in targets.rdp_targets %}
+					<li>{{ t }}</li>
+					{%endfor %}
+				</ul>
+				{% endif %}
+
+				{% if !rdp_outputs.is_empty() %}
+				<h3>RDP targets with NLA disabled:</h3>
+				<ul>{% for t in rdp_outputs %}
+					<li>{{ t.target() }}</li>
+					{%endfor %}
+				</ul>
+				{% endif %}
+
+				{% if !targets.web_targets.is_empty() %}
+				<h3>Web targets:</h3>
+				<ul>{% for t in targets.web_targets %}
+					<li>{{ t }}</li>
+					{%endfor %}
+				</ul>
+				{% endif %}
 			</div>
 		</div>
 	</body>

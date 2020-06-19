@@ -1,3 +1,5 @@
+use crate::parsing::InputLists;
+
 use crate::argparse::Opts;
 use crate::error::Error;
 use crate::rdp::RdpOutput;
@@ -14,6 +16,7 @@ use log::{debug, error, info, trace, warn};
 #[derive(Template)]
 #[template(path = "report.html")]
 struct ReportTemplate {
+    targets: Arc<InputLists>,
     rdp_outputs: Vec<RdpOutput>,
     web_outputs: Vec<WebOutput>,
 }
@@ -39,6 +42,7 @@ pub trait AsReportMessage {
 pub fn reporting_thread(
     rx: mpsc::Receiver<ReportMessage>,
     opts: Arc<Opts>,
+    targets: Arc<InputLists>,
 ) -> Result<(), Error> {
     // Vecs to collect the output messages in
     let mut rdp_outputs: Vec<RdpOutput> = Vec::new();
@@ -63,6 +67,7 @@ pub fn reporting_thread(
     let report_file = Path::new(&opts.output_dir).join("report.html");
 
     let report_template = ReportTemplate {
+        targets: targets,
         rdp_outputs,
         web_outputs,
     };

@@ -108,3 +108,6 @@ OPTIONS:
         --threads <threads>          Number of worker threads for each target type [default: 3]
         --timeout <timeout>           [default: 10]
 ```
+
+## Sample HTML report
+![Sample report](images/scrying-report.png)
