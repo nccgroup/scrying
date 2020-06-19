@@ -856,10 +856,10 @@ mod test {
                     rdp_targets: Vec::new(),
                     web_targets: vec![
                         Target::Url(
-                            Url::parse("https://[2001:db8::6]").unwrap(),
+                            Url::parse("http://[2001:db8::6]").unwrap(),
                         ),
                         Target::Url(
-                            Url::parse("http://[2001:db8::6]").unwrap(),
+                            Url::parse("https://[2001:db8::6]").unwrap(),
                         ),
                     ],
                 },
@@ -891,10 +891,10 @@ mod test {
                     )],
                     web_targets: vec![
                         Target::Url(
-                            Url::parse("https://[2001:db8::6]:3300").unwrap(),
+                            Url::parse("http://[2001:db8::6]:3300").unwrap(),
                         ),
                         Target::Url(
-                            Url::parse("http://[2001:db8::6]:3300").unwrap(),
+                            Url::parse("https://[2001:db8::6]:3300").unwrap(),
                         ),
                     ],
                 },
@@ -937,15 +937,15 @@ mod test {
                 ],
                 web_targets: vec![
                     Target::Url(
-                        Url::parse("https://192.168.59.128:8000/").unwrap(),
-                    ),
-                    Target::Url(
                         Url::parse("http://192.168.59.128:8000/").unwrap(),
+                    ),
+                    Target::Url(Url::parse("http://192.168.59.146/").unwrap()),
+                    Target::Url(
+                        Url::parse("https://192.168.59.128:8000/").unwrap(),
                     ),
                     Target::Url(
                         Url::parse("https://192.168.59.146:80/").unwrap(),
                     ),
-                    Target::Url(Url::parse("http://192.168.59.146/").unwrap()),
                 ],
             },
         )];
