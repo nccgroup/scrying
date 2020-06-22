@@ -62,8 +62,8 @@ jobs:
     steps:
       - name: Configure VNC
         run: |
-          apt-get update
-          apt-get install -y xvfb x11vnc xterm
+          sudo apt-get update
+          sudo apt-get install -y xvfb x11vnc xterm
           Xvfb -screen 0 800x600x16 -ac &
           x11vnc -localhost -display :0 &
           export DISPLAY=:0
