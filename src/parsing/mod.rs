@@ -722,7 +722,7 @@ mod test {
     use super::*;
     #[test]
     fn parse_target_as_url() {
-        use Mode::{Rdp, Web, Vnc};
+        use Mode::{Rdp, Vnc, Web};
         let test_cases: Vec<(&str, Target, Mode)> = vec![
             (
                 "http://example.com",
@@ -1114,7 +1114,7 @@ mod test {
                         Url::parse("https://192.168.59.146:80/").unwrap(),
                     ),
                 ],
-                    vnc_targets: Vec::new(),
+                vnc_targets: Vec::new(),
             },
         )];
         let mut opts: Opts = Default::default();

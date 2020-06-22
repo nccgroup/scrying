@@ -73,3 +73,9 @@ impl From<askama::shared::Error> for Error {
         Self::TemplateError(e.to_string())
     }
 }
+
+impl From<vnc::Error> for Error {
+    fn from(e: vnc::Error) -> Self {
+        Self::VncError(e.to_string())
+    }
+}

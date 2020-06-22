@@ -1,8 +1,8 @@
-use crate::parsing::InputLists;
-
 use crate::argparse::Opts;
 use crate::error::Error;
+use crate::parsing::InputLists;
 use crate::rdp::RdpOutput;
+use crate::vnc::VncOutput;
 use crate::web::WebOutput;
 use askama::Template;
 use std::fs;
@@ -19,12 +19,14 @@ struct ReportTemplate {
     targets: Arc<InputLists>,
     rdp_outputs: Vec<RdpOutput>,
     web_outputs: Vec<WebOutput>,
+    vnc_outputs: Vec<VncOutput>,
 }
 
 #[derive(Debug)]
 pub enum ReportMessage {
     RdpOutput(RdpOutput),
     WebOutput(WebOutput),
+    VncOutput(VncOutput),
     GenerateReport,
 }
 
@@ -47,6 +49,7 @@ pub fn reporting_thread(
     // Vecs to collect the output messages in
     let mut rdp_outputs: Vec<RdpOutput> = Vec::new();
     let mut web_outputs: Vec<WebOutput> = Vec::new();
+    let mut vnc_outputs: Vec<VncOutput> = Vec::new();
 
     // Main loop listening on the channel
     while let Ok(msg) = rx.recv() {
@@ -56,6 +59,7 @@ pub fn reporting_thread(
             GenerateReport => break,
             RdpOutput(out) => rdp_outputs.push(out),
             WebOutput(out) => web_outputs.push(out),
+            VncOutput(out) => vnc_outputs.push(out),
         }
     }
 
@@ -70,6 +74,7 @@ pub fn reporting_thread(
         targets,
         rdp_outputs,
         web_outputs,
+        vnc_outputs,
     };
     let report = report_template.render()?;
     debug!("Report: {:?}", report);
