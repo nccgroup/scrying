@@ -117,7 +117,7 @@ jobs:
             Protocol = "TCP"
             Action = "Allow"
           }
-          Net-NewFirewallRule @firewallopts
+          New-NetFirewallRule @firewallopts
 
       - name: Start python webserver
         shell: cmd
