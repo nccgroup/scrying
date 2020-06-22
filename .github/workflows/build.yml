@@ -108,7 +108,16 @@ jobs:
           command: test
 
       - name: Start python webserver
+        shell: powershell
         run: |
+          $firewallopts = @{
+            DisplayName = "Permit python webserver"
+            Direction = "Inbound"
+            LocalPort = 8000
+            Protocol = "TCP"
+            Action = "Allow"
+          }
+          Net-NewFirewallRule @firewallopts
           cd test
           python3 -m http.server &
 
