@@ -96,23 +96,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v1
 
-      - name: Enable webserver firewall rule
-        shell: powershell
-        run: |
-          $firewallopts = @{
-            DisplayName = "Permit python webserver"
-            Direction = "Inbound"
-            LocalPort = 8000
-            Protocol = "TCP"
-            Action = "Allow"
-          }
-          New-NetFirewallRule @firewallopts
-
-      - name: Start python webserver
-        run: |
-          cd test
-          python3 -m http.server &
-
       - name: Enable RDP without NLA
         shell: powershell
         run: |
@@ -122,7 +105,6 @@ jobs:
             Value = 0
           }
           Set-ItemProperty @itemprops
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           $itemprops = @{
             Path = 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp'
             name = "UserAuthentication"
@@ -143,6 +125,9 @@ jobs:
 
       - name: Screenshot the web and RDP servers
         run: |
+          cd test
+          python3 -m http.server &
+          cd ..
           cargo run -- -t rdp://localhost -t http://localhost:8000/webpage.html
 
       - name: Upload artifacts
