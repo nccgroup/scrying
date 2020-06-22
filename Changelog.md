@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-
+* Added support for VNC screenshotting [#6](https://github.com/nccgroup/scrying/issues/6)
 ### Changed
 
 ### Deprecated
