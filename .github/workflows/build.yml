@@ -107,7 +107,7 @@ jobs:
         with:
           command: test
 
-      - name: Start python webserver
+      - name: Enable webserver firewall rule
         shell: powershell
         run: |
           $firewallopts = @{
@@ -118,6 +118,10 @@ jobs:
             Action = "Allow"
           }
           Net-NewFirewallRule @firewallopts
+
+      - name: Start python webserver
+        shell: cmd
+        run: |
           cd test
           python3 -m http.server &
 
