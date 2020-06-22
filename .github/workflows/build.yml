@@ -96,12 +96,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v1
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
       - name: Enable webserver firewall rule
         shell: powershell
         run: |
@@ -114,13 +108,7 @@ jobs:
           }
           New-NetFirewallRule @firewallopts
 
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-
       - name: Start python webserver
-        shell: cmd
         run: |
           cd test
           python3 -m http.server &
@@ -141,6 +129,17 @@ jobs:
             Value = 0
           }
           Set-ItemProperty @itemprops
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
 
       - name: Screenshot the web and RDP servers
         run: |
