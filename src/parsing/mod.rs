@@ -43,12 +43,14 @@ pub enum Target {
 pub struct InputLists {
     pub rdp_targets: Vec<Target>,
     pub web_targets: Vec<Target>,
+    pub vnc_targets: Vec<Target>,
 }
 
 impl InputLists {
     fn append(&mut self, list: &mut Self) {
         self.rdp_targets.append(&mut list.rdp_targets);
         self.web_targets.append(&mut list.web_targets);
+        self.vnc_targets.append(&mut list.vnc_targets);
     }
 
     fn dedup(&mut self) {
@@ -56,6 +58,8 @@ impl InputLists {
         self.rdp_targets.dedup();
         self.web_targets.sort();
         self.web_targets.dedup();
+        self.vnc_targets.sort();
+        self.vnc_targets.dedup();
     }
 }
 
@@ -76,7 +80,7 @@ impl Target {
         use url::Host;
         // Parse a &str into a Target using the mode hint to guide output.
         // It doesn't make much sense to use a URL for RDP, etc.
-        use Mode::{Auto, Rdp, Web};
+        use Mode::*;
 
         // "Auto" is not supported here because this function returns a
         // Vec of Targets and cannot tag them as RDP or Web
@@ -122,6 +126,29 @@ impl Target {
                     };
                     return Ok(vec![Target::Address(address)]);
                 }
+                "vnc" => {
+                    //TODO code reuse
+                    trace!("Parsed as VNC url");
+                    if mode != Vnc {
+                        return Err("Non-VNC mode requested for VNC-type URL");
+                    }
+                    let port = u.port().unwrap_or(5900);
+                    let address: SocketAddr = match &u
+                        .host()
+                        .expect("URL expected to have host")
+                    {
+                        Host::Ipv4(a) => {
+                            SocketAddr::from((IpAddr::V4(*a), port))
+                        }
+                        Host::Ipv6(a) => {
+                            SocketAddr::from((IpAddr::V6(*a), port))
+                        }
+                        //TODO work out how to get ? to work here rather
+                        // than unwrap
+                        Host::Domain(d) => domain_to_sockaddr(d, port).unwrap(),
+                    };
+                    return Ok(vec![Target::Address(address)]);
+                }
 
                 _ => return Err("Invalid scheme"),
             }
@@ -132,6 +159,7 @@ impl Target {
             if input.starts_with("rdp://")
                 || input.starts_with("https://")
                 || input.starts_with("http://")
+                || input.starts_with("vnc://")
             {
                 return Err("Parsing error");
             }
@@ -190,6 +218,25 @@ impl Target {
 
                 Ok(targets)
             }
+            Vnc => {
+                // add VNC targets
+                // if no port specified then assume 5900, otherwise take
+                // the provided port
+                //TODO code reuse
+
+                // Try forcing a parse that includes the port
+                if let Ok(addr) = ip_port_to_sockaddr(&input) {
+                    return Ok(vec![Target::Address(addr)]);
+                }
+
+                // If that didn't work then try parsing it as just an address
+                if let Ok(addr) = domain_to_sockaddr(&input, 5900) {
+                    return Ok(vec![Target::Address(addr)]);
+                }
+
+                // If none of these worked then it's probably not salvageable
+                Err("Unable to parse target")
+            }
         }
     }
 }
@@ -226,6 +273,14 @@ impl Display for InputLists {
             write!(fmt, " None")?;
         }
         for t in &self.web_targets {
+            write!(fmt, "\n    {}", t)?;
+        }
+
+        write!(fmt, "\nVNC targets:")?;
+        if self.vnc_targets.is_empty() {
+            write!(fmt, " None")?;
+        }
+        for t in &self.vnc_targets {
             write!(fmt, "\n    {}", t)?;
         }
 
@@ -283,7 +338,7 @@ fn ip_port_to_sockaddr(input: &str) -> Result<SocketAddr, io::Error> {
 }
 
 pub fn generate_target_lists(opts: &Opts) -> InputLists {
-    use Mode::{Auto, Rdp, Web};
+    use Mode::*;
     let mut input_lists: InputLists = Default::default();
 
     // Process the optional command-line target argument
@@ -302,6 +357,11 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                     parse_successful = true;
                     debug!("{} parsed as Web target", t);
                 }
+                if let Ok(mut targets) = Target::parse(&t, Vnc) {
+                    input_lists.vnc_targets.append(&mut targets);
+                    parse_successful = true;
+                    debug!("{} parsed as VNC target", t);
+                }
             }
             Web => {
                 if let Ok(mut targets) = Target::parse(&t, Web) {
@@ -315,6 +375,13 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                     input_lists.rdp_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as RDP target", t);
+                }
+            }
+            Vnc => {
+                if let Ok(mut targets) = Target::parse(&t, Vnc) {
+                    input_lists.vnc_targets.append(&mut targets);
+                    parse_successful = true;
+                    debug!("{} parsed as VNC target", t);
                 }
             }
         }
@@ -333,6 +400,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         // string type and then behave slightly differently depending on
         // the selected mode, failing gracefully at each stage if any
         // errors occur.
+        //TODO make nesting less deep somehow
         match File::open(file_name) {
             Ok(file) => {
                 let reader = BufReader::new(file);
@@ -340,12 +408,12 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                     debug!("Reading target {:?}", line);
                     match line {
                         Ok(t) => {
-                            // Try tp parse the line into a Target
+                            // Try to parse the line into a Target
                             parse_total_count += 1;
 
                             match &opts.mode {
                                 Auto => {
-                                    // Try parsing as both web and RDP,
+                                    // Try parsing as web, RDP, and VNC,
                                     // saving any that stick
                                     let mut success = false;
                                     if let Ok(mut targets) =
@@ -367,6 +435,16 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                                         parse_successful_count += 1;
                                         success = true;
                                         info!("{} loaded as Web target", t);
+                                    }
+                                    if let Ok(mut targets) =
+                                        Target::parse(&t, Vnc)
+                                    {
+                                        input_lists
+                                            .vnc_targets
+                                            .append(&mut targets);
+                                        parse_successful_count += 1;
+                                        success = true;
+                                        info!("{} loaded as VNC target", t);
                                     }
                                     if !success {
                                         warn!("Unable to parse {}", t);
@@ -399,6 +477,23 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                                             .append(&mut targets);
                                         parse_successful_count += 1;
                                         info!("{} loaded as RDP target", t);
+                                    } else {
+                                        warn!(
+                                            "{} is not a valid RDP target",
+                                            t
+                                        );
+                                        parse_unsuccessful_count += 1;
+                                    }
+                                }
+                                Vnc => {
+                                    if let Ok(mut targets) =
+                                        Target::parse(&t, Vnc)
+                                    {
+                                        input_lists
+                                            .vnc_targets
+                                            .append(&mut targets);
+                                        parse_successful_count += 1;
+                                        info!("{} loaded as VNC target", t);
                                     } else {
                                         warn!(
                                             "{} is not a valid RDP target",
@@ -471,6 +566,7 @@ fn lists_from_nmap(host: &Host, port: &Port, mode: &Mode) -> InputLists {
     //TODO service discovery for ports identified as
     // "web", etc.
     //TODO break this out into a function
+    //TODO code reuse
     debug!("Parsing host {:?}", (host, port));
     if port.status.state == PortState::Open {
         debug!("open port");
@@ -568,6 +664,53 @@ fn lists_from_nmap(host: &Host, port: &Port, mode: &Mode) -> InputLists {
                     }
                 }
             }
+            // VNC signatures
+            (5900, _)
+            | (5901, _)
+            | (5902, _)
+            | (5903, _)
+            | (_, "vnc")
+            | (_, "vnc-1")
+            | (_, "vnc-2")
+            | (_, "vnc-3")
+                if mode.selected(Mode::Vnc) =>
+            {
+                debug!("Identified VNC");
+                let port = port.port_number;
+                // Iterate over the host's addresses. It may have multiple
+                // IPv6, IPv4, and MAC addresses and we want to add them
+                // all (well, maybe not the MAC addresses)
+                for address in host.addresses() {
+                    let target_string = match address {
+                        Address::IpAddr(IpAddr::V6(a)) => {
+                            trace!("address: {:?}", a);
+                            format!("[{}]:{}", a, port)
+                        }
+                        Address::IpAddr(IpAddr::V4(a)) => {
+                            trace!("legacy address: {:?}", a);
+                            format!("{}:{}", a, port)
+                        }
+                        Address::MacAddr(a) => {
+                            trace!("Ignoring MAC address {}", a);
+                            // Ignore the MAC address and move on
+                            continue;
+                        }
+                    };
+
+                    // target_string now contains a string sockaddr
+                    // representation, so we parse it as RDP and see what
+                    // happens
+                    match Target::parse(&target_string, Mode::Vnc) {
+                        Ok(mut target) => {
+                            debug!("Successfully parsed as VNC");
+                            list.vnc_targets.append(&mut target);
+                        }
+                        Err(e) => {
+                            warn!("Error parsing target as VNC: {}", e);
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -579,7 +722,7 @@ mod test {
     use super::*;
     #[test]
     fn parse_target_as_url() {
-        use Mode::{Rdp, Web};
+        use Mode::{Rdp, Web, Vnc};
         let test_cases: Vec<(&str, Target, Mode)> = vec![
             (
                 "http://example.com",
@@ -618,6 +761,17 @@ mod test {
                         .unwrap(),
                 ),
                 Rdp,
+            ),
+            (
+                "vnc://[2001:db8::6]",
+                Target::Address(
+                    "[2001:db8::6]:5900"
+                        .to_socket_addrs()
+                        .unwrap()
+                        .next()
+                        .unwrap(),
+                ),
+                Vnc,
             ),
         ];
 
@@ -813,6 +967,7 @@ mod test {
                             .unwrap(),
                     )],
                     web_targets: Vec::new(),
+                    vnc_targets: Vec::new(),
                 },
                 Rdp,
             ),
@@ -827,6 +982,7 @@ mod test {
                             .unwrap(),
                     )],
                     web_targets: Vec::new(),
+                    vnc_targets: Vec::new(),
                 },
                 Auto,
             ),
@@ -837,6 +993,7 @@ mod test {
                     web_targets: vec![Target::Url(
                         Url::parse("https://[2001:db8::6]:8080").unwrap(),
                     )],
+                    vnc_targets: Vec::new(),
                 },
                 Web,
             ),
@@ -847,6 +1004,7 @@ mod test {
                     web_targets: vec![Target::Url(
                         Url::parse("https://[2001:db8::6]").unwrap(),
                     )],
+                    vnc_targets: Vec::new(),
                 },
                 Auto,
             ),
@@ -862,6 +1020,7 @@ mod test {
                             Url::parse("https://[2001:db8::6]").unwrap(),
                         ),
                     ],
+                    vnc_targets: Vec::new(),
                 },
                 Web,
             ),
@@ -876,6 +1035,7 @@ mod test {
                             .unwrap(),
                     )],
                     web_targets: Vec::new(),
+                    vnc_targets: Vec::new(),
                 },
                 Rdp,
             ),
@@ -897,6 +1057,13 @@ mod test {
                             Url::parse("https://[2001:db8::6]:3300").unwrap(),
                         ),
                     ],
+                    vnc_targets: vec![Target::Address(
+                        "[2001:db8::6]:3300"
+                            .to_socket_addrs()
+                            .unwrap()
+                            .next()
+                            .unwrap(),
+                    )],
                 },
                 Auto,
             ),
@@ -947,6 +1114,7 @@ mod test {
                         Url::parse("https://192.168.59.146:80/").unwrap(),
                     ),
                 ],
+                    vnc_targets: Vec::new(),
             },
         )];
         let mut opts: Opts = Default::default();

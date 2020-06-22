@@ -25,6 +25,7 @@ pub enum Mode {
     Auto,
     Web,
     Rdp,
+    Vnc,
 }
 
 impl Mode {
@@ -48,10 +49,11 @@ impl FromStr for Mode {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use Mode::{Auto, Rdp, Web};
+        use Mode::{Auto, Rdp, Vnc, Web};
         match s {
             "web" => Ok(Web),
             "rdp" => Ok(Rdp),
+            "vnc" => Ok(Vnc),
             "auto" => Ok(Auto),
             _ => Err("Mode must be \"auto\", \"web\" or \"rdp\""),
         }

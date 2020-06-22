@@ -43,6 +43,7 @@ mod parsing;
 mod rdp;
 mod reporting;
 mod util;
+mod vnc;
 mod web;
 
 pub enum ThreadStatus {

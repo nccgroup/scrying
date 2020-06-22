@@ -33,6 +33,9 @@ pub enum Error {
 
     #[error("Template error: {0}")]
     TemplateError(String),
+
+    #[error("VNC error: {0}")]
+    VncError(String),
 }
 
 impl From<failure::Error> for Error {

@@ -24,6 +24,7 @@ headless_chrome = { "git" = "https://github.com/jeprojects/rust-headless-chrome"
 failure = "0.1"
 askama = "0.9"
 socks = "0.3"
+vnc = "0.4"
 
 [package.metadata.deb]
 depends = "chromium"
