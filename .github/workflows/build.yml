@@ -125,10 +125,6 @@ jobs:
           cd test
           python3 -m http.server &
 
-      - name: Screenshot the python server
-        run: |
-          cargo run -- -t http://localhost:8000/webpage.html
-
       - name: Enable RDP without NLA
         shell: powershell
         run: |
@@ -146,9 +142,9 @@ jobs:
           }
           Set-ItemProperty @itemprops
 
-      - name: Screenshot the RDP server
+      - name: Screenshot the web and RDP servers
         run: |
-          cargo run -- -t rdp://localhost
+          cargo run -- -t rdp://localhost -t http://localhost:8000/webpage.html
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
