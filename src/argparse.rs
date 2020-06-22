@@ -61,7 +61,7 @@ impl FromStr for Mode {
 }
 
 #[derive(Clap, Debug, Default)]
-#[clap(version = "0.4.0", author = "David Y. <david.young@nccgroup.com>")]
+#[clap(version = "0.5.0", author = "David Y. <david.young@nccgroup.com>")]
 pub struct Opts {
     #[clap(short, long, about = "Targets file, one per line")]
     pub file: Vec<String>,
@@ -73,7 +73,7 @@ pub struct Opts {
         short,
         long,
         default_value = "auto",
-        about = "Force `web` or `rdp`"
+        about = "Force `web`, `rdp`, `vnc`"
     )]
     pub mode: Mode,
 

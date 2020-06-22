@@ -6,7 +6,6 @@ Please file any bugs or feature requests as [GitHub issues](https://github.com/n
 
 ## Caveats
 * Web screenshotting relies on Chromium or Google Chrome being installed
-* VNC has not been implemented
 
 ## Motivation
 Since Eyewitness recently [dropped support for RDP](https://github.com/FortyNorthSecurity/EyeWitness/issues/422#issuecomment-539690698) there isn't a working CLI tool for capturing RDP screenshots.
@@ -20,13 +19,14 @@ For web screenshotting, scrying currently depends on there being an installation
 Download the latest release from [the releases tab](https://github.com/nccgroup/scrying/releases). There's a Debian package available for distros that use them (install with `sudo dpkg -i scrying*.deb`), and zipped binaries for Windows, Mac, and other Linuxes.
 
 ## Usage
-Grab a single web page or RDP server:
+Grab a single web page, RDP server, or VNC server:
 ```
 $ scrying -t http://example.com
 $ scrying -t rdp://192.0.2.1
 $ scrying -t 2001:db8::5 --mode web
 $ scrying -t 2001:db8::5 --mode rdp
 $ scrying -t 192.0.2.2
+$ scrying -t vnc://[2001:db8::53]:5901
 ```
 
 Automatically grab screenshots from an nmap output:
@@ -61,6 +61,8 @@ output
 ├── report.html
 ├── rdp
 │   └── 192.0.2.1-3389.png
+├── vnc
+│   └── 192.0.2.1-5900.png
 └── web
     └── https_example.com.png
 ```
