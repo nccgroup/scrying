@@ -118,6 +118,12 @@ fn main() {
             panic!("Error creating directory {}", web_output_dir.display())
         });
     }
+    let vnc_output_dir = output_base.join("vnc");
+    if !targets.vnc_targets.is_empty() && !vnc_output_dir.is_dir() {
+        create_dir_all(&vnc_output_dir).unwrap_or_else(|_| {
+            panic!("Error creating directory {}", vnc_output_dir.display())
+        });
+    }
 
     // Start report collating thread
     let (report_tx, report_rx): (
@@ -145,13 +151,25 @@ fn main() {
     };
 
     let web_handle = if !targets.web_targets.is_empty() {
+        let targets_clone = targets.clone();
+        let opts_clone = opts.clone();
+        let report_tx_clone = report_tx.clone();
+        Some(thread::spawn(move || {
+            debug!("Starting Web worker threads");
+            web_worker(targets_clone, opts_clone, report_tx_clone).unwrap()
+        }))
+    } else {
+        None
+    };
+
+    let vnc_handle = if !targets.vnc_targets.is_empty() {
         // clone here will be more useful when there are more target types
         let targets_clone = targets; //.clone();
         let opts_clone = opts; //.clone();
         let report_tx_clone = report_tx.clone();
         Some(thread::spawn(move || {
-            debug!("Starting Web worker threads");
-            web_worker(targets_clone, opts_clone, report_tx_clone).unwrap()
+            debug!("Starting VNC worker threads");
+            vnc_worker(targets_clone, opts_clone, report_tx_clone).unwrap()
         }))
     } else {
         None
@@ -162,6 +180,9 @@ fn main() {
         h.join().unwrap().unwrap();
     }
     if let Some(h) = web_handle {
+        h.join().unwrap();
+    }
+    if let Some(h) = vnc_handle {
         h.join().unwrap();
     }
     report_tx.send(ReportMessage::GenerateReport).unwrap();
@@ -257,5 +278,59 @@ fn web_worker(
             }
         }
     }
+    Ok(())
+}
+
+fn vnc_worker(
+    targets: Arc<InputLists>,
+    opts: Arc<Opts>,
+    report_tx: mpsc::Sender<ReportMessage>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use mpsc::{Receiver, Sender};
+    let max_workers = opts.threads;
+    let mut num_workers: usize = 0;
+    let mut targets_iter = targets.vnc_targets.iter();
+    let mut workers: Vec<_> = Vec::new();
+    let (thread_status_tx, thread_status_rx): (
+        Sender<ThreadStatus>,
+        Receiver<ThreadStatus>,
+    ) = mpsc::channel();
+    loop {
+        // check for status messages
+        // Turn off clippy's single_match warning here because match
+        // matches the intuition for how try_recv is processed better
+        // than an if let.
+        #[allow(clippy::single_match)]
+        match thread_status_rx.try_recv() {
+            Ok(ThreadStatus::Complete) => {
+                info!("Thread complete, yay");
+                num_workers -= 1;
+            }
+            Err(_) => {}
+        }
+        if num_workers < max_workers {
+            if let Some(target) = targets_iter.next() {
+                let target = target.clone();
+                info!("Adding VNC worker for {:?}", target);
+                let opts_clone = opts.clone();
+                let tx = thread_status_tx.clone();
+                let report_tx_clone = report_tx.clone();
+                let handle = thread::spawn(move || {
+                    vnc::capture(&target, &opts_clone, tx, &report_tx_clone)
+                });
+
+                workers.push(handle);
+                num_workers += 1;
+            } else {
+                break;
+            }
+        }
+    }
+    debug!("At the join part");
+    for w in workers {
+        debug!("Joining {:?}", w);
+        w.join().unwrap();
+    }
+
     Ok(())
 }

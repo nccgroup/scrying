@@ -34,7 +34,7 @@ fn vnc_capture(
 }
 
 pub fn capture(
-    target: Target,
+    target: &Target,
     opts: &Opts,
     tx: mpsc::Sender<ThreadStatus>,
     report_tx: &mpsc::Sender<ReportMessage>,
