@@ -74,6 +74,21 @@ jobs:
         with:
           command: test
 
+      - name: Start python webserver
+        run: |
+          cd test
+          python3 -m http.server &
+
+      - name: Screenshot the python server
+        run: |
+          cargo run -- -t http://localhost:8000/webpage.html
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: http_localhost_8000-webpage.html.png
+          path: output/web/http_localhost_8000-webpage.html.png
+
   test_windows:
     name: Run tests on windows-latest
     runs-on: windows-latest
