@@ -116,6 +116,27 @@ jobs:
         run: |
           cargo run -- -t http://localhost:8000/webpage.html
 
+      - name: Enable RDP without NLA
+        shell: powershell
+        run: |
+          $itemprops = @{
+            Path = 'HKLM:\System\CurrentControlSet\Control\Terminal Server'
+            name = "fDenyTSConnections"
+            Value = 0
+          }
+          Set-ItemProperty @itemprops
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          $itemprops = @{
+            Path = 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp'
+            name = "UserAuthentication"
+            Value = 0
+          }
+          Set-ItemProperty @itemprops
+
+      - name: Screenshot the RDP server
+        run: |
+          cargo run -- -t rdp://localhost
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
