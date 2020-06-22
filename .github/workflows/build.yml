@@ -60,6 +60,15 @@ jobs:
     name: Run tests on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
+      - name: Configure VNC
+        run: |
+          apt-get update
+          apt-get install -y xvfb x11vnc xterm
+          Xvfb -screen 0 800x600x16 -ac &
+          x11vnc -localhost -display :0 &
+          export DISPLAY=:0
+          xterm -hold -e "cat /etc/passwd" &
+
       - name: Checkout sources
         uses: actions/checkout@v1
 
@@ -81,7 +90,9 @@ jobs:
 
       - name: Screenshot the python server
         run: |
-          cargo run -- -t http://localhost:8000/webpage.html
+          cargo run -- \
+            -t http://localhost:8000/webpage.html \
+            -t vnc://localhost:5900
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
