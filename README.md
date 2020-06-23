@@ -80,8 +80,8 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ HTTP - uses Chromium/Chrome in headless mode
 * ✔️ Full cross-platform support - tested on Linux, Windows and Mac
 * ✔️ Produces an HTML report to allow easy browsing of the results
+* ✔️ VNC
 * RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
-* VNC - tracking issue [#6](https://github.com/nccgroup/scrying/issues/6)
 * Video streams - tracking issue [#5](https://github.com/nccgroup/scrying/issues/5)
 * option for timestamps in filenames
 * Read targets from a msf services -o csv output
