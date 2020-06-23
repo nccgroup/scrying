@@ -19,8 +19,6 @@
 
 #![allow(unused)]
 
-
-
 use crate::argparse::Opts;
 use crate::error::Error;
 use crate::parsing::Target;
@@ -57,7 +55,7 @@ impl AsReportMessage for VncOutput {
 
 //TODO code reuse with RDP?
 struct Image {
-    image: ImageMode,
+    image: DynamicImage,
     format: PixelFormat,
     width: u16,
     height: u16,
@@ -65,14 +63,9 @@ struct Image {
 
 impl Image {
     fn new(format: PixelFormat, width: u16, height: u16) -> Self {
-        let mut image =
-            ImageMode::Rgb8(DynamicImage::ImageRgb8(ImageBuffer::<
-                Rgb<u8>,
-                Vec<u8>,
-            >::new(
-                width.into(),
-                height.into(),
-            )));
+        let mut image = DynamicImage::ImageRgb8(
+            ImageBuffer::<Rgb<u8>, Vec<u8>>::new(width.into(), height.into()),
+        );
 
         Self {
             image,
@@ -83,7 +76,6 @@ impl Image {
     }
 
     fn put_pixels(&mut self, rect: Rect, pixels: &[u8]) -> Result<(), Error> {
-        use ImageMode::*;
         trace!("pixels: {:?}", pixels);
         trace!("rect: {:?}", rect);
 
@@ -124,7 +116,7 @@ impl Image {
                 );
 
                 match &mut self.image {
-                    Rgb8(DynamicImage::ImageRgb8(img)) => {
+                    DynamicImage::ImageRgb8(img) => {
                         let (r, g, b) = Image::pixel_to_rgb(
                             format,
                             &pixels[idx..(idx + bytes_per_pixel)],
@@ -279,18 +271,9 @@ impl Image {
             d => panic!("Unsupported colour depth {:?}", d),
         }
     }
-}
 
-enum ImageMode {
-    Rgb8(DynamicImage),
-}
-
-impl ImageMode {
-    fn extract(self) -> DynamicImage {
-        use ImageMode::*;
-        match self {
-            Rgb8(di) => di,
-        }
+    fn set_colour_map(&mut self, first_colour: u16, colours: Vec<Colour>) {
+        todo!();
     }
 }
 
@@ -367,7 +350,7 @@ fn vnc_capture(
     let relative_filepath = Path::new("vnc").join(&filename);
     let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
     info!("Saving image as {}", filepath.display());
-    vnc_image.image.extract().save(&filepath)?;
+    vnc_image.image.save(&filepath)?;
     let vnc_message = VncOutput {
         target: target.to_string(),
         file: relative_filepath.display().to_string(),
