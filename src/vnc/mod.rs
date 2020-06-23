@@ -104,23 +104,33 @@ impl Image {
         let format = &self.format;
 
         // Rect { left: 1216, top: 704, width: 64, height: 16 }
+        let bytes_per_pixel = match format.bits_per_pixel {
+            16 => 2,
+            32 => 4,
+            _ => panic!("Invalid bits per pixel"),
+        };
         let mut idx = 0_usize;
         for y in rect.top..(rect.top + rect.height) {
             for x in rect.left..(rect.left + rect.width) {
-                trace!("Position: {},{}", x, y);
+                trace!(
+                    "Position: {},{}: {:?}",
+                    x,
+                    y,
+                    &pixels[idx..(idx + bytes_per_pixel)]
+                );
 
                 match &mut self.image {
                     Rgb8(DynamicImage::ImageRgb8(img)) => {
                         let (r, g, b) = Image::pixel_to_rgb(
                             format,
-                            [pixels[idx], pixels[idx + 1]],
+                            &pixels[idx..(idx + bytes_per_pixel)],
                         );
                         img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
                     }
                     _ => unimplemented!(),
                 }
 
-                idx += 2;
+                idx += bytes_per_pixel;
             }
         }
     }
@@ -139,32 +149,76 @@ impl Image {
     ///   green_shift: 5,
     ///   blue_shift: 0
     /// }
+    ///
+    /// PixelFormat {
+    ///   bits_per_pixel: 32,
+    ///   depth: 24,
+    ///   big_endian: false,
+    ///   true_colour: true,
+    ///   red_max: 255,
+    ///   green_max: 255,
+    ///   blue_max: 255,
+    ///   red_shift: 16,
+    ///   green_shift: 8,
+    ///   blue_shift: 0
+    /// }
     //TODO unit test
-    fn pixel_to_rgb(format: &PixelFormat, bytes: [u8; 2]) -> (u8, u8, u8) {
-        let px = if format.big_endian {
-            u16::from_be_bytes(bytes)
-        } else {
-            u16::from_le_bytes(bytes)
-        };
-        let blue_mask = format.blue_max as u16; // 5 bits
-        let green_mask = format.green_max as u16; // 6 bits
-        let red_mask = format.red_max as u16; // 5 bits
+    fn pixel_to_rgb(format: &PixelFormat, bytes: &[u8]) -> (u8, u8, u8) {
+        //TODO code reuse
+        match (format.bits_per_pixel, format.depth) {
+            (16, 16) => {
+                let bytes: [u8; 2] = bytes.try_into().unwrap();
+                let px = if format.big_endian {
+                    u16::from_be_bytes(bytes)
+                } else {
+                    u16::from_le_bytes(bytes)
+                };
+                let blue_mask = format.blue_max as u16; // 5 bits
+                let green_mask = format.green_max as u16; // 6 bits
+                let red_mask = format.red_max as u16; // 5 bits
 
-        let b = (px >> format.blue_shift) & blue_mask;
-        let g = (px >> format.green_shift) & green_mask;
-        let r = (px >> format.red_shift) & red_mask;
+                let b = (px >> format.blue_shift) & blue_mask; // 0x1f
+                let g = (px >> format.green_shift) & green_mask; // 0x3f
+                let r = (px >> format.red_shift) & red_mask; // 0x1f
 
-        // Left shift all the values so that they're at the top of their
-        // respective bytes
-        let b = b << 3;
-        let g = g << 2;
-        let r = r << 3;
+                // Left shift all the values so that they're at the top of their
+                // respective bytes
+                let b = b << (8 - blue_mask.count_ones()); // 3
+                let g = g << (8 - green_mask.count_ones()); // 2
+                let r = r << (8 - red_mask.count_ones()); // 3
 
-        (
-            r.try_into().unwrap(),
-            g.try_into().unwrap(),
-            b.try_into().unwrap(),
-        )
+                (
+                    r.try_into().unwrap(),
+                    g.try_into().unwrap(),
+                    b.try_into().unwrap(),
+                )
+            }
+            (32, 24) => {
+                let bytes: [u8; 4] = bytes.try_into().unwrap();
+                let px = if format.big_endian {
+                    u32::from_be_bytes(bytes)
+                } else {
+                    u32::from_le_bytes(bytes)
+                };
+                let blue_mask = format.blue_max as u32; // 5 bits
+                let green_mask = format.green_max as u32; // 6 bits
+                let red_mask = format.red_max as u32; // 5 bits
+
+                let b = (px >> format.blue_shift) & blue_mask; // 0x1f
+                let g = (px >> format.green_shift) & green_mask; // 0x3f
+                let r = (px >> format.red_shift) & red_mask; // 0x1f
+
+                // Values do not need left shifting because they are
+                // already 8-bits long
+
+                (
+                    r.try_into().unwrap(),
+                    g.try_into().unwrap(),
+                    b.try_into().unwrap(),
+                )
+            }
+            d => panic!("Unsupported colour depth {:?}", d),
+        }
     }
 }
 
