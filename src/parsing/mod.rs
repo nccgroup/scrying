@@ -342,7 +342,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     let mut input_lists: InputLists = Default::default();
 
     // Process the optional command-line target argument
-    for t in &opts.target {
+    for t in &opts.targets {
         let mut parse_successful = false;
         match &opts.mode {
             Auto => {
@@ -391,7 +391,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     }
 
     // Process the optional input file
-    for file_name in &opts.file {
+    for file_name in &opts.files {
         let mut parse_successful_count: usize = 0;
         let mut parse_total_count: usize = 0;
         let mut parse_unsuccessful_count: usize = 0;
@@ -525,7 +525,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
     }
 
     // Parse nmap file
-    for file in &opts.nmap {
+    for file in &opts.nmaps {
         info!("Loading nmap file {}", file);
 
         match fs::read_to_string(file) {
@@ -1071,7 +1071,7 @@ mod test {
 
         for (input, input_lists, mode) in test_cases {
             eprintln!("Test case: {:?}", (input, &input_lists, mode));
-            opts.target = vec![input.into()];
+            opts.targets = vec![input.into()];
             opts.mode = mode;
 
             let parsed = generate_target_lists(&opts);
@@ -1120,7 +1120,7 @@ mod test {
         let mut opts: Opts = Default::default();
         for case in test_cases {
             eprintln!("Test case: {:?}", case);
-            opts.nmap = vec![case.0.into()];
+            opts.nmaps = vec![case.0.into()];
             let parsed = generate_target_lists(&opts);
             eprintln!("Parsed: {:?}", parsed);
 

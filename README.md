@@ -94,24 +94,29 @@ Features with ticks next to them have been implemented, others are TODO
 ## Help text
 ```
 USAGE:
-    scrying [FLAGS] [OPTIONS]
+    scrying [FLAGS] [OPTIONS] <--file <FILES>|--nmap <NMAP FILES>...|--target <TARGETS>>
 
 FLAGS:
-    -h, --help           Prints help information
     -s, --silent         Suppress most log messages
         --test-import    Exit after importing targets
     -v, --verbose        Increase log verbosity
+    -h, --help           Prints help information
     -V, --version        Prints version information
 
 OPTIONS:
-    -f, --file <file>...             Targets file, one per line
-    -l, --log-file <log-file>        Save logs to file
-    -m, --mode <mode>                Force `web` or `rdp` [default: auto]
-        --nmap <nmap>...             Nmap XML file
-    -o, --output-dir <output-dir>    Directory to save the captured images in [default: output]
-    -t, --target <target>...         Target, e.g. http://example.com
-        --threads <threads>          Number of worker threads for each target type [default: 3]
-        --timeout <timeout>           [default: 10]
+    -f, --file <FILES>                 Targets file, one per line
+    -l, --log-file <LOG FILE>          Save logs to the given file
+    -m, --mode <MODE>                  Force targets to be parsed as `web`, `rdp`, `vnc` [default:
+                                       auto]  [possible values: web, rdp, vnc, auto]
+        --nmap <NMAP FILES>...         Nmap XML file
+    -o, --output <OUTPUT>              Directory to save the captured images in [default: output]
+        --proxy <PROXY>                Default SOCKS5 proxy to use for connections
+        --rdp-proxy <RDP PROXY>        Proxy to use for RDP connections
+        --rdp-timeout <RDP TIMEOUT>    How long after last bitmap to wait before saving image
+                                       [default: 2]
+    -t, --target <TARGETS>             Target, e.g. http://example.com
+        --threads <THREADS>            Number of worker threads for each target type [default: 10]
+        --web-proxy <WEB PROXY>        Proxy to use for web requests
 ```
 
 ## Sample HTML report

@@ -52,7 +52,7 @@ pub enum ThreadStatus {
 
 fn main() {
     println!("Starting NCC Group Scrying...");
-    let opts = Arc::new(argparse::parse());
+    let opts = Arc::new(argparse::parse().unwrap());
 
     // Configure logging
     let mut log_dests: Vec<Box<dyn SharedLogger>> = Vec::new();
