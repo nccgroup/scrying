@@ -17,7 +17,6 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
 use crate::argparse::Opts;
 use crate::error::Error;
 use crate::parsing::Target;
@@ -57,6 +56,7 @@ impl AsReportMessage for VncOutput {
 struct Image {
     image: DynamicImage,
     format: PixelFormat,
+    colour_map: Option<ColourMap>,
     _width: u16,
     _height: u16,
 }
@@ -70,6 +70,7 @@ impl Image {
         Self {
             image,
             format,
+            colour_map: None,
             _width: width,
             _height: height,
         }
@@ -272,9 +273,29 @@ impl Image {
         }
     }
 
-    fn set_colour_map(&mut self, first_colour: u16, colours: Vec<Colour>) {
-        todo!();
+    fn set_colour_map(
+        &mut self,
+        first_colour: u16,
+        colours: Vec<Colour>,
+    ) -> Result<(), Error> {
+        if colours.len() != 255 {
+            return Err(Error::VncError(format!(
+                "Invalid number of colours in map: {}",
+                colours.len()
+            )));
+        }
+        self.colour_map = Some(ColourMap {
+            first_colour,
+            colours,
+        });
+
+        Ok(())
     }
+}
+
+struct ColourMap {
+    first_colour: u16,
+    colours: Vec<Colour>,
 }
 
 fn vnc_capture(
@@ -385,7 +406,7 @@ fn vnc_poll(mut vnc: Client, vnc_image: &mut Image) -> Result<(), Error> {
                     debug!("Set colour map");
                     trace!("first colour: {:x}", first_colour);
                     trace!("colours: {:?}", colours);
-                    vnc_image.set_colour_map(first_colour, colours);
+                    vnc_image.set_colour_map(first_colour, colours)?;
                 }
                 other => debug!("Unsupported event: {:?}", other),
             }
