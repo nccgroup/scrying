@@ -82,7 +82,7 @@ impl Image {
         }
     }
 
-    fn put_pixels(&mut self, rect: Rect, pixels: &[u8]) {
+    fn put_pixels(&mut self, rect: Rect, pixels: &[u8]) -> Result<(), Error> {
         use ImageMode::*;
         trace!("pixels: {:?}", pixels);
         trace!("rect: {:?}", rect);
@@ -107,7 +107,11 @@ impl Image {
         let bytes_per_pixel = match format.bits_per_pixel {
             16 => 2,
             32 => 4,
-            _ => panic!("Invalid bits per pixel"),
+            _ => {
+                return Err(Error::VncError(
+                    "Invalid bits per pixel".to_string(),
+                ))
+            }
         };
         let mut idx = 0_usize;
         for y in rect.top..(rect.top + rect.height) {
@@ -124,7 +128,7 @@ impl Image {
                         let (r, g, b) = Image::pixel_to_rgb(
                             format,
                             &pixels[idx..(idx + bytes_per_pixel)],
-                        );
+                        )?;
                         img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
                     }
                     _ => unimplemented!(),
@@ -133,6 +137,8 @@ impl Image {
                 idx += bytes_per_pixel;
             }
         }
+
+        Ok(())
     }
 
     /// Convert two bytes of RGB16 into their corresponding r,g,b
@@ -163,11 +169,14 @@ impl Image {
     ///   blue_shift: 0
     /// }
     //TODO unit test
-    fn pixel_to_rgb(format: &PixelFormat, bytes: &[u8]) -> (u8, u8, u8) {
+    fn pixel_to_rgb(
+        format: &PixelFormat,
+        bytes: &[u8],
+    ) -> Result<(u8, u8, u8), Error> {
         //TODO code reuse
         match (format.bits_per_pixel, format.depth) {
             (16, 16) => {
-                let bytes: [u8; 2] = bytes.try_into().unwrap();
+                let bytes: [u8; 2] = bytes.try_into()?;
                 let px = if format.big_endian {
                     u16::from_be_bytes(bytes)
                 } else {
@@ -187,14 +196,10 @@ impl Image {
                 let g = g << (8 - green_mask.count_ones()); // 2
                 let r = r << (8 - red_mask.count_ones()); // 3
 
-                (
-                    r.try_into().unwrap(),
-                    g.try_into().unwrap(),
-                    b.try_into().unwrap(),
-                )
+                Ok((r.try_into()?, g.try_into()?, b.try_into()?))
             }
             (32, 24) => {
-                let bytes: [u8; 4] = bytes.try_into().unwrap();
+                let bytes: [u8; 4] = bytes.try_into()?;
                 let px = if format.big_endian {
                     u32::from_be_bytes(bytes)
                 } else {
@@ -211,11 +216,7 @@ impl Image {
                 // Values do not need left shifting because they are
                 // already 8-bits long
 
-                (
-                    r.try_into().unwrap(),
-                    g.try_into().unwrap(),
-                    b.try_into().unwrap(),
-                )
+                Ok((r.try_into()?, g.try_into()?, b.try_into()?))
             }
             d => panic!("Unsupported colour depth {:?}", d),
         }
@@ -330,7 +331,7 @@ fn vnc_poll(mut vnc: Client, vnc_image: &mut Image) -> Result<(), Error> {
                 }
                 PutPixels(vnc_rect, ref pixels) => {
                     trace!("PutPixels");
-                    vnc_image.put_pixels(vnc_rect, pixels);
+                    vnc_image.put_pixels(vnc_rect, pixels)?;
                 }
                 EndOfFrame => {
                     debug!("End of frame");

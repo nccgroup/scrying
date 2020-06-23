@@ -36,6 +36,9 @@ pub enum Error {
 
     #[error("VNC error: {0}")]
     VncError(String),
+
+    #[error("Conversion error: {0}")]
+    ConversionError(String),
 }
 
 impl From<failure::Error> for Error {
@@ -77,5 +80,17 @@ impl From<askama::shared::Error> for Error {
 impl From<vnc::Error> for Error {
     fn from(e: vnc::Error) -> Self {
         Self::VncError(e.to_string())
+    }
+}
+
+impl From<std::num::TryFromIntError> for Error {
+    fn from(e: std::num::TryFromIntError) -> Self {
+        Self::ConversionError(e.to_string())
+    }
+}
+
+impl From<std::array::TryFromSliceError> for Error {
+    fn from(e: std::array::TryFromSliceError) -> Self {
+        Self::ConversionError(e.to_string())
     }
 }
