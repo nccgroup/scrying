@@ -143,6 +143,31 @@ impl Image {
 
     /// Convert two bytes of RGB16 into their corresponding r,g,b
     /// components according to the given pixel format
+    ///
+    /// −depth depth
+	///   Specify the pixel depth (in bits) of the VNC desktop to be
+	///   created. Default is 24. Other possible values are 8, 15 and 16
+	///   - anything else is likely to cause strange behaviour by
+	///   applications.
+    ///
+	/// −pixelformat format
+	///   Specify pixel format for Xvnc to use (BGRnnn or RGBnnn). The 
+	//    default for depth 8 is BGR233 (meaning the most significant
+	///   two bits represent blue, the next three green, and the least
+	///   significant three represent red), the default for depth 16 is
+	///   RGB565, and the default for depth 24 is RGB888.
+	/// 	
+	///  −cc 3
+	///   As an alternative to the default TrueColor visual, this allows
+	///   you to run an Xvnc server with a PseudoColor visual (i.e. one
+	///   which uses a color map or palette), which can be useful for
+	///   running some old X applications which only work on such a
+	///   display. Values other than 3 (PseudoColor) and 4 (TrueColor)
+	///   for the −cc option may result in strange behaviour, and
+	///   PseudoColor desktops must have an 8-bit depth.
+	///
+	/// Ref: https://tigervnc.org/doc/vncserver.html
+	///
     /// $ Xvfb -screen 0 800x600x24 -ac &
     /// PixelFormat {
     ///   bits_per_pixel: 16,
