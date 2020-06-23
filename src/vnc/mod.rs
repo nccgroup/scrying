@@ -143,6 +143,7 @@ impl Image {
 
     /// Convert two bytes of RGB16 into their corresponding r,g,b
     /// components according to the given pixel format
+    /// $ Xvfb -screen 0 800x600x24 -ac &
     /// PixelFormat {
     ///   bits_per_pixel: 16,
     ///   depth: 16,
@@ -156,6 +157,7 @@ impl Image {
     ///   blue_shift: 0
     /// }
     ///
+    /// $ Xvfb -screen 0 800x600x16 -ac &
     /// PixelFormat {
     ///   bits_per_pixel: 32,
     ///   depth: 24,
@@ -168,6 +170,37 @@ impl Image {
     ///   green_shift: 8,
     ///   blue_shift: 0
     /// }
+    ///
+    /// Xvfb -screen 0 800x600x15 -ac &
+    /// PixelFormat {
+    ///   bits_per_pixel: 16,
+    ///   depth: 15,
+    ///   big_endian: false,
+    ///   true_colour: true,
+    ///   red_max: 31,
+    ///   green_max: 31,
+    ///   blue_max: 31,
+    ///   red_shift: 10,
+    ///   green_shift: 5,
+    ///   blue_shift: 0
+    /// }
+    ///
+	/// Xvfb -screen 0 800x600x8 -ac &
+	/// PixelFormat { 
+	///   bits_per_pixel: 8,
+	///   depth: 8, 
+	///   big_endian: false,
+	///   true_colour: false,
+	///   red_max: 0,
+	///   green_max: 0, 
+	///   blue_max: 0, 
+	///   red_shift: 0,
+	///   green_shift: 0,
+	///   blue_shift: 0 
+	/// }
+	/// This one results in Unsupported event: SetColourMap which we
+	/// need to handle somehow
+
     //TODO unit test
     fn pixel_to_rgb(
         format: &PixelFormat,
@@ -175,7 +208,7 @@ impl Image {
     ) -> Result<(u8, u8, u8), Error> {
         //TODO code reuse
         match (format.bits_per_pixel, format.depth) {
-            (16, 16) => {
+            (16, 16) | (16, 15) => {
                 let bytes: [u8; 2] = bytes.try_into()?;
                 let px = if format.big_endian {
                     u16::from_be_bytes(bytes)

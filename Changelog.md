@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-* Added support for 24-bit colour depth on VNC
+* Added support for 15- and 24-bit colour depth on VNC
 
 ### Changed
 
