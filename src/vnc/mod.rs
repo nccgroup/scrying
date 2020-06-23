@@ -33,6 +33,7 @@ use std::net::TcpStream;
 use std::path::Path;
 use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
 use vnc::client::{AuthChoice, AuthMethod, Client};
+use vnc::Colour;
 use vnc::{PixelFormat, Rect};
 
 #[derive(Debug)]
@@ -377,6 +378,15 @@ fn vnc_poll(mut vnc: Client, vnc_image: &mut Image) -> Result<(), Error> {
                 EndOfFrame => {
                     debug!("End of frame");
                     return Ok(());
+                }
+                SetColourMap {
+                    first_colour,
+                    colours,
+                } => {
+                    debug!("Set colour map");
+                    trace!("first colour: {:x}", first_colour);
+                    trace!("colours: {:?}", colours);
+                    vnc_image.set_colour_map(first_colour, colours);
                 }
                 other => debug!("Unsupported event: {:?}", other),
             }
