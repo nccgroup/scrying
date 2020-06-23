@@ -61,22 +61,50 @@ struct Image {
     _height: u16,
 }
 
-impl Image {
-    fn new(format: PixelFormat, width: u16, height: u16) -> Self {
-        let image = DynamicImage::ImageRgb8(
-            ImageBuffer::<Rgb<u8>, Vec<u8>>::new(width.into(), height.into()),
-        );
+enum ColourFormat {
+    U8((u8, u8, u8)),
+    U16((u16, u16, u16)),
+}
 
-        Self {
+impl Image {
+    fn new(
+        format: PixelFormat,
+        width: u16,
+        height: u16,
+    ) -> Result<Self, Error> {
+        let image = match (format.depth, format.true_colour) {
+            (15, true) | (16, true) | (24, true) => {
+                DynamicImage::ImageRgb8(ImageBuffer::<Rgb<u8>, Vec<u8>>::new(
+                    width.into(),
+                    height.into(),
+                ))
+            }
+            (8, false) => DynamicImage::ImageRgb16(ImageBuffer::<
+                Rgb<u16>,
+                Vec<u16>,
+            >::new(
+                width.into(),
+                height.into(),
+            )),
+            (d, t) => {
+                return Err(Error::VncError(format!(
+                    "Invalid colour depth: {}, true colour: {}",
+                    d, t
+                )))
+            }
+        };
+
+        Ok(Self {
             image,
             format,
             colour_map: None,
             _width: width,
             _height: height,
-        }
+        })
     }
 
     fn put_pixels(&mut self, rect: Rect, pixels: &[u8]) -> Result<(), Error> {
+        use ColourFormat::*;
         trace!("pixels: {:?}", pixels);
         trace!("rect: {:?}", rect);
 
@@ -95,15 +123,18 @@ impl Image {
         // Borrow the pixel format from self before mutably borrowing
         // the image
         let format = &self.format;
+        let colour_map = &self.colour_map;
 
         // Rect { left: 1216, top: 704, width: 64, height: 16 }
         let bytes_per_pixel = match format.bits_per_pixel {
+            8 => 1,
             16 => 2,
             32 => 4,
             _ => {
-                return Err(Error::VncError(
-                    "Invalid bits per pixel".to_string(),
-                ))
+                return Err(Error::VncError(format!(
+                    "Invalid bits per pixel: {}",
+                    format.bits_per_pixel
+                )))
             }
         };
         let mut idx = 0_usize;
@@ -118,12 +149,32 @@ impl Image {
 
                 match &mut self.image {
                     DynamicImage::ImageRgb8(img) => {
-                        let (r, g, b) = Image::pixel_to_rgb(
+                        if let U8((r, g, b)) = Image::pixel_to_rgb(
                             format,
+                            colour_map,
                             &pixels[idx..(idx + bytes_per_pixel)],
-                        )?;
-                        img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
+                        )? {
+                            img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
+                        } else {
+                            return Err(Error::VncError(
+                                "Colour format mismatch: expected 8-bit colours".to_string(),
+                            ));
+                        }
                     }
+                    DynamicImage::ImageRgb16(img) => {
+                        if let U16((r, g, b)) = Image::pixel_to_rgb(
+                            format,
+                            colour_map,
+                            &pixels[idx..(idx + bytes_per_pixel)],
+                        )? {
+                            img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
+                        } else {
+                            return Err(Error::VncError(
+                                "Colour format mismatch: expected 16-bit colours".to_string(),
+                            ));
+                        }
+                    }
+
                     _ => unimplemented!(),
                 }
 
@@ -222,8 +273,10 @@ impl Image {
     //TODO unit test
     fn pixel_to_rgb(
         format: &PixelFormat,
+        colour_map: &Option<ColourMap>,
         bytes: &[u8],
-    ) -> Result<(u8, u8, u8), Error> {
+    ) -> Result<ColourFormat, Error> {
+        use ColourFormat::*;
         //TODO code reuse
         match (format.bits_per_pixel, format.depth) {
             (16, 16) | (16, 15) => {
@@ -247,7 +300,7 @@ impl Image {
                 let g = g << (8 - green_mask.count_ones()); // 2
                 let r = r << (8 - red_mask.count_ones()); // 3
 
-                Ok((r.try_into()?, g.try_into()?, b.try_into()?))
+                Ok(U8((r.try_into()?, g.try_into()?, b.try_into()?)))
             }
             (32, 24) => {
                 let bytes: [u8; 4] = bytes.try_into()?;
@@ -267,7 +320,26 @@ impl Image {
                 // Values do not need left shifting because they are
                 // already 8-bits long
 
-                Ok((r.try_into()?, g.try_into()?, b.try_into()?))
+                Ok(U8((r.try_into()?, g.try_into()?, b.try_into()?)))
+            }
+            (8, 8) => {
+                let px = bytes[0];
+                if let Some(colour_map) = colour_map {
+                    let colour = &colour_map.colours[px as usize];
+                    let r = colour.red;
+                    let g = colour.green;
+                    let b = colour.blue;
+
+                    Ok(U16((
+                        r.try_into().unwrap(),
+                        g.try_into().unwrap(),
+                        b.try_into().unwrap(),
+                    )))
+                } else {
+                    Err(Error::VncError(
+                        "No colour map supplied for 8-bit mode!".to_string(),
+                    ))
+                }
             }
             d => panic!("Unsupported colour depth {:?}", d),
         }
@@ -278,7 +350,7 @@ impl Image {
         first_colour: u16,
         colours: Vec<Colour>,
     ) -> Result<(), Error> {
-        if colours.len() != 255 {
+        if colours.len() != 256 {
             return Err(Error::VncError(format!(
                 "Invalid number of colours in map: {}",
                 colours.len()
@@ -294,6 +366,7 @@ impl Image {
 }
 
 struct ColourMap {
+    #[allow(unused)]
     first_colour: u16,
     colours: Vec<Colour>,
 }
@@ -361,7 +434,7 @@ fn vnc_capture(
         false,
     )?;
 
-    let mut vnc_image = Image::new(vnc_format, width, height);
+    let mut vnc_image = Image::new(vnc_format, width, height)?;
 
     vnc_poll(vnc, &mut vnc_image)?;
 
