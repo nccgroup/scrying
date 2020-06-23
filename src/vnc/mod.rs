@@ -17,7 +17,6 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#![allow(unused)]
 
 use crate::argparse::Opts;
 use crate::error::Error;
@@ -31,7 +30,7 @@ use log::{debug, error, info, trace, warn};
 use std::convert::TryInto;
 use std::net::TcpStream;
 use std::path::Path;
-use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
+use std::sync::mpsc::Sender;
 use vnc::client::{AuthChoice, AuthMethod, Client};
 use vnc::Colour;
 use vnc::{PixelFormat, Rect};
@@ -58,21 +57,21 @@ impl AsReportMessage for VncOutput {
 struct Image {
     image: DynamicImage,
     format: PixelFormat,
-    width: u16,
-    height: u16,
+    _width: u16,
+    _height: u16,
 }
 
 impl Image {
     fn new(format: PixelFormat, width: u16, height: u16) -> Self {
-        let mut image = DynamicImage::ImageRgb8(
+        let image = DynamicImage::ImageRgb8(
             ImageBuffer::<Rgb<u8>, Vec<u8>>::new(width.into(), height.into()),
         );
 
         Self {
             image,
             format,
-            width,
-            height,
+            _width: width,
+            _height: height,
         }
     }
 
@@ -281,7 +280,7 @@ impl Image {
 fn vnc_capture(
     target: &Target,
     opts: &Opts,
-    report_tx: &mpsc::Sender<ReportMessage>,
+    report_tx: &Sender<ReportMessage>,
 ) -> Result<(), Error> {
     info!("Connecting to {:?}", target);
     let addr = match target {
@@ -392,14 +391,13 @@ fn vnc_poll(mut vnc: Client, vnc_image: &mut Image) -> Result<(), Error> {
             }
         }
     }
-    Ok(())
 }
 
 pub fn capture(
     target: &Target,
     opts: &Opts,
-    tx: mpsc::Sender<ThreadStatus>,
-    report_tx: &mpsc::Sender<ReportMessage>,
+    tx: Sender<ThreadStatus>,
+    report_tx: &Sender<ReportMessage>,
 ) {
     if let Err(e) = vnc_capture(&target, opts, report_tx) {
         warn!("VNC error: {}", e);
