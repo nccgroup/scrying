@@ -87,6 +87,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
             Arg::new("FILES")
                 .about("Targets file, one per line")
                 .long("file")
+                .multiple(true)
                 .short('f')
                 .takes_value(true),
         )
@@ -94,6 +95,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
             Arg::new("TARGETS")
                 .about("Target, e.g. http://example.com")
                 .long("target")
+                .multiple(true)
                 .short('t')
                 .takes_value(true),
         )
