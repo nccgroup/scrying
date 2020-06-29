@@ -84,7 +84,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         .about("Automatic RDP, Web, and VNC screenshotting tool")
         .setting(AppSettings::ArgRequiredElseHelp)
         .arg(
-            Arg::new("FILES")
+            Arg::new("FILE")
                 .about("Targets file, one per line")
                 .long("file")
                 .multiple(true)
@@ -92,7 +92,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .arg(
-            Arg::new("TARGETS")
+            Arg::new("TARGET")
                 .about("Target, e.g. http://example.com")
                 .long("target")
                 .multiple(true)
@@ -131,7 +131,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .arg(
-            Arg::new("NMAP FILES")
+            Arg::new("NMAP XML FILE")
                 .about("Nmap XML file")
                 .long("nmap")
                 .multiple(true)
@@ -184,15 +184,15 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .long("test-import"),
         )
         .group(ArgGroup::new("inputs").required(true).args(&[
-            "FILES",
-            "NMAP FILES",
-            "TARGETS",
+            "FILE",
+            "NMAP XML FILE",
+            "TARGET",
         ]))
         .get_matches();
 
     // Grab input files if present, otherwise an empty Vec
     let mut files: Vec<String> = Vec::new();
-    if let Some(f) = args.values_of("FILES") {
+    if let Some(f) = args.values_of("FILE") {
         for file in f {
             files.push(file.to_string());
         }
@@ -200,7 +200,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
 
     // Grab targets if present, otherwise an empty Vec
     let mut targets: Vec<String> = Vec::new();
-    if let Some(t) = args.values_of("TARGETS") {
+    if let Some(t) = args.values_of("TARGET") {
         for target in t {
             targets.push(target.to_string());
         }
@@ -208,7 +208,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
 
     // Grab Nmap files if present, otherwise an empty Vec
     let mut nmaps: Vec<String> = Vec::new();
-    if let Some(n) = args.values_of("NMAP FILES") {
+    if let Some(n) = args.values_of("NMAP XML FILE") {
         for nmap in n {
             nmaps.push(nmap.to_string());
         }
