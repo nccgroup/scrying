@@ -2,7 +2,7 @@
 # See COPYING for license details.
 
 pkgname=scrying
-pkgver=0.5.0
+pkgver=0.6.0
 pkgrel=1
 epoch=0
 pkgdesc='Collect RDP, web, and VNC screenshots smartly'
