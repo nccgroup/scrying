@@ -194,9 +194,9 @@ checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
 name = "cc"
-version = "1.0.55"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1be3409f94d7bdceeb5f5fac551039d9b3f00e25da7a74fc4d33400a0d96368"
+checksum = "77c1f1d60091c1b73e2b1f4560ab419204b178e625fa945ded7b660becd2bd46"
 
 [[package]]
 name = "cfg-if"
@@ -262,9 +262,9 @@ checksum = "0dbbb57365263e881e805dc77d94697c9118fd94d8da011240555aa7b23445bd"
 
 [[package]]
 name = "core-foundation"
-version = "0.7.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b463447b41ba76cf803544e3276ca19f661b92e84200091df0f78ec1c8aa9808"
+checksum = "57d24c7a13c43e870e37c1556b74555437870a04514f7685f5b354e090567171"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -272,9 +272,9 @@ dependencies = [
 
 [[package]]
 name = "core-foundation-sys"
-version = "0.7.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90accdee0acac454f78a41d2eefc1212ec6eaa2ae6a216619389e996c0155c3c"
+checksum = "b3a71ab494c0b5b860bdc8407ae08978052417070c2ced38573a9157ad75b8ac"
 
 [[package]]
 name = "crc32fast"
@@ -1502,9 +1502,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.55"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec2c5d7e739bc07a3e73381a39d61fdb5f671c60c1df26a130690665803d8226"
+checksum = "3433e879a558dde8b5e8feb2a04899cf34fdde1fafb894687e52105fc1162ac3"
 dependencies = [
  "itoa",
  "ryu",
@@ -1766,9 +1766,9 @@ checksum = "e83e153d1053cbb5a118eeff7fd5be06ed99153f00dbcd8ae310c5fb2b22edc0"
 
 [[package]]
 name = "unicode-width"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "caaa9d531767d1ff2150b9332433f32a24622147e5ebb1f26409d5da67afd479"
+checksum = "9337591893a19b88d8d87f2cec1e73fad5cdfd10e5a6f349f498ad6ea2ffb1e3"
 
 [[package]]
 name = "unicode-xid"
