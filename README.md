@@ -1,4 +1,7 @@
 # NCC Group Scrying
+![Build](https://github.com/nccgroup/scrying/workflows/Build/badge.svg)
+![Release](https://github.com/nccgroup/scrying/workflows/Release/badge.svg)
+
 A new tool for collecting RDP, web and VNC screenshots all in one place
 
 This tool is still a work-in-progress and should be mostly usable but is not yet complete.
