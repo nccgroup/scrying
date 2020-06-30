@@ -69,6 +69,7 @@ pub struct Opts {
     pub threads: usize,
     pub log_file: Option<String>,
     pub nmaps: Vec<String>,
+    pub nessus: Vec<String>,
     pub output_dir: String,
     pub web_proxy: Option<String>,
     pub rdp_proxy: Option<String>,
@@ -138,6 +139,13 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .arg(
+            Arg::new("NESSUS XML FILE")
+                .about("Nessus XML file")
+                .long("nessus")
+                .multiple(true)
+                .takes_value(true),
+        )
+        .arg(
             Arg::new("OUTPUT")
                 .about("Directory to save the captured images in")
                 .default_value("output")
@@ -186,6 +194,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         .group(ArgGroup::new("inputs").required(true).args(&[
             "FILE",
             "NMAP XML FILE",
+            "NESSUS XML FILE",
             "TARGET",
         ]))
         .get_matches();
@@ -211,6 +220,14 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
     if let Some(n) = args.values_of("NMAP XML FILE") {
         for nmap in n {
             nmaps.push(nmap.to_string());
+        }
+    }
+
+    // Grab Nessus files if present, otherwise an empty Vec
+    let mut nessus: Vec<String> = Vec::new();
+    if let Some(n) = args.values_of("NESSUS XML FILE") {
+        for nessus_file in n {
+            nessus.push(nessus_file.to_string());
         }
     }
 
@@ -241,6 +258,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
             .value_of("LOG FILE")
             .map_or_else(|| None, |s| Some(s.to_string())),
         nmaps,
+        nessus,
         output_dir: args.value_of_t("OUTPUT").unwrap(),
         web_proxy,
         rdp_proxy,

@@ -94,7 +94,7 @@ Features with ticks next to them have been implemented, others are TODO
 ## Help text
 ```
 USAGE:
-    scrying [FLAGS] [OPTIONS] <--file <FILES>|--nmap <NMAP FILES>...|--target <TARGETS>>
+    scrying [FLAGS] [OPTIONS] <--file <FILE>...|--nmap <NMAP XML FILE>...|--nessus <NESSUS XML FILE>...|--target <TARGET>...>
 
 FLAGS:
     -s, --silent         Suppress most log messages
@@ -104,19 +104,22 @@ FLAGS:
     -V, --version        Prints version information
 
 OPTIONS:
-    -f, --file <FILES>                 Targets file, one per line
-    -l, --log-file <LOG FILE>          Save logs to the given file
-    -m, --mode <MODE>                  Force targets to be parsed as `web`, `rdp`, `vnc` [default:
-                                       auto]  [possible values: web, rdp, vnc, auto]
-        --nmap <NMAP FILES>...         Nmap XML file
-    -o, --output <OUTPUT>              Directory to save the captured images in [default: output]
-        --proxy <PROXY>                Default SOCKS5 proxy to use for connections
-        --rdp-proxy <RDP PROXY>        Proxy to use for RDP connections
-        --rdp-timeout <RDP TIMEOUT>    How long after last bitmap to wait before saving image
-                                       [default: 2]
-    -t, --target <TARGETS>             Target, e.g. http://example.com
-        --threads <THREADS>            Number of worker threads for each target type [default: 10]
-        --web-proxy <WEB PROXY>        Proxy to use for web requests
+    -f, --file <FILE>...                 Targets file, one per line
+    -l, --log-file <LOG FILE>            Save logs to the given file
+    -m, --mode <MODE>
+            Force targets to be parsed as `web`, `rdp`, `vnc` [default: auto]  [possible values:
+            web, rdp, vnc, auto]
+        --nessus <NESSUS XML FILE>...    Nessus XML file
+        --nmap <NMAP XML FILE>...        Nmap XML file
+    -o, --output <OUTPUT>                Directory to save the captured images in [default: output]
+        --proxy <PROXY>                  Default SOCKS5 proxy to use for connections
+        --rdp-proxy <RDP PROXY>          Proxy to use for RDP connections
+        --rdp-timeout <RDP TIMEOUT>
+            How long after last bitmap to wait before saving image [default: 2]
+
+    -t, --target <TARGET>...             Target, e.g. http://example.com
+        --threads <THREADS>              Number of worker threads for each target type [default: 10]
+        --web-proxy <WEB PROXY>          Proxy to use for web requests
 ```
 
 ## Sample HTML report

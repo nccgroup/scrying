@@ -27,6 +27,7 @@ failure = "0.1"
 askama = "0.9"
 socks = "0.3"
 vnc = "0.4"
+nessus_xml_parser = "0.1"
 
 [package.metadata.deb]
 depends = "chromium"

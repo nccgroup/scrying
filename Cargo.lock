@@ -858,11 +858,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "nessus_xml_parser"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b82063fbb3cf81e923c195d3ed2ca80a569968c062b2df03215955353d59ff96"
+dependencies = [
+ "num-derive",
+ "num-traits",
+ "roxmltree 0.13.0",
+ "thiserror",
+]
+
+[[package]]
 name = "nmap_xml_parser"
 version = "0.2.0"
 source = "git+https://github.com/sciguy16/nmap_xml_parser?branch=host-missing-starttime#97fd77cf5e5b3bc47d57efa8f524fffc40202c23"
 dependencies = [
- "roxmltree",
+ "roxmltree 0.11.0",
  "strum",
  "strum_macros",
  "thiserror",
@@ -888,6 +900,17 @@ dependencies = [
  "autocfg 1.0.0",
  "num-integer",
  "num-traits",
+]
+
+[[package]]
+name = "num-derive"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c8b15b261814f992e33760b1fca9fe8b693d8a65299f20c9901688636cfb746"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1371,6 +1394,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "roxmltree"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17dfc6c39f846bfc7d2ec442ad12055d79608d501380789b965d22f9354451f2"
+dependencies = [
+ "xmlparser",
+]
+
+[[package]]
 name = "rust-crypto"
 version = "0.2.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1448,6 +1480,7 @@ dependencies = [
  "headless_chrome",
  "image",
  "log 0.4.8",
+ "nessus_xml_parser",
  "nmap_xml_parser",
  "rdp-rs",
  "simplelog",

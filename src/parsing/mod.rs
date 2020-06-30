@@ -20,9 +20,7 @@
 use crate::argparse::{Mode, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use nmap_xml_parser::host::Address;
-use nmap_xml_parser::host::Host;
-use nmap_xml_parser::port::Port;
+use nessus_xml_parser::NessusScan;
 use nmap_xml_parser::{port::PortState, NmapResults};
 use std::fmt::Display;
 use std::fs::{self, File};
@@ -324,6 +322,24 @@ fn domain_to_sockaddr(
     ))
 }
 
+fn host_to_socketaddr(host: &str, port: u16) -> Result<SocketAddr, io::Error> {
+    // The nessus file just gives us the "host name" as a string, which
+    // could be an IP address, a legacy IP address, a DNS name, or maybe
+    // even something else entirely. We try to parse it as each type of
+    // thing and see what happens.
+
+    let mut addrs = (host, port).to_socket_addrs()?;
+
+    if let Some(sockaddr) = addrs.next() {
+        Ok(sockaddr)
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!("Unknown error resolving {}", host),
+        ))
+    }
+}
+
 fn ip_port_to_sockaddr(input: &str) -> Result<SocketAddr, io::Error> {
     let mut addrs = input.to_socket_addrs()?;
 
@@ -556,11 +572,49 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         }
     }
 
+    // Parse nessus file
+    for file in &opts.nessus {
+        info!("Loading nessus file {}", file);
+
+        match fs::read_to_string(file) {
+            Err(e) => {
+                warn!("Error opening file: {}", e);
+            }
+            Ok(content) => {
+                match NessusScan::parse(&content) {
+                    Err(e) => {
+                        warn!("Error parsing nessus file: {}", e);
+                    }
+                    Ok(results) => {
+                        debug!("Successfully parsed file");
+                        //TODO filter for host being UP
+                        for (host, port) in results.ports() {
+                            // for each host check for some common open ports
+                            // and add relevant ones to the list
+
+                            // this has been broken out into a separate function
+                            // for readability
+                            input_lists.append(&mut lists_from_nessus(
+                                host, port, &opts.mode,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     input_lists.dedup();
     input_lists
 }
 
-fn lists_from_nmap(host: &Host, port: &Port, mode: &Mode) -> InputLists {
+fn lists_from_nmap(
+    host: &nmap_xml_parser::host::Host,
+    port: &nmap_xml_parser::port::Port,
+    mode: &Mode,
+) -> InputLists {
+    use nmap_xml_parser::host::Address;
+
     let mut list: InputLists = Default::default();
 
     //TODO service discovery for ports identified as
@@ -714,6 +768,51 @@ fn lists_from_nmap(host: &Host, port: &Port, mode: &Mode) -> InputLists {
             _ => {}
         }
     }
+    list
+}
+
+fn lists_from_nessus(
+    host: &nessus_xml_parser::ReportHost,
+    port: nessus_xml_parser::Port,
+    mode: &Mode,
+) -> InputLists {
+    let mut list: InputLists = Default::default();
+
+    debug!("Parsing host: {}, port: {}", host, port.id);
+
+    // Interpret the host.name as an address or hostname
+    if let Ok(target) = host_to_socketaddr(&host.name, port.id) {
+        //let target_string = format!("{}", target);
+        match (port.id, port.service.as_str()) {
+            (3389, _) | (_, "msrdp") if mode.selected(Mode::Rdp) => {
+                debug!("Identified RDP");
+                list.rdp_targets.push(Target::Address(target));
+            }
+            (80, _)
+            | (443, _)
+            | (631, _)
+            | (7443, _)
+            | (8080, _)
+            | (8443, _)
+            | (8000, _)
+            | (3000, _)
+            | (_, "www")
+            | (_, "https?")
+                if mode.selected(Mode::Web) =>
+            {
+                debug!("Identified Web");
+                list.web_targets.push(Target::Address(target));
+            }
+            (5900, _) | (5901, _) | (5902, _) | (5903, _) | (_, "vnc")
+                if mode.selected(Mode::Vnc) =>
+            {
+                debug!("Identified VNC");
+                list.vnc_targets.push(Target::Address(target));
+            }
+            _ => {}
+        }
+    }
+
     list
 }
 
