@@ -330,11 +330,7 @@ impl Image {
                     let g = colour.green;
                     let b = colour.blue;
 
-                    Ok(U16((
-                        r.try_into().unwrap(),
-                        g.try_into().unwrap(),
-                        b.try_into().unwrap(),
-                    )))
+                    Ok(U16((r, g, b)))
                 } else {
                     Err(Error::VncError(
                         "No colour map supplied for 8-bit mode!".to_string(),
