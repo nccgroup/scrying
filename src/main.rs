@@ -237,7 +237,9 @@ fn rdp_worker(
     debug!("At the join part");
     for w in workers {
         debug!("Joining {:?}", w);
-        w.join().unwrap();
+        if w.join().is_err() {
+            debug!("Thread finished with errors");
+        }
     }
 
     Ok(())
