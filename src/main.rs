@@ -104,6 +104,15 @@ fn main() {
         return;
     }
 
+    // Verify that targets have been processed
+    if targets.rdp_targets.is_empty()
+        && targets.web_targets.is_empty()
+        && targets.vnc_targets.is_empty()
+    {
+        error!("No targets imported, exiting");
+        return;
+    }
+
     // Create output directories if they do not exist
     let output_base = Path::new(&opts.output_dir);
     let rdp_output_dir = output_base.join("rdp");
