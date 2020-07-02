@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fix bug where connection issues with RDP would result in a panic [#22](https://github.com/nccgroup/scrying/issues/22)
+* Fix bug where different input arguments would conflict [#23](https://github.com/nccgroup/scrying/issues/23)
 
 ### Security
 
