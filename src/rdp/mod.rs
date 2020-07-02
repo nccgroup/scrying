@@ -314,9 +314,10 @@ fn capture_worker(
             "Error receiving image from {}. Perhaps the server disconnected",
             addr
             );
-            return Err(Error::RdpError(format!(
-                "Error receiving image, perhaps the server disconnected",
-            )));
+            return Err(Error::RdpError(
+                "Error receiving image, perhaps the server disconnected"
+                    .to_string(),
+            ));
         }
     }
 
