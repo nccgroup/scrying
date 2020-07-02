@@ -191,12 +191,12 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .about("Exit after importing targets")
                 .long("test-import"),
         )
-        .group(ArgGroup::new("inputs").required(true).args(&[
-            "FILE",
-            "NMAP XML FILE",
-            "NESSUS XML FILE",
-            "TARGET",
-        ]))
+        .group(
+            ArgGroup::new("inputs")
+                .multiple(true)
+                .required(true)
+                .args(&["FILE", "NMAP XML FILE", "NESSUS XML FILE", "TARGET"]),
+        )
         .get_matches();
 
     // Grab input files if present, otherwise an empty Vec
