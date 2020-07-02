@@ -391,11 +391,26 @@ pub fn capture(
 ) {
     if let Err(e) = capture_worker(target, opts, report_tx) {
         warn!("error: {}", e);
-        let report_message = ReportMessage::Output(ReportMessageContent {
-            mode: Rdp,
-            target: target.to_string(),
-            output: FileError::Error(e.to_string()),
-        });
+        let report_message = match &e {
+            Error::RdpError(r) if r.contains("failed to fill whole buffer") => {
+                ReportMessage::Output(ReportMessageContent {
+                    mode: Rdp,
+                    target: target.to_string(),
+                    output: FileError::Error(
+                        concat!(
+                            "Unexpected disconnection, target may be XP-era ",
+                            "which is currently unsupported"
+                        )
+                        .to_string(),
+                    ),
+                })
+            }
+            _ => ReportMessage::Output(ReportMessageContent {
+                mode: Rdp,
+                target: target.to_string(),
+                output: FileError::Error(e.to_string()),
+            }),
+        };
         report_tx
             .send(report_message)
             .expect("Reporting thread seems to have disconnected");
