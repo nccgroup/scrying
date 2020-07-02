@@ -17,9 +17,11 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::argparse::Mode::Web;
 use crate::error::Error;
 use crate::parsing::Target;
-use crate::reporting::{AsReportMessage, ReportMessage};
+use crate::reporting::ReportMessageContent;
+use crate::reporting::{FileError, ReportMessage};
 use crate::util::target_to_filename;
 use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
 #[allow(unused)]
@@ -27,24 +29,6 @@ use log::{debug, error, info, trace, warn};
 use std::path::Path;
 use std::sync::mpsc;
 use std::{fs::File, io::Write};
-
-#[derive(Debug)]
-pub struct WebOutput {
-    url: String,
-    file: String,
-}
-
-impl AsReportMessage for WebOutput {
-    fn as_report_message(self) -> ReportMessage {
-        ReportMessage::WebOutput(self)
-    }
-    fn target(&self) -> &str {
-        &self.url
-    }
-    fn file(&self) -> &str {
-        &self.file
-    }
-}
 
 pub fn capture(
     target: &Target,
@@ -67,12 +51,13 @@ pub fn capture(
             .expect("error making screenshot");
         let mut file = File::create(&output_file)?;
         file.write_all(&png_data)?;
-        let report_data = WebOutput {
-            url: target.as_str().to_string(),
-            file: relative_filepath.display().to_string(),
-        }
-        .as_report_message();
-        report_tx.send(report_data)?;
+
+        let report_message = ReportMessage::Output(ReportMessageContent {
+            mode: Web,
+            target: target.to_string(),
+            output: FileError::File(relative_filepath.display().to_string()),
+        });
+        report_tx.send(report_message)?;
     }
     Ok(())
 }

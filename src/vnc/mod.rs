@@ -17,10 +17,12 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::argparse::Mode::Vnc;
 use crate::argparse::Opts;
 use crate::error::Error;
 use crate::parsing::Target;
-use crate::reporting::{AsReportMessage, ReportMessage};
+use crate::reporting::ReportMessageContent;
+use crate::reporting::{FileError, ReportMessage};
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
 use image::{DynamicImage, ImageBuffer, Rgb};
@@ -33,24 +35,6 @@ use std::sync::mpsc::Sender;
 use vnc::client::{AuthChoice, AuthMethod, Client};
 use vnc::Colour;
 use vnc::{PixelFormat, Rect};
-
-#[derive(Debug)]
-pub struct VncOutput {
-    target: String,
-    file: String,
-}
-
-impl AsReportMessage for VncOutput {
-    fn as_report_message(self) -> ReportMessage {
-        ReportMessage::VncOutput(self)
-    }
-    fn target(&self) -> &str {
-        &self.target
-    }
-    fn file(&self) -> &str {
-        &self.file
-    }
-}
 
 //TODO code reuse with RDP?
 struct Image {
@@ -441,12 +425,13 @@ fn vnc_capture(
     let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
     info!("Saving image as {}", filepath.display());
     vnc_image.image.save(&filepath)?;
-    let vnc_message = VncOutput {
+
+    let report_message = ReportMessage::Output(ReportMessageContent {
+        mode: Vnc,
         target: target.to_string(),
-        file: relative_filepath.display().to_string(),
-    }
-    .as_report_message();
-    report_tx.send(vnc_message)?;
+        output: FileError::File(relative_filepath.display().to_string()),
+    });
+    report_tx.send(report_message)?;
 
     Ok(())
 }

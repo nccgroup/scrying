@@ -17,10 +17,12 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::argparse::Mode::Rdp;
 use crate::argparse::Opts;
 use crate::error::Error;
 use crate::parsing::Target;
-use crate::reporting::{AsReportMessage, ReportMessage};
+use crate::reporting::ReportMessageContent;
+use crate::reporting::{FileError, ReportMessage};
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
 use image::{DynamicImage, ImageBuffer, Rgba};
@@ -42,24 +44,6 @@ use std::time::Duration;
 //TODO maybe make this configurable
 const IMAGE_WIDTH: u16 = 1280;
 const IMAGE_HEIGHT: u16 = 1024;
-
-#[derive(Debug)]
-pub struct RdpOutput {
-    target: String,
-    file: String,
-}
-
-impl AsReportMessage for RdpOutput {
-    fn as_report_message(self) -> ReportMessage {
-        ReportMessage::RdpOutput(self)
-    }
-    fn target(&self) -> &str {
-        &self.target
-    }
-    fn file(&self) -> &str {
-        &self.file
-    }
-}
 
 struct BitmapChunk {
     width: u32,
@@ -316,14 +300,24 @@ fn capture_worker(
             let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
             info!("Saving image as {}", filepath.display());
             di.extract().save(&filepath)?;
-            let rdp_message = RdpOutput {
+            let report_message = ReportMessage::Output(ReportMessageContent {
+                mode: Rdp,
                 target: target.to_string(),
-                file: relative_filepath.display().to_string(),
-            }
-            .as_report_message();
-            report_tx.send(rdp_message)?;
+                output: FileError::File(
+                    relative_filepath.display().to_string(),
+                ),
+            });
+            report_tx.send(report_message)?;
         }
-        _ => unimplemented!(),
+        None => {
+            warn!(
+            "Error receiving image from {}. Perhaps the server disconnected",
+            addr
+            );
+            return Err(Error::RdpError(format!(
+                "Error receiving image, perhaps the server disconnected",
+            )));
+        }
     }
 
     Ok(())
@@ -382,8 +376,8 @@ fn bmp_thread<T: Read + Write>(
         }) {
             Ok(_) => (),
             Err(e) => {
-                error!("{:?}", e);
-                break;
+                error!("Error reading RDP stream: {:?}", e);
+                return;
             }
         }
     }
@@ -397,6 +391,14 @@ pub fn capture(
 ) {
     if let Err(e) = capture_worker(target, opts, report_tx) {
         warn!("error: {}", e);
+        let report_message = ReportMessage::Output(ReportMessageContent {
+            mode: Rdp,
+            target: target.to_string(),
+            output: FileError::Error(e.to_string()),
+        });
+        report_tx
+            .send(report_message)
+            .expect("Reporting thread seems to have disconnected");
     }
 
     tx.send(ThreadStatus::Complete).unwrap();

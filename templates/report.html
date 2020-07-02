@@ -36,16 +36,22 @@
 					{% if !vnc_outputs.is_empty() %}
 					<li><a href="#web">VNC images</a></li>{% endif %}
 					<li><a href="#summary">Scan summary</a></li>
+					{% if !rdp_errors.is_empty() %}
+					<li><a href="#rdp_errors">RDP errors</a></li>{% endif %}
+					{% if !web_errors.is_empty() %}
+					<li><a href="#web_errors">Web errors</a></li>{% endif %}
+					{% if !vnc_errors.is_empty() %}
+					<li><a href="#vnc_errors">VNC errors</a></li>{% endif %}
 				</ul>
 			</div>
 			{% if !rdp_outputs.is_empty() %}
 			<div class="section">
 				<h2 id="rdp">RDP captures</h2>
 				{% for out in rdp_outputs %}
-				<a href="{{ out.file() }}">
+				<a href="{{ out.file }}">
 					<div class="imagebox">
-						<img width="300px" src="{{ out.file() }}" />
-						<br />{{ out.target() }}
+						<img width="300px" src="{{ out.file }}" />
+						<br />{{ out.target }}
 					</div>
 				</a>
 				{% endfor %}
@@ -56,10 +62,10 @@
 			<div class="section">
 				<h2 id="web">Web captures</h2>
 				{% for out in web_outputs %}
-				<a href="{{ out.file() }}">
+				<a href="{{ out.file }}">
 					<div class="imagebox">
-						<img width="300px" src="{{ out.file() }}" />
-						<br />{{ out.target() }}
+						<img width="300px" src="{{ out.file }}" />
+						<br />{{ out.target }}
 					</div>
 				</a>
 				{% endfor %}
@@ -70,10 +76,10 @@
 			<div class="section">
 				<h2 id="web">VNC captures</h2>
 				{% for out in vnc_outputs %}
-				<a href="{{ out.file() }}">
+				<a href="{{ out.file }}">
 					<div class="imagebox">
-						<img width="300px" src="{{ out.file() }}" />
-						<br />{{ out.target() }}
+						<img width="300px" src="{{ out.file }}" />
+						<br />{{ out.target }}
 					</div>
 				</a>
 				{% endfor %}
@@ -93,7 +99,7 @@
 				{% if !rdp_outputs.is_empty() %}
 				<h3>RDP targets with NLA disabled:</h3>
 				<ul>{% for t in rdp_outputs %}
-					<li>{{ t.target() }}</li>
+					<li>{{ t.target }}</li>
 					{%endfor %}
 				</ul>
 				{% endif %}
@@ -117,11 +123,44 @@
 				{% if !vnc_outputs.is_empty() %}
 				<h3>VNC targets with no password:</h3>
 				<ul>{% for t in vnc_outputs %}
-					<li>{{ t.target() }}</li>
+					<li>{{ t.target }}</li>
 					{%endfor %}
 				</ul>
 				{% endif %}
 			</div>
+
+			{% if !rdp_errors.is_empty() %}
+			<div class="section">
+				<h3 id="rdp_errors">RDP errors</h2>
+
+				<ul>{% for out in rdp_errors %}
+					<li>{{out.target}}: {{ out.error }}</li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+
+			{% if !web_errors.is_empty() %}
+			<div class="section">
+				<h3 id="web_errors">Web errors</h2>
+
+				<ul>{% for out in web_errors %}
+					<li>{{out.target}}: {{ out.error }}</li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+
+			{% if !vnc_errors.is_empty() %}
+			<div class="section">
+				<h3 id="vnc_errors">VNC errors</h2>
+
+				<ul>{% for out in vnc_errors %}
+					<li>{{out.target}}: {{ out.error }}</li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
 		</div>
 	</body>
 </html>
