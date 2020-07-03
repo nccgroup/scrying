@@ -81,7 +81,7 @@ pub struct Opts {
 pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
     let args = App::new("Scrying")
         .version(crate_version!())
-        .author("David Young https://github.com/nccgroup/dirble")
+        .author("David Young https://github.com/nccgroup/scrying")
         .about("Automatic RDP, Web, and VNC screenshotting tool")
         .setting(AppSettings::ArgRequiredElseHelp)
         .arg(
@@ -94,7 +94,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("TARGET")
-                .about("Target, e.g. http://example.com")
+                .about("Target, e.g. http://example.com, rdp://[2001:db8::4]")
                 .long("target")
                 .multiple(true)
                 .short('t')
@@ -111,7 +111,9 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("RDP TIMEOUT")
-                .about("How long after last bitmap to wait before saving image")
+                .about(
+                    "Seconds to wait after last bitmap before saving an image",
+                )
                 .default_value("2")
                 .long("rdp-timeout")
                 .takes_value(true)
@@ -146,7 +148,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .arg(
-            Arg::new("OUTPUT")
+            Arg::new("OUTPUT DIR")
                 .about("Directory to save the captured images in")
                 .default_value("output")
                 .long("output")
@@ -155,19 +157,28 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("WEB PROXY")
-                .about("Proxy to use for web requests")
+                .about(concat!(
+                    "HTTP/SOCKS Proxy to use for web requests",
+                    " e.g. http://[::1]:8080"
+                ))
                 .long("web-proxy")
                 .takes_value(true),
         )
         .arg(
             Arg::new("RDP PROXY")
-                .about("Proxy to use for RDP connections")
+                .about(concat!(
+                    "SOCKS5 proxy to use for RDP connections",
+                    " e.g. socks5://[::1]:1080"
+                ))
                 .long("rdp-proxy")
                 .takes_value(true),
         )
         .arg(
             Arg::new("PROXY")
-                .about("Default SOCKS5 proxy to use for connections")
+                .about(concat!(
+                    "Default SOCKS5 proxy to use for connections",
+                    " e.g. socks5://[::1]:1080"
+                ))
                 .long("proxy")
                 .takes_value(true)
                 .validator(is_socks5),
@@ -259,7 +270,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
             .map_or_else(|| None, |s| Some(s.to_string())),
         nmaps,
         nessus,
-        output_dir: args.value_of_t("OUTPUT").unwrap(),
+        output_dir: args.value_of_t("OUTPUT DIR").unwrap(),
         web_proxy,
         rdp_proxy,
         silent: args.is_present("SILENT"),
