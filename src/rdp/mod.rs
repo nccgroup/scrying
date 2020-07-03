@@ -94,7 +94,7 @@ impl Image {
 
         // If the chunk has zero size then we have a problem
         if chunk.left == chunk.right || chunk.top == chunk.bottom {
-            warn!("Received zero-size chunk");
+            debug!("Received zero-size chunk");
             return Err(());
         }
 
@@ -109,7 +109,7 @@ impl Image {
             trace!("idx: {}, pixel: {:?}, at ({}, {})", idx, pixel, x, y);
 
             if y > chunk.bottom {
-                warn!("Pixel out of bounds!");
+                debug!("Pixel out of bounds!");
                 break;
             }
 
@@ -148,7 +148,7 @@ impl Image {
 
     fn initialise_buffer(&mut self, chunk: &BitmapChunk) -> Result<(), ()> {
         use ImageMode::*;
-        println!("BITS PER PIXEL: {}", chunk.bpp);
+        debug!("BITS PER PIXEL: {}", chunk.bpp);
         //TODO get these values properly
         // IMAGE_WIDTH and IMAGE_HEIGHT are u16
         let width = IMAGE_WIDTH as u32;
@@ -156,7 +156,7 @@ impl Image {
 
         let pixel_size = 4; //chunk.data.len() as u32
                             // / ((chunk.right - chunk.left) * (chunk.bottom - chunk.top));
-        println!("PIXEL SIZE {}", pixel_size);
+        debug!("PIXEL SIZE {}", pixel_size);
 
         // Have to do a let binding here and then transfer to the self.*
         // variables pending https://github.com/rust-lang/rfcs/pull/2909
@@ -285,7 +285,7 @@ fn capture_worker(
                 }
                 Ok(chunk) => {
                     if rdp_image.add_chunk(&chunk).is_err() {
-                        warn!("Attempted to add invalid chunk");
+                        debug!("Attempted to add invalid chunk");
                         //break;
                     }
                 }

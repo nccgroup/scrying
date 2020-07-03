@@ -220,7 +220,7 @@ fn rdp_worker(
         #[allow(clippy::single_match)]
         match thread_status_rx.try_recv() {
             Ok(ThreadStatus::Complete) => {
-                info!("Thread complete, yay");
+                debug!("Thread complete, yay");
                 num_workers -= 1;
             }
             Err(_) => {}
