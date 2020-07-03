@@ -33,8 +33,8 @@ use std::ffi::OsStr;
 use std::fs::create_dir_all;
 use std::fs::File;
 use std::path::Path;
-use std::sync::mpsc;
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
 use std::thread;
 
 mod argparse;
@@ -134,6 +134,15 @@ fn main() {
         });
     }
 
+    // Attach interrupt handler to catch ctrl-c
+    let caught_ctrl_c = Arc::new(AtomicBool::new(false));
+    let caught_ctrl_c_clone_for_handler = caught_ctrl_c.clone();
+    ctrlc::set_handler(move || {
+        warn!("Caught interrupt signal, cleaning up...");
+        caught_ctrl_c_clone_for_handler.store(true, Ordering::SeqCst);
+    })
+    .expect("Unable to attach interrupt signal handler");
+
     // Start report collating thread
     let (report_tx, report_rx): (
         mpsc::Sender<ReportMessage>,
@@ -151,9 +160,15 @@ fn main() {
         let targets_clone = targets.clone();
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c.clone();
         Some(thread::spawn(move || {
             debug!("Starting RDP worker threads");
-            rdp_worker(targets_clone, opts_clone, report_tx_clone)
+            rdp_worker(
+                targets_clone,
+                opts_clone,
+                report_tx_clone,
+                caught_ctrl_c_clone,
+            )
         }))
     } else {
         None
@@ -163,9 +178,16 @@ fn main() {
         let targets_clone = targets.clone();
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c.clone();
         Some(thread::spawn(move || {
             debug!("Starting Web worker threads");
-            web_worker(targets_clone, opts_clone, report_tx_clone).unwrap()
+            web_worker(
+                targets_clone,
+                opts_clone,
+                report_tx_clone,
+                caught_ctrl_c_clone,
+            )
+            .unwrap()
         }))
     } else {
         None
@@ -176,9 +198,16 @@ fn main() {
         let targets_clone = targets; //.clone();
         let opts_clone = opts; //.clone();
         let report_tx_clone = report_tx.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c.clone();
         Some(thread::spawn(move || {
             debug!("Starting VNC worker threads");
-            vnc_worker(targets_clone, opts_clone, report_tx_clone).unwrap()
+            vnc_worker(
+                targets_clone,
+                opts_clone,
+                report_tx_clone,
+                caught_ctrl_c_clone,
+            )
+            .unwrap()
         }))
     } else {
         None
@@ -202,6 +231,7 @@ fn rdp_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
+    caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), ()> {
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
@@ -212,7 +242,7 @@ fn rdp_worker(
         Sender<ThreadStatus>,
         Receiver<ThreadStatus>,
     ) = mpsc::channel();
-    loop {
+    while !caught_ctrl_c.load(Ordering::SeqCst) {
         // check for status messages
         // Turn off clippy's single_match warning here because match
         // matches the intuition for how try_recv is processed better
@@ -258,6 +288,7 @@ fn web_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
+    caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut chrome_env = HashMap::new();
     if let Some(p) = &opts.web_proxy {
@@ -274,6 +305,9 @@ fn web_worker(
     let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
 
     for target in &targets.web_targets {
+        if caught_ctrl_c.load(Ordering::SeqCst) {
+            break;
+        }
         if let Err(e) = web::capture(target, &opts.output_dir, &tab, &report_tx)
         {
             match e {
@@ -296,6 +330,7 @@ fn vnc_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
+    caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
@@ -306,7 +341,7 @@ fn vnc_worker(
         Sender<ThreadStatus>,
         Receiver<ThreadStatus>,
     ) = mpsc::channel();
-    loop {
+    while !caught_ctrl_c.load(Ordering::SeqCst) {
         // check for status messages
         // Turn off clippy's single_match warning here because match
         // matches the intuition for how try_recv is processed better

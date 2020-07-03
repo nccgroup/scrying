@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added support for reading Nessus XML files
 * RDP errors are collected and included in the report
 * While XP is not currently supported, suspected XP-era machines have appropriate error messages [#21](https://github.com/nccgroup/scrying/issues/21)
+* Catches CTRL+C so that active targets can be completed and a report produced before exiting
 
 ### Changed
 * The program exits early if it couldn't parse any targets from the input files [#19](https://github.com/nccgroup/scrying/issues/19)
