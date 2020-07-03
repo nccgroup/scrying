@@ -198,7 +198,7 @@ fn main() {
         let targets_clone = targets; //.clone();
         let opts_clone = opts; //.clone();
         let report_tx_clone = report_tx.clone();
-        let caught_ctrl_c_clone = caught_ctrl_c.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c; //.clone();
         Some(thread::spawn(move || {
             debug!("Starting VNC worker threads");
             vnc_worker(
