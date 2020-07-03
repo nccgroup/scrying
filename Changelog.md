@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [v0.7.0] - 2020-06-29
+### Added
 * Added support for reading Nessus XML files
 * RDP errors are collected and included in the report
 * While XP is not currently supported, suspected XP-era machines have appropriate error messages [#21](https://github.com/nccgroup/scrying/issues/21)
@@ -14,15 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * The program exits early if it couldn't parse any targets from the input files [#19](https://github.com/nccgroup/scrying/issues/19)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 * Fix bug where connection issues with RDP would result in a panic [#22](https://github.com/nccgroup/scrying/issues/22)
 * Fix bug where different input arguments would conflict [#23](https://github.com/nccgroup/scrying/issues/23)
 
-### Security
 
 ## [v0.6.0] - 2020-06-29
 ### Added
