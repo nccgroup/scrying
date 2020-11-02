@@ -627,7 +627,12 @@ fn lists_from_nmap(
         // Found an open port, now add it to the
         // input lists if it is appropriate
         //TODO identify Web
-        match (port.port_number, port.service_info.name.as_str()) {
+        let service_name = if let Some(info) = &port.service_info {
+            info.name.as_str()
+        } else {
+            ""
+        };
+        match (port.port_number, service_name) {
             // RDP signatures
             (3389, _) | (_, "ms-wbt-server") if mode.selected(Mode::Rdp) => {
                 debug!("Identified RDP");
