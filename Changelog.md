@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [v0.8.0] - 2020-11-02
+
+### Fixed
+* Correctly parse Nmap files without full service information for each port ([nmap_xml_parser#7](https://github.com/Ayrx/nmap_xml_parser/issues/7))
+
 ## [v0.7.0] - 2020-06-29
 ### Added
 * Added support for reading Nessus XML files
