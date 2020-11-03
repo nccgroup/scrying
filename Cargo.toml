@@ -30,6 +30,12 @@ vnc = "0.4"
 nessus_xml_parser = "0.1"
 ctrlc = "3.1"
 
+[profile.release]
+# enable overflow checks because there is sometimes a memory allocation
+# error where some component tries to allocate 2^64-1 bytes, and it would
+# be helpful to panic at the point of the underflow.
+overflow-checks = true
+
 [package.metadata.deb]
 depends = "chromium"
 extended-description = """\
