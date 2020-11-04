@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [v0.8.1] - 2020-11-04
+
+### Changed
+* Enable integer overflow checks in release mode to investigate [#26](https://github.com/nccgroup/scrying/issues/26)
+
+
 ## [v0.8.0] - 2020-11-02
 
 ### Fixed
