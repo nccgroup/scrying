@@ -17,8 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## [v0.8.1] - 2020-11-04
 
+## [v0.8.2] - 2020-11-19
+### Fixed
+* Debian package now depends on either `chromium`, `chromium-browser` or `google-chrome` because every Debian-derived distribution seems to have its own name for Chromium [#27](https://github.com/nccgroup/scrying/issues/27)
+
+
+## [v0.8.1] - 2020-11-04
 ### Changed
 * Enable integer overflow checks in release mode to investigate [#26](https://github.com/nccgroup/scrying/issues/26)
 
@@ -27,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Correctly parse Nmap files without full service information for each port ([nmap_xml_parser#7](https://github.com/Ayrx/nmap_xml_parser/issues/7))
+
 
 ## [v0.7.0] - 2020-06-29
 ### Added
