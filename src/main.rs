@@ -284,6 +284,70 @@ fn rdp_worker(
     Ok(())
 }
 
+#[cfg(target_os = "windows")]
+fn web_worker(
+    targets: Arc<InputLists>,
+    opts: Arc<Opts>,
+    report_tx: mpsc::Sender<ReportMessage>,
+    caught_ctrl_c: Arc<AtomicBool>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use native_windows_gui::{
+        self as nwg, ImageDecoder, ImageFrame, ImageSource, Window,
+    };
+    use webview2::{Controller, Stream};
+    use winapi::um::winuser::*;
+
+    nwg::init().unwrap();
+
+    let mut window = Window::default();
+
+    Window::builder()
+        .title("WebView2 - NWG")
+        // CW_USEDEFAULT incidentally works, because it's actually i32::MIN, and
+        // after saturating mul_div, it's still i32::MIN.
+        .position((CW_USEDEFAULT, CW_USEDEFAULT))
+        .size((1600, 900))
+        .build(&mut window)
+        .unwrap();
+
+    let window_handle = window.handle;
+    let hwnd = window_handle.hwnd().unwrap();
+    println!("Building webview");
+    let _res = webview2::EnvironmentBuilder::new().build(move |env| {
+        println!("Built webview");
+        env.unwrap().create_controller(hwnd, move |c| {
+            let c = c.unwrap();
+            println!("get controller");
+            unsafe {
+                let mut rect = std::mem::zeroed();
+                GetClientRect(hwnd, &mut rect);
+                c.put_bounds(rect).unwrap();
+            }
+
+            let webview = c.get_webview().unwrap();
+            webview.navigate("https://nccgroup.com").unwrap();
+            println!("Navigated webview");
+            c.move_focus(webview2::MoveFocusReason::Programmatic)
+                .unwrap();
+
+            let mut stream = webview2::Stream::from_bytes(&[]);
+            webview.capture_preview(
+                webview2::CapturePreviewImageFormat::PNG,
+                stream.clone(),
+                move |r| {
+                    use std::io::{Seek, SeekFrom};
+                    r?;
+                    stream.seek(SeekFrom::Start(0)).unwrap();
+                    println!("image: {:?}", stream);
+                    Ok(())
+                },
+            )
+        })
+    }).unwrap();
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
 fn web_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
