@@ -294,6 +294,8 @@ fn web_worker(
     use native_windows_gui::{
         self as nwg, ImageDecoder, ImageFrame, ImageSource, Window,
     };
+    use once_cell::unsync::OnceCell;
+    use std::rc::Rc;
     use webview2::{Controller, Stream};
     use winapi::um::winuser::*;
 
@@ -312,38 +314,82 @@ fn web_worker(
 
     let window_handle = window.handle;
     let hwnd = window_handle.hwnd().unwrap();
+
+    let controller: Rc<OnceCell<Controller>> = Rc::new(OnceCell::new());
+    let controller_clone = controller.clone();
+
     println!("Building webview");
-    let _res = webview2::EnvironmentBuilder::new().build(move |env| {
-        println!("Built webview");
-        env.unwrap().create_controller(hwnd, move |c| {
-            let c = c.unwrap();
-            println!("get controller");
-            unsafe {
-                let mut rect = std::mem::zeroed();
-                GetClientRect(hwnd, &mut rect);
-                c.put_bounds(rect).unwrap();
-            }
+    let _res = webview2::EnvironmentBuilder::new()
+        .build(move |env| {
+            println!("Built webview");
+            env.unwrap().create_controller(hwnd, move |c| {
+                let c = c.unwrap();
+                println!("get controller");
+                unsafe {
+                    let mut rect = std::mem::zeroed();
+                    GetClientRect(hwnd, &mut rect);
+                    c.put_bounds(rect).unwrap();
+                }
 
-            let webview = c.get_webview().unwrap();
-            webview.navigate("https://nccgroup.com").unwrap();
-            println!("Navigated webview");
-            c.move_focus(webview2::MoveFocusReason::Programmatic)
-                .unwrap();
+                let webview = c.get_webview().unwrap();
+                c.move_focus(webview2::MoveFocusReason::Programmatic)
+                    .unwrap();
+                println!("Add event handler");
+                webview
+                    .add_navigation_completed(|wv, args| {
+                        println!("Navigation completed handler");
+                        let mut stream = webview2::Stream::from_bytes(&[]);
+                        wv.capture_preview(
+                            webview2::CapturePreviewImageFormat::PNG,
+                            stream.clone(),
+                            move |r| {
+                                use std::io::{Seek, SeekFrom};
+                                r?;
+                                stream.seek(SeekFrom::Start(0)).unwrap();
+                                println!("image: {:?}", stream);
+                                Ok(())
+                            },
+                        )
+                    })
+                    .unwrap();
 
-            let mut stream = webview2::Stream::from_bytes(&[]);
-            webview.capture_preview(
-                webview2::CapturePreviewImageFormat::PNG,
-                stream.clone(),
-                move |r| {
-                    use std::io::{Seek, SeekFrom};
-                    r?;
-                    stream.seek(SeekFrom::Start(0)).unwrap();
-                    println!("image: {:?}", stream);
-                    Ok(())
-                },
-            )
+                controller_clone.set(c).unwrap();
+
+                webview.navigate("https://github.com").unwrap();
+                println!("Navigated webview");
+                Ok(())
+            })
         })
-    }).unwrap();
+        .unwrap();
+
+    let window_handle = window.handle;
+    nwg::bind_raw_event_handler(
+        &window_handle,
+        0xffff + 1,
+        move |_, msg, _, _| {
+            match msg {
+                WM_SETFOCUS => {
+                    println!("set focus");
+                    if let Some(controller) = controller.get() {
+                        controller
+                            .move_focus(webview2::MoveFocusReason::Programmatic)
+                            .unwrap();
+                    }
+                }
+                WM_CLOSE => {
+                    println!("close window");
+
+                    nwg::stop_thread_dispatch();
+                }
+                _ => {}
+            }
+            None
+        },
+    )
+    .unwrap();
+
+    nwg::dispatch_thread_events();
+
     Ok(())
 }
 

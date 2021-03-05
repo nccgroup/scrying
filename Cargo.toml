@@ -35,6 +35,7 @@ webview2 = "0.1.0-beta.1"
 winapi = { version = "0.3", features = ["libloaderapi"] }
 winit = "0.24"
 native-windows-gui = "1.0"
+once_cell = "1.7"
 
 [profile.release]
 # enable overflow checks because there is sometimes a memory allocation

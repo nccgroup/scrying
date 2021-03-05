@@ -2141,6 +2141,7 @@ dependencies = [
  "native-windows-gui",
  "nessus_xml_parser",
  "nmap_xml_parser",
+ "once_cell",
  "rdp-rs",
  "simplelog",
  "socks",
