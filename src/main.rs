@@ -291,13 +291,14 @@ fn web_worker(
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use native_windows_gui::{
-        self as nwg, ImageDecoder, ImageFrame, ImageSource, Window,
-    };
-    use once_cell::unsync::OnceCell;
-    use std::rc::Rc;
+    use crate::parsing::Target;
+    use crossbeam_channel::unbounded;
+    use native_windows_gui::{self as nwg, Window};
+    use once_cell::sync::OnceCell;
     use webview2::{Controller, Stream};
     use winapi::um::winuser::*;
+
+    let (target_sender, target_receiver) = unbounded::<Target>();
 
     nwg::init().unwrap();
 
@@ -315,7 +316,7 @@ fn web_worker(
     let window_handle = window.handle;
     let hwnd = window_handle.hwnd().unwrap();
 
-    let controller: Rc<OnceCell<Controller>> = Rc::new(OnceCell::new());
+    let controller: Arc<OnceCell<Controller>> = Arc::new(OnceCell::new());
     let controller_clone = controller.clone();
 
     println!("Building webview");
@@ -335,10 +336,12 @@ fn web_worker(
                 c.move_focus(webview2::MoveFocusReason::Programmatic)
                     .unwrap();
                 println!("Add event handler");
+                let target_receiver_clone = target_receiver.clone();
                 webview
-                    .add_navigation_completed(|wv, args| {
+                    .add_navigation_completed(move |wv, _args| {
                         println!("Navigation completed handler");
-                        let mut stream = webview2::Stream::from_bytes(&[]);
+                        let mut stream = Stream::from_bytes(&[]);
+                        let target_receiver_clone = target_receiver.clone();
                         wv.capture_preview(
                             webview2::CapturePreviewImageFormat::PNG,
                             stream.clone(),
@@ -347,22 +350,65 @@ fn web_worker(
                                 r?;
                                 stream.seek(SeekFrom::Start(0)).unwrap();
                                 println!("image: {:?}", stream);
+
+                                //TODO work out how to save the image
+                                //
+                                // The whole callback-centred architecture is
+                                // really difficult to work with. Saving the
+                                // image involves writing the data to a file
+                                // with a target-specific name and sending a
+                                // message down the report_tx channel with
+                                // target-specific data, but the image data
+                                // only exists within this callback where
+                                // we don't have access to that additional
+                                // information :(
+                                //
+                                // I also don't think that the controller is
+                                // Send, so it might be difficult to have a
+                                // supervisor thread controlling the
+                                // navigation (and taking "callbacks" via
+                                // mpsc)?
+
                                 Ok(())
                             },
                         )
+                        .unwrap();
+
+                        // Navigate to next target?
+                        if caught_ctrl_c.load(Ordering::SeqCst) {
+                            nwg::stop_thread_dispatch();
+                            return Ok(());
+                        } else if let Ok(t) = target_receiver_clone.try_recv() {
+                            println!("Loading next target: {}", t);
+                            if let Target::Url(u) = t {
+                                wv.navigate(u.as_str()).unwrap();
+                            }
+                        } else {
+                            // No more targets - close the webview
+                            nwg::stop_thread_dispatch();
+                        }
+                        Ok(())
                     })
                     .unwrap();
 
                 controller_clone.set(c).unwrap();
 
-                webview.navigate("https://github.com").unwrap();
-                println!("Navigated webview");
+                // Navigate to the first target
+                if let Ok(t) = target_receiver_clone.try_recv() {
+                    debug!("Loading target: {}", t);
+                    if let Target::Url(u) = t {
+                        webview.navigate(u.as_str()).unwrap();
+                    }
+                } else {
+                    nwg::stop_thread_dispatch();
+                }
                 Ok(())
             })
         })
         .unwrap();
 
     let window_handle = window.handle;
+    let controller_clone = controller.clone();
     nwg::bind_raw_event_handler(
         &window_handle,
         0xffff + 1,
@@ -370,7 +416,7 @@ fn web_worker(
             match msg {
                 WM_SETFOCUS => {
                     println!("set focus");
-                    if let Some(controller) = controller.get() {
+                    if let Some(controller) = controller_clone.get() {
                         controller
                             .move_focus(webview2::MoveFocusReason::Programmatic)
                             .unwrap();
@@ -387,6 +433,13 @@ fn web_worker(
         },
     )
     .unwrap();
+
+    // Spawn thread to fill up the channel
+    thread::spawn(move || {
+        for target in &targets.web_targets {
+            target_sender.send(target.clone()).unwrap();
+        }
+    });
 
     nwg::dispatch_thread_events();
 

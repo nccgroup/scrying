@@ -2133,6 +2133,7 @@ version = "0.8.2"
 dependencies = [
  "askama",
  "clap",
+ "crossbeam-channel",
  "ctrlc",
  "failure",
  "headless_chrome",

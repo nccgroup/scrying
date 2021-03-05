@@ -61,3 +61,30 @@ pub fn capture(
     }
     Ok(())
 }
+
+pub fn save(
+    target: &Target,
+    output_dir: &str,
+    png_data: &[u8],
+    report_tx: &mpsc::Sender<ReportMessage>,
+) -> Result<(), Error> {
+    info!("Processing {}", target);
+
+    let filename = format!("{}.png", target_to_filename(&target));
+
+    let relative_filepath = Path::new("web").join(&filename);
+    let output_file = Path::new(output_dir).join(&relative_filepath);
+    info!("Saving image as {}", output_file.display());
+
+    let mut file = File::create(&output_file)?;
+    file.write_all(&png_data)?;
+
+    let report_message = ReportMessage::Output(ReportMessageContent {
+        mode: Web,
+        target: target.to_string(),
+        output: FileError::File(relative_filepath.display().to_string()),
+    });
+    report_tx.send(report_message)?;
+
+    Ok(())
+}
