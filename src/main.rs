@@ -19,8 +19,6 @@
 
 use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
-use error::Error;
-use headless_chrome::{Browser, LaunchOptionsBuilder};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use parsing::{generate_target_lists, InputLists};
@@ -28,10 +26,7 @@ use simplelog::{
     CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
 };
-use std::collections::HashMap;
-use std::ffi::OsStr;
-use std::fs::create_dir_all;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
@@ -292,7 +287,6 @@ fn web_worker(
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use crate::parsing::Target;
-    use crossbeam_channel::unbounded;
     use native_windows_gui::{self as nwg, Window};
     use once_cell::sync::OnceCell;
     use std::io::Read;
@@ -301,10 +295,9 @@ fn web_worker(
 
     type CaptureResult = Result<Vec<u8>, Option<WebErrorStatus>>;
 
-    let (target_sender, target_receiver) = unbounded::<Target>();
     let (result_sender, result_receiver) = mpsc::channel::<CaptureResult>();
 
-    nwg::init().unwrap();
+    nwg::init()?;
 
     let mut window = Window::default();
 
@@ -314,8 +307,7 @@ fn web_worker(
         // after saturating mul_div, it's still i32::MIN.
         .position((CW_USEDEFAULT, CW_USEDEFAULT))
         .size((1600, 900))
-        .build(&mut window)
-        .unwrap();
+        .build(&mut window)?;
 
     let window_handle = window.handle;
     let hwnd = window_handle.hwnd().unwrap();
@@ -341,12 +333,10 @@ fn web_worker(
                 c.move_focus(webview2::MoveFocusReason::Programmatic)
                     .unwrap();
                 trace!("Add event handler");
-                let target_receiver_clone = target_receiver.clone();
                 webview
                     .add_navigation_completed(move |wv, args| {
                         trace!("Navigation completed handler");
                         let mut stream = Stream::from_bytes(&[]);
-                        let target_receiver_clone = target_receiver.clone();
                         let result_sender_clone = result_sender.clone();
                         if Ok(true) == args.get_is_success() {
                             trace!("Navigation successful, start capture");
@@ -394,7 +384,7 @@ fn web_worker(
                         } else {
                             let status = args
                                 .get_web_error_status()
-                                .map(|s| Some(s))
+                                .map(Some)
                                 .unwrap_or_default();
                             warn!("Capture failed with error: {:?}", status);
                             result_sender_clone.send(Err(status)).unwrap();
@@ -408,27 +398,23 @@ fn web_worker(
 
                 Ok(())
             })
-        })
-        .unwrap();
+        })?;
 
     let window_handle = window.handle;
-    let controller_clone = controller.clone();
+
     nwg::bind_raw_event_handler(
         &window_handle,
         0xffff + 1,
         move |_, msg, _, _| {
-            match msg {
-                WM_CLOSE => {
-                    println!("close window");
+            if msg == WM_CLOSE {
+                info!("close window");
 
-                    nwg::stop_thread_dispatch();
-                }
-                _ => {}
+                nwg::stop_thread_dispatch();
             }
+
             None
         },
-    )
-    .unwrap();
+    )?;
 
     // Launch the gui threads in a nonblocking way
     trace!("Dispatch thread events");
@@ -519,6 +505,11 @@ fn web_worker(
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    use error::Error;
+    use headless_chrome::{Browser, LaunchOptionsBuilder};
+    use std::collections::HashMap;
+    use std::ffi::OsStr;
+
     let mut chrome_env = HashMap::new();
     if let Some(p) = &opts.web_proxy {
         chrome_env.insert("http_proxy".to_string(), p.clone());
