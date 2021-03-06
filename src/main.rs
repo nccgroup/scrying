@@ -295,10 +295,14 @@ fn web_worker(
     use crossbeam_channel::unbounded;
     use native_windows_gui::{self as nwg, Window};
     use once_cell::sync::OnceCell;
-    use webview2::{Controller, Stream};
+    use std::sync::RwLock;
+    use webview2::{Controller, Stream, WebErrorStatus};
     use winapi::um::winuser::*;
 
+    type CaptureResult = Result<Vec<u8>, Option<WebErrorStatus>>;
+
     let (target_sender, target_receiver) = unbounded::<Target>();
+    let (result_sender, result_receiver) = mpsc::channel::<CaptureResult>();
 
     nwg::init().unwrap();
 
@@ -319,13 +323,13 @@ fn web_worker(
     let controller: Arc<OnceCell<Controller>> = Arc::new(OnceCell::new());
     let controller_clone = controller.clone();
 
-    println!("Building webview");
+    trace!("Building webview");
     let _res = webview2::EnvironmentBuilder::new()
         .build(move |env| {
-            println!("Built webview");
+            trace!("Built webview");
             env.unwrap().create_controller(hwnd, move |c| {
                 let c = c.unwrap();
-                println!("get controller");
+                trace!("get controller");
                 unsafe {
                     let mut rect = std::mem::zeroed();
                     GetClientRect(hwnd, &mut rect);
@@ -335,73 +339,69 @@ fn web_worker(
                 let webview = c.get_webview().unwrap();
                 c.move_focus(webview2::MoveFocusReason::Programmatic)
                     .unwrap();
-                println!("Add event handler");
+                trace!("Add event handler");
                 let target_receiver_clone = target_receiver.clone();
                 webview
-                    .add_navigation_completed(move |wv, _args| {
-                        println!("Navigation completed handler");
+                    .add_navigation_completed(move |wv, args| {
+                        trace!("Navigation completed handler");
                         let mut stream = Stream::from_bytes(&[]);
                         let target_receiver_clone = target_receiver.clone();
-                        wv.capture_preview(
-                            webview2::CapturePreviewImageFormat::PNG,
-                            stream.clone(),
-                            move |r| {
-                                use std::io::{Seek, SeekFrom};
-                                r?;
-                                stream.seek(SeekFrom::Start(0)).unwrap();
-                                println!("image: {:?}", stream);
+                        let result_sender_clone = result_sender.clone();
+                        if Ok(true) == args.get_is_success() {
+                            trace!("Navigation successful, start capture");
+                            wv.capture_preview(
+                                webview2::CapturePreviewImageFormat::PNG,
+                                stream.clone(),
+                                move |r| {
+                                    trace!(
+                                        "Capture successful, sending result"
+                                    );
+                                    use std::io::{Seek, SeekFrom};
+                                    r?;
+                                    stream.seek(SeekFrom::Start(0)).unwrap();
+                                    println!("image: {:?}", stream);
 
-                                //TODO work out how to save the image
-                                //
-                                // The whole callback-centred architecture is
-                                // really difficult to work with. Saving the
-                                // image involves writing the data to a file
-                                // with a target-specific name and sending a
-                                // message down the report_tx channel with
-                                // target-specific data, but the image data
-                                // only exists within this callback where
-                                // we don't have access to that additional
-                                // information :(
-                                //
-                                // I also don't think that the controller is
-                                // Send, so it might be difficult to have a
-                                // supervisor thread controlling the
-                                // navigation (and taking "callbacks" via
-                                // mpsc)?
+                                    //TODO work out how to save the image
+                                    //
+                                    // The whole callback-centred architecture is
+                                    // really difficult to work with. Saving the
+                                    // image involves writing the data to a file
+                                    // with a target-specific name and sending a
+                                    // message down the report_tx channel with
+                                    // target-specific data, but the image data
+                                    // only exists within this callback where
+                                    // we don't have access to that additional
+                                    // information :(
+                                    //
+                                    // I also don't think that the controller is
+                                    // Send, so it might be difficult to have a
+                                    // supervisor thread controlling the
+                                    // navigation (and taking "callbacks" via
+                                    // mpsc)?
 
-                                Ok(())
-                            },
-                        )
-                        .unwrap();
+                                    result_sender_clone
+                                        .send(Ok(Vec::new()))
+                                        .unwrap();
 
-                        // Navigate to next target?
-                        if caught_ctrl_c.load(Ordering::SeqCst) {
-                            nwg::stop_thread_dispatch();
-                            return Ok(());
-                        } else if let Ok(t) = target_receiver_clone.try_recv() {
-                            println!("Loading next target: {}", t);
-                            if let Target::Url(u) = t {
-                                wv.navigate(u.as_str()).unwrap();
-                            }
+                                    Ok(())
+                                },
+                            )
+                            .unwrap();
                         } else {
-                            // No more targets - close the webview
-                            nwg::stop_thread_dispatch();
+                            let status = args
+                                .get_web_error_status()
+                                .map(|s| Some(s))
+                                .unwrap_or_default();
+                            warn!("Capture failed with error: {:?}", status);
+                            result_sender_clone.send(Err(status)).unwrap();
                         }
+
                         Ok(())
                     })
                     .unwrap();
 
                 controller_clone.set(c).unwrap();
 
-                // Navigate to the first target
-                if let Ok(t) = target_receiver_clone.try_recv() {
-                    debug!("Loading target: {}", t);
-                    if let Target::Url(u) = t {
-                        webview.navigate(u.as_str()).unwrap();
-                    }
-                } else {
-                    nwg::stop_thread_dispatch();
-                }
                 Ok(())
             })
         })
@@ -434,14 +434,39 @@ fn web_worker(
     )
     .unwrap();
 
-    // Spawn thread to fill up the channel
-    thread::spawn(move || {
-        for target in &targets.web_targets {
-            target_sender.send(target.clone()).unwrap();
-        }
-    });
+    // Launch the gui threads in a nonblocking way
+    trace!("Dispatch thread events");
+    nwg::dispatch_thread_events_with_callback(|| {});
 
-    nwg::dispatch_thread_events();
+    // Spawn thread to fill up the channel
+    trace!("Pass targets in");
+    for target in &targets.web_targets {
+        // Send a target to the window
+        //target_sender.send(target.clone()).unwrap();
+        if let Some(c) = controller.get() {
+            if let Ok(wv) = c.get_webview() {
+                wv.navigate("https://davi.dyoung.tech").unwrap();
+            } else {
+                break;
+            }
+        }
+        // Wait for a response with the captured image
+        match result_receiver.recv() {
+            Ok(Ok(msg)) => {
+                info!("Received result: {:?}", msg);
+            }
+            Ok(Err(Some(e))) => {
+                warn!("Capture error: {:?}", e);
+            }
+            Ok(Err(None)) => {
+                warn!("Unknown error");
+            }
+            Err(e) => {
+                error!("Channel error: {}", e);
+                break;
+            }
+        }
+    }
 
     Ok(())
 }
