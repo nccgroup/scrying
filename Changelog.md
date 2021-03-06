@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Windows builds now use the native Edge webview for rendering
+* Pressing ctrl+c once will ask the current processes to stop and still produce an output file. Pressing it again will cause Scrying to immediately exit with an error code
 
 ### Deprecated
 
