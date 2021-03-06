@@ -68,7 +68,7 @@ pub fn save(
     png_data: &[u8],
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
-    info!("Processing {}", target);
+    debug!("Saving image for {}", target);
 
     let filename = format!("{}.png", target_to_filename(&target));
 

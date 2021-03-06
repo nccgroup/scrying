@@ -295,7 +295,7 @@ fn web_worker(
     use crossbeam_channel::unbounded;
     use native_windows_gui::{self as nwg, Window};
     use once_cell::sync::OnceCell;
-    use std::sync::RwLock;
+    use std::io::Read;
     use webview2::{Controller, Stream, WebErrorStatus};
     use winapi::um::winuser::*;
 
@@ -359,10 +359,13 @@ fn web_worker(
                                     use std::io::{Seek, SeekFrom};
                                     r?;
                                     stream.seek(SeekFrom::Start(0)).unwrap();
-                                    println!("image: {:?}", stream);
 
-                                    //TODO work out how to save the image
-                                    //
+                                    let mut captured_image: Vec<u8> =
+                                        Vec::new();
+                                    stream
+                                        .read_to_end(&mut captured_image)
+                                        .unwrap();
+
                                     // The whole callback-centred architecture is
                                     // really difficult to work with. Saving the
                                     // image involves writing the data to a file
@@ -380,7 +383,7 @@ fn web_worker(
                                     // mpsc)?
 
                                     result_sender_clone
-                                        .send(Ok(Vec::new()))
+                                        .send(Ok(captured_image))
                                         .unwrap();
 
                                     Ok(())
@@ -431,6 +434,7 @@ fn web_worker(
     let mut first_run = true;
     let mut exit_signal_sent = false;
     let mut idx = 0;
+    let mut current_target: Option<Target> = None;
     nwg::dispatch_thread_events_with_callback(move || {
         use mpsc::TryRecvError;
 
@@ -445,12 +449,21 @@ fn web_worker(
                 // Handle any completed captures
                 match result_receiver.try_recv() {
                     Ok(Ok(msg)) => {
-                        info!("Received result: {:?}", msg);
+                        info!(
+                            "Received {} bytes from screen capture",
+                            msg.len()
+                        );
+                        if let Some(t) = &current_target {
+                            web::save(&t, &opts.output_dir, &msg, &report_tx)
+                                .unwrap();
+                        }
 
                         // Load in the next target
                         if idx < targets.web_targets.len() {
                             if let Target::Url(u) = &targets.web_targets[idx] {
                                 wv.navigate(u.as_str()).unwrap();
+                                current_target =
+                                    Some(targets.web_targets[idx].clone());
                                 idx += 1;
                             } else {
                                 error!("Target is not a URL");
@@ -484,6 +497,8 @@ fn web_worker(
                     if idx < targets.web_targets.len() {
                         if let Target::Url(u) = &targets.web_targets[idx] {
                             wv.navigate(u.as_str()).unwrap();
+                            current_target =
+                                Some(targets.web_targets[idx].clone());
                             idx += 1;
                         } else {
                             error!("Target is not a URL");
