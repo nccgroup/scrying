@@ -133,8 +133,13 @@ fn main() {
     let caught_ctrl_c = Arc::new(AtomicBool::new(false));
     let caught_ctrl_c_clone_for_handler = caught_ctrl_c.clone();
     ctrlc::set_handler(move || {
+        if caught_ctrl_c_clone_for_handler.load(Ordering::SeqCst) {
+            error!("Multiple ctrl+c caught, force-exiting...");
+            std::process::exit(-1);
+        }
         warn!("Caught interrupt signal, cleaning up...");
         caught_ctrl_c_clone_for_handler.store(true, Ordering::SeqCst);
+
     })
     .expect("Unable to attach interrupt signal handler");
 
@@ -287,7 +292,7 @@ fn web_worker(
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use crate::parsing::Target;
-    use native_windows_gui::{self as nwg, Window};
+    use native_windows_gui::{self as nwg, Window, WindowFlags};
     use once_cell::sync::OnceCell;
     use std::io::Read;
     use webview2::{Controller, Stream, WebErrorStatus};
@@ -303,10 +308,10 @@ fn web_worker(
 
     Window::builder()
         .title("WebView2 - NWG")
-        // CW_USEDEFAULT incidentally works, because it's actually i32::MIN, and
-        // after saturating mul_div, it's still i32::MIN.
-        .position((CW_USEDEFAULT, CW_USEDEFAULT))
+        // TODO work out how to make a proper invisible window
+        .position((65536, 65536))
         .size((1600, 900))
+        .flags(WindowFlags::MAIN_WINDOW | WindowFlags::VISIBLE)
         .build(&mut window)?;
 
     let window_handle = window.handle;
