@@ -325,6 +325,7 @@ fn web_worker(
 
     trace!("Building webview");
     let _res = webview2::EnvironmentBuilder::new()
+        .with_additional_browser_arguments("--ignore-certificate-errors")
         .build(move |env| {
             trace!("Built webview");
             env.unwrap().create_controller(hwnd, move |c| {
@@ -438,6 +439,8 @@ fn web_worker(
     nwg::dispatch_thread_events_with_callback(move || {
         use mpsc::TryRecvError;
 
+        let mut load_next_target = false;
+
         if let Some(c) = controller.get() {
             // handle ctrl+c
             if !exit_signal_sent && caught_ctrl_c.load(Ordering::SeqCst) {
@@ -457,26 +460,11 @@ fn web_worker(
                             web::save(&t, &opts.output_dir, &msg, &report_tx)
                                 .unwrap();
                         }
-
-                        // Load in the next target
-                        if idx < targets.web_targets.len() {
-                            if let Target::Url(u) = &targets.web_targets[idx] {
-                                wv.navigate(u.as_str()).unwrap();
-                                current_target =
-                                    Some(targets.web_targets[idx].clone());
-                                idx += 1;
-                            } else {
-                                error!("Target is not a URL");
-                                c.close().unwrap();
-                            }
-                        } else {
-                            debug!("Reached end of target list");
-                            c.close().unwrap();
-                            nwg::stop_thread_dispatch();
-                        }
+                        load_next_target = true;
                     }
                     Ok(Err(Some(e))) => {
                         warn!("Capture error: {:?}", e);
+                        load_next_target = true;
                     }
                     Ok(Err(None)) => {
                         warn!("Unknown error");
@@ -494,6 +482,13 @@ fn web_worker(
 
                 // Handle first run
                 if first_run {
+                    load_next_target = true;
+
+                    first_run = false;
+                }
+
+                if load_next_target {
+                    // Load in the next target
                     if idx < targets.web_targets.len() {
                         if let Target::Url(u) = &targets.web_targets[idx] {
                             wv.navigate(u.as_str()).unwrap();
@@ -507,9 +502,8 @@ fn web_worker(
                     } else {
                         debug!("Reached end of target list");
                         c.close().unwrap();
+                        nwg::stop_thread_dispatch();
                     }
-
-                    first_run = false;
                 }
             }
         }
