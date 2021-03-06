@@ -102,24 +102,15 @@ pub fn web_worker(
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use futures::{channel::mpsc, SinkExt, StreamExt};
     use gdk::prelude::WindowExtManual;
-    use gdk::RGBA;
     use gio::prelude::*;
-    use gio::Cancellable;
-    use glib::{Bytes, FileError};
-    use gtk::prelude::*;
     use gtk::{
-        Application, ApplicationWindow, ApplicationWindowExt, ContainerExt,
-        GtkWindowExt, Inhibit, WidgetExt, WindowPosition,
+        Application, ApplicationWindow, ContainerExt, GtkWindowExt, WidgetExt,
+        WindowPosition,
     };
-    use std::rc::Rc;
-    use url::Url;
+    use std::sync::mpsc::TryRecvError;
     use webkit2gtk::{
-        SecurityManagerExt, SettingsExt, URISchemeRequestExt,
-        UserContentInjectedFrames, UserContentManager, UserContentManagerExt,
-        UserScript, UserScriptInjectionTime, WebContext, WebContextExt,
-        WebView, WebViewExt, WebViewExtManual,
+        UserContentManager, WebContext, WebView, WebViewExt, WebViewExtManual,
     };
 
     // Create a window
@@ -127,7 +118,7 @@ pub fn web_worker(
         Some("com.github.nccgroup.scrying"),
         Default::default(),
     )?;
-    application.connect_activate(|app| {
+    application.connect_activate(move |app| {
         let window = ApplicationWindow::new(app);
         window.set_default_size(WIDTH, HEIGHT);
         window.set_position(WindowPosition::Center);
@@ -141,7 +132,12 @@ pub fn web_worker(
             &context, &manager,
         );
 
-        webview.connect_load_changed(|wv, evt| {
+        // Make a channel for sending captured images back to the
+        // supervisor thread
+        let (img_tx, img_rx) = mpsc::channel::<Result<Vec<u8>, String>>();
+        let (end_of_targets_tx, end_of_targets_rx) = mpsc::channel::<()>();
+
+        webview.connect_load_changed(move |wv, evt| {
             use webkit2gtk::LoadEvent::*;
             trace!("Webview event: {}", evt);
             match evt {
@@ -156,6 +152,7 @@ pub fn web_worker(
                                             "Got pixbuf length {}",
                                             buf.len()
                                         );
+                                        img_tx.send(Ok(buf)).unwrap();
                                     }
                                     Err(e) => {
                                         error!(
@@ -190,8 +187,25 @@ pub fn web_worker(
             glib::source::Continue(true)
         });
 
+        let mut received_exit_signal = false;
         glib::source::idle_add(move || {
             // check ctrl+c?
+
+            // Check end of target list
+            match end_of_targets_rx.try_recv() {
+                Err(TryRecvError::Empty) => {}
+                e => {
+                    // Empty does nothing, all other options (message or
+                    // channel disconnected) result in closing the window
+                    if !received_exit_signal {
+                        info!("Received signal `{:?}`, closing webview", e);
+                        received_exit_signal = true;
+                    }
+                    // +-- this but in a way that works across threads
+                    // v   or can signal to the window somehow to close
+                    //window.close();
+                }
+            }
 
             // check rendered?
             glib::source::Continue(true)
@@ -199,12 +213,48 @@ pub fn web_worker(
 
         window.show_all();
 
+        let targets_clone = targets.clone();
+        let report_tx_clone = report_tx.clone();
+        let opts_clone = opts.clone();
         std::thread::spawn(move || {
-            sender.send("https://davi.dyoung.tech".to_string()).unwrap();
+            for target in &targets_clone.web_targets {
+                if let Target::Url(u) = target {
+                    sender.send(u.as_str().to_string()).unwrap();
+                } else {
+                    warn!("Target `{}` is not a URL!", target);
+                    continue;
+                }
+
+                // Wait for a response
+                match img_rx.recv() {
+                    Ok(Ok(img)) => {
+                        trace!("Screen capture received!");
+                        save(
+                            &target,
+                            &opts_clone.output_dir,
+                            &img,
+                            &report_tx_clone,
+                        )
+                        .unwrap();
+                    }
+                    Ok(Err(e)) => {
+                        warn!("Capture failed: {}", e);
+                    }
+                    Err(e) => {
+                        warn!("Channel disconnected: {}", e);
+                        break;
+                    }
+                }
+            }
+
+            // Reached end of input list - close the window
+            end_of_targets_tx.send(()).unwrap();
         });
     });
 
+    trace!("application.run");
     application.run(Default::default());
+    trace!("End of web_worker function");
     Ok(())
 }
 
