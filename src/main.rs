@@ -414,14 +414,6 @@ fn web_worker(
         0xffff + 1,
         move |_, msg, _, _| {
             match msg {
-                WM_SETFOCUS => {
-                    println!("set focus");
-                    if let Some(controller) = controller_clone.get() {
-                        controller
-                            .move_focus(webview2::MoveFocusReason::Programmatic)
-                            .unwrap();
-                    }
-                }
                 WM_CLOSE => {
                     println!("close window");
 
@@ -436,37 +428,77 @@ fn web_worker(
 
     // Launch the gui threads in a nonblocking way
     trace!("Dispatch thread events");
-    nwg::dispatch_thread_events_with_callback(|| {});
+    let mut first_run = true;
+    let mut exit_signal_sent = false;
+    let mut idx = 0;
+    nwg::dispatch_thread_events_with_callback(move || {
+        use mpsc::TryRecvError;
 
-    // Spawn thread to fill up the channel
-    trace!("Pass targets in");
-    for target in &targets.web_targets {
-        // Send a target to the window
-        //target_sender.send(target.clone()).unwrap();
         if let Some(c) = controller.get() {
+            // handle ctrl+c
+            if !exit_signal_sent && caught_ctrl_c.load(Ordering::SeqCst) {
+                c.close().unwrap();
+                exit_signal_sent = true;
+            }
+
             if let Ok(wv) = c.get_webview() {
-                wv.navigate("https://davi.dyoung.tech").unwrap();
-            } else {
-                break;
+                // Handle any completed captures
+                match result_receiver.try_recv() {
+                    Ok(Ok(msg)) => {
+                        info!("Received result: {:?}", msg);
+
+                        // Load in the next target
+                        if idx < targets.web_targets.len() {
+                            if let Target::Url(u) = &targets.web_targets[idx] {
+                                wv.navigate(u.as_str()).unwrap();
+                                idx += 1;
+                            } else {
+                                error!("Target is not a URL");
+                                c.close().unwrap();
+                            }
+                        } else {
+                            debug!("Reached end of target list");
+                            c.close().unwrap();
+                            nwg::stop_thread_dispatch();
+                        }
+                    }
+                    Ok(Err(Some(e))) => {
+                        warn!("Capture error: {:?}", e);
+                    }
+                    Ok(Err(None)) => {
+                        warn!("Unknown error");
+                    }
+                    Err(TryRecvError::Disconnected) => {
+                        error!("Channel disconnected");
+                        c.close().unwrap();
+                    }
+                    Err(TryRecvError::Empty) => {
+                        // No messages to process: do nothing
+                    }
+                }
+
+                // Handle timeout
+
+                // Handle first run
+                if first_run {
+                    if idx < targets.web_targets.len() {
+                        if let Target::Url(u) = &targets.web_targets[idx] {
+                            wv.navigate(u.as_str()).unwrap();
+                            idx += 1;
+                        } else {
+                            error!("Target is not a URL");
+                            c.close().unwrap();
+                        }
+                    } else {
+                        debug!("Reached end of target list");
+                        c.close().unwrap();
+                    }
+
+                    first_run = false;
+                }
             }
         }
-        // Wait for a response with the captured image
-        match result_receiver.recv() {
-            Ok(Ok(msg)) => {
-                info!("Received result: {:?}", msg);
-            }
-            Ok(Err(Some(e))) => {
-                warn!("Capture error: {:?}", e);
-            }
-            Ok(Err(None)) => {
-                warn!("Unknown error");
-            }
-            Err(e) => {
-                error!("Channel error: {}", e);
-                break;
-            }
-        }
-    }
+    });
 
     Ok(())
 }
