@@ -89,9 +89,6 @@ pub fn save(
     Ok(())
 }
 
-
-
-
 #[cfg(target_os = "windows")]
 pub fn web_worker(
     targets: Arc<InputLists>,

@@ -142,7 +142,6 @@ fn main() {
         }
         warn!("Caught interrupt signal, cleaning up...");
         caught_ctrl_c_clone_for_handler.store(true, Ordering::SeqCst);
-
     })
     .expect("Unable to attach interrupt signal handler");
 
