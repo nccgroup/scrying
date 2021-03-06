@@ -17,19 +17,25 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::Mode::Web;
+use crate::argparse::{Mode::Web, Opts};
 use crate::error::Error;
 use crate::parsing::Target;
-use crate::reporting::ReportMessageContent;
-use crate::reporting::{FileError, ReportMessage};
+use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
 use crate::util::target_to_filename;
+use crate::InputLists;
+#[cfg(target_os = "macos")]
 use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::path::Path;
-use std::sync::mpsc;
+use std::sync::Arc;
+use std::sync::{atomic::AtomicBool, mpsc};
 use std::{fs::File, io::Write};
 
+const WIDTH: i32 = 1280;
+const HEIGHT: i32 = 720;
+
+#[cfg(target_os = "macos")]
 pub fn capture(
     target: &Target,
     output_dir: &str,
@@ -86,6 +92,119 @@ pub fn save(
     });
     report_tx.send(report_message)?;
 
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+pub fn web_worker(
+    targets: Arc<InputLists>,
+    opts: Arc<Opts>,
+    report_tx: mpsc::Sender<ReportMessage>,
+    caught_ctrl_c: Arc<AtomicBool>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use futures::{channel::mpsc, SinkExt, StreamExt};
+    use gdk::prelude::WindowExtManual;
+    use gdk::RGBA;
+    use gio::prelude::*;
+    use gio::Cancellable;
+    use glib::{Bytes, FileError};
+    use gtk::prelude::*;
+    use gtk::{
+        Application, ApplicationWindow, ApplicationWindowExt, ContainerExt,
+        GtkWindowExt, Inhibit, WidgetExt, WindowPosition,
+    };
+    use std::rc::Rc;
+    use url::Url;
+    use webkit2gtk::{
+        SecurityManagerExt, SettingsExt, URISchemeRequestExt,
+        UserContentInjectedFrames, UserContentManager, UserContentManagerExt,
+        UserScript, UserScriptInjectionTime, WebContext, WebContextExt,
+        WebView, WebViewExt, WebViewExtManual,
+    };
+
+    // Create a window
+    let application = Application::new(
+        Some("com.github.nccgroup.scrying"),
+        Default::default(),
+    )?;
+    application.connect_activate(|app| {
+        let window = ApplicationWindow::new(app);
+        window.set_default_size(WIDTH, HEIGHT);
+        window.set_position(WindowPosition::Center);
+        window.set_title("Scrying WebCapture");
+        //window.set_visible(false);
+
+        // Create a webview
+        let manager = UserContentManager::new();
+        let context = WebContext::new();
+        let webview = WebView::new_with_context_and_user_content_manager(
+            &context, &manager,
+        );
+
+        webview.connect_load_changed(|wv, evt| {
+            use webkit2gtk::LoadEvent::*;
+            trace!("Webview event: {}", evt);
+            match evt {
+                Finished => {
+                    // grab screenshot
+                    if let Some(win) = wv.get_window() {
+                        match win.get_pixbuf(0, 0, WIDTH, HEIGHT) {
+                            Some(pix) => {
+                                match pix.save_to_bufferv("png", &[]) {
+                                    Ok(buf) => {
+                                        trace!(
+                                            "Got pixbuf length {}",
+                                            buf.len()
+                                        );
+                                    }
+                                    Err(e) => {
+                                        error!(
+                                            "Failed to process pixbuf: {}",
+                                            e
+                                        );
+                                    }
+                                }
+                            }
+                            None => {
+                                error!("Failed to retrieve pixbuf");
+                            }
+                        }
+                    } else {
+                        error!("Unable to find window");
+                    }
+                }
+                _ => {}
+            }
+        });
+
+        window.add(&webview);
+
+        // Create a communication channel
+        let main_context = glib::MainContext::default();
+        let (sender, receiver) =
+            glib::MainContext::channel::<String>(glib::Priority::default());
+
+        receiver.attach(Some(&main_context), move |msg| {
+            trace!("Navigating to target: {}", msg);
+            webview.load_uri(&msg);
+            glib::source::Continue(true)
+        });
+
+        glib::source::idle_add(move || {
+            // check ctrl+c?
+
+            // check rendered?
+            glib::source::Continue(true)
+        });
+
+        window.show_all();
+
+        std::thread::spawn(move || {
+            sender.send("https://davi.dyoung.tech".to_string()).unwrap();
+        });
+    });
+
+    application.run(Default::default());
     Ok(())
 }
 

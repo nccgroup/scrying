@@ -32,7 +32,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
 
-#[cfg(target_os = "windows")]
+#[cfg(not(target_os = "macos"))]
 use web::web_worker;
 
 mod argparse;
@@ -286,7 +286,7 @@ fn rdp_worker(
     Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
 fn web_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
