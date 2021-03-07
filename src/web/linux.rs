@@ -35,7 +35,8 @@ use std::sync::{
 };
 use std::{thread, time::Duration};
 use webkit2gtk::{
-    UserContentManager, WebContext, WebView, WebViewExt, WebViewExtManual,
+    TLSErrorsPolicy, UserContentManager, WebContext, WebContextExt, WebView,
+    WebViewExt, WebViewExtManual,
 };
 
 enum GuiMessage {
@@ -65,11 +66,15 @@ pub fn web_worker(
         window.set_default_size(WIDTH, HEIGHT);
         window.set_position(WindowPosition::Center);
         window.set_title("Scrying WebCapture");
+        //TODO work out how to make the window invisible
         //window.set_visible(false); // this doesn't work for some reason
 
         // Create a webview
         let manager = UserContentManager::new();
         let context = WebContext::new();
+
+        // Ignore certificate errors
+        context.set_tls_errors_policy(TLSErrorsPolicy::Ignore);
         let webview = WebView::new_with_context_and_user_content_manager(
             &context, &manager,
         );
@@ -81,7 +86,6 @@ pub fn web_worker(
         let targets_exhausted_clone = targets_exhausted_clone.clone();
         webview.connect_ready_to_show(move |_wv| {
             info!("Ready to show!");
-            //img_tx.send(Ok(Vec::new())).unwrap();
         });
 
         // Create a communication channel
@@ -93,6 +97,25 @@ pub fn web_worker(
         let (delayed_gui_sender, delayed_gui_receiver) =
             mpsc::channel::<GuiMessage>();
 
+        // This is a horrendous bodge to make sure the webview has enough
+        // time to render the page before we screenshot it. This is
+        // because webkit2gtk only gives us a callback when the page has
+        // *loaded*, not when it has *rendered*. Without this bodge in
+        // place the captured images end up out of sync, because
+        // callback (n+1) will fire after page (n+1) has been loaded but
+        // while page (n) is still displayed. If page (n+1) fails to
+        // render properly/in time then page (n) will get repeated. I
+        // haven't been able to come up with a good workaround -
+        // suggestions are welcome!
+        //
+        // Perhaps a reasonable idea could be to inject a Javascript
+        // to run at body.onload time that calls back to a Rust function
+        // (it's a webview, so we can cheat like that). Potential issues
+        // here are that it might interfere with javascript on the page
+        // and that someone could theoretically build a webpage that
+        // somehow scans or watches for extra events firing and stops
+        // them, which would break Scrying and I'd have to build in a
+        // timeout watchdog.
         thread::spawn(move || {
             while let Ok(msg) = delayed_gui_receiver.recv() {
                 thread::sleep(Duration::from_millis(1000));
