@@ -17,20 +17,19 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::Mode::Web;
-use crate::error::Error;
+use super::{save, HEIGHT, WIDTH};
 use crate::parsing::Target;
-use crate::parsing::Target;
-use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
-use crate::util::target_to_filename;
+use crate::reporting::ReportMessage;
+use crate::{InputLists, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use native_windows_gui::{self as nwg, Window, WindowFlags};
 use once_cell::sync::OnceCell;
 use std::io::Read;
-use std::path::Path;
-use std::sync::mpsc;
-use std::{fs::File, io::Write};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    mpsc, Arc,
+};
 use webview2::{Controller, Stream, WebErrorStatus};
 use winapi::um::winuser::*;
 
@@ -52,7 +51,7 @@ pub fn web_worker(
         .title("WebView2 - NWG")
         // TODO work out how to make a proper invisible window
         .position((65536, 65536))
-        .size((1600, 900))
+        .size((WIDTH, HEIGHT))
         .flags(WindowFlags::MAIN_WINDOW | WindowFlags::VISIBLE)
         .build(&mut window)?;
 

@@ -17,29 +17,35 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::Mode::Web;
-use crate::error::Error;
-use crate::parsing::Target;
+use super::{HEIGHT, WIDTH};
 use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
-use crate::util::target_to_filename;
-use headless_chrome::{protocol::page::ScreenshotFormat, Tab};
+use crate::{
+    argparse::Mode::Web, error::Error, parsing::Target,
+    util::target_to_filename,
+};
+use crate::{InputLists, Opts};
+use headless_chrome::{
+    protocol::page::ScreenshotFormat, Browser, LaunchOptionsBuilder, Tab,
+};
+
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
+use std::collections::HashMap;
+use std::convert::TryInto;
+use std::ffi::OsStr;
 use std::path::Path;
-use std::sync::mpsc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    mpsc, Arc,
+};
 use std::{fs::File, io::Write};
 
-fn web_worker(
+pub fn web_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use error::Error;
-    use headless_chrome::{Browser, LaunchOptionsBuilder};
-    use std::collections::HashMap;
-    use std::ffi::OsStr;
-
     let mut chrome_env = HashMap::new();
     if let Some(p) = &opts.web_proxy {
         chrome_env.insert("http_proxy".to_string(), p.clone());
@@ -47,7 +53,10 @@ fn web_worker(
     }
     let launch_options = LaunchOptionsBuilder::default()
         .headless(true)
-        .window_size(Some((1280, 720)))
+        .window_size(Some((
+            WIDTH.try_into().unwrap(),
+            HEIGHT.try_into().unwrap(),
+        )))
         .process_envs(Some(chrome_env))
         .args(vec![OsStr::new("--ignore-certificate-errors")])
         .build()?;
@@ -58,8 +67,7 @@ fn web_worker(
         if caught_ctrl_c.load(Ordering::SeqCst) {
             break;
         }
-        if let Err(e) = web::capture(target, &opts.output_dir, &tab, &report_tx)
-        {
+        if let Err(e) = capture(target, &opts.output_dir, &tab, &report_tx) {
             match e {
                 Error::IoError(e) => {
                     // Should probably abort on an IO error
