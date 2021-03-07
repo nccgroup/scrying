@@ -91,7 +91,7 @@ jobs:
         with:
           upload_url: ${{ needs.create_new_release.outputs.upload_url }}
           asset_path: |
-            target/debian/scrying_*_amd64.deb
+            target/debian/scrying_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_name: |
             scrying_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
