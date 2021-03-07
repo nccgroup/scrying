@@ -52,7 +52,7 @@ winit = "0.24"
 overflow-checks = true
 
 [package.metadata.deb]
-depends = "chromium | chromium-browser | google-chrome"
+depends = "libwebkit2gtk-4.0-37"
 extended-description = """\
 A new tool for collecting RDP, web and VNC screenshots all in one place\
 """
