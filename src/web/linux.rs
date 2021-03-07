@@ -53,7 +53,7 @@ pub fn web_worker(
         window.set_default_size(WIDTH, HEIGHT);
         window.set_position(WindowPosition::Center);
         window.set_title("Scrying WebCapture");
-        //window.set_visible(false);
+        //window.set_visible(false); // this doesn't work for some reason
 
         // Create a webview
         let manager = UserContentManager::new();

@@ -42,11 +42,9 @@ pub use windows::web_worker;
 mod windows;
 
 #[cfg(target_os = "macos")]
-pub use macos::web_worker;
+pub use mac::web_worker;
 #[cfg(target_os = "macos")]
-mod macos;
-
-
+mod mac;
 
 pub fn save(
     target: &Target,
@@ -74,4 +72,3 @@ pub fn save(
 
     Ok(())
 }
-

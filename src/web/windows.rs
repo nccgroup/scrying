@@ -1,20 +1,19 @@
 use crate::argparse::Mode::Web;
 use crate::error::Error;
 use crate::parsing::Target;
+use crate::parsing::Target;
 use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
 use crate::util::target_to_filename;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
+use native_windows_gui::{self as nwg, Window, WindowFlags};
+use once_cell::sync::OnceCell;
+use std::io::Read;
 use std::path::Path;
 use std::sync::mpsc;
 use std::{fs::File, io::Write};
-    use crate::parsing::Target;
-    use native_windows_gui::{self as nwg, Window, WindowFlags};
-    use once_cell::sync::OnceCell;
-    use std::io::Read;
-    use webview2::{Controller, Stream, WebErrorStatus};
-    use winapi::um::winuser::*;
-
+use webview2::{Controller, Stream, WebErrorStatus};
+use winapi::um::winuser::*;
 
 pub fn web_worker(
     targets: Arc<InputLists>,
@@ -22,7 +21,6 @@ pub fn web_worker(
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-
     type CaptureResult = Result<Vec<u8>, Option<WebErrorStatus>>;
 
     let (result_sender, result_receiver) = mpsc::channel::<CaptureResult>();

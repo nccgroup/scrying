@@ -76,7 +76,6 @@ fn web_worker(
     Ok(())
 }
 
-
 pub fn capture(
     target: &Target,
     output_dir: &str,

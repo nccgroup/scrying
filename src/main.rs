@@ -284,7 +284,6 @@ fn rdp_worker(
     Ok(())
 }
 
-
 fn vnc_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
