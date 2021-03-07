@@ -21,7 +21,7 @@ use super::{save, HEIGHT, WIDTH};
 use crate::{
     argparse::Opts, parsing::Target, reporting::ReportMessage, InputLists,
 };
-use gdk::prelude::{WindowExt, WindowExtManual};
+use gdk::prelude::WindowExtManual;
 use gio::prelude::*;
 use gtk::{
     Application, ApplicationWindow, ContainerExt, GtkWindowExt, WidgetExt,
@@ -33,6 +33,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     mpsc, Arc,
 };
+use std::{thread, time::Duration};
 use webkit2gtk::{
     UserContentManager, WebContext, WebView, WebViewExt, WebViewExtManual,
 };
@@ -40,6 +41,7 @@ use webkit2gtk::{
 enum GuiMessage {
     Navigate(String),
     Exit,
+    PageReady,
 }
 
 pub fn web_worker(
@@ -77,9 +79,34 @@ pub fn web_worker(
         let (img_tx, img_rx) = mpsc::channel::<Result<Vec<u8>, String>>();
 
         let targets_exhausted_clone = targets_exhausted_clone.clone();
+        webview.connect_ready_to_show(move |_wv| {
+            info!("Ready to show!");
+            //img_tx.send(Ok(Vec::new())).unwrap();
+        });
+
+        // Create a communication channel
+        let main_context = glib::MainContext::default();
+        let (sender, receiver) =
+            glib::MainContext::channel::<GuiMessage>(glib::Priority::default());
+
+        let gui_sender = sender.clone();
+        let (delayed_gui_sender, delayed_gui_receiver) =
+            mpsc::channel::<GuiMessage>();
+
+        thread::spawn(move || {
+            while let Ok(msg) = delayed_gui_receiver.recv() {
+                thread::sleep(Duration::from_millis(1000));
+                gui_sender.send(msg).unwrap();
+            }
+        });
+
         webview.connect_load_changed(move |wv, evt| {
             use webkit2gtk::LoadEvent::*;
-            trace!("Webview event: {}", evt);
+            trace!(
+                "Webview event: {} from `{:?}`",
+                evt,
+                wv.get_uri().map(|s| s.as_str().to_string())
+            );
             if targets_exhausted_clone.load(Ordering::SeqCst) {
                 // no targets left to capture, so ignore this event
                 trace!("Targets exhausted, ignoring event");
@@ -88,32 +115,7 @@ pub fn web_worker(
             match evt {
                 Finished => {
                     // grab screenshot
-                    if let Some(win) = wv.get_window() {
-                        match win.get_pixbuf(0, 0, WIDTH, HEIGHT) {
-                            Some(pix) => {
-                                match pix.save_to_bufferv("png", &[]) {
-                                    Ok(buf) => {
-                                        trace!(
-                                            "Got pixbuf length {}",
-                                            buf.len()
-                                        );
-                                        img_tx.send(Ok(buf)).unwrap();
-                                    }
-                                    Err(e) => {
-                                        error!(
-                                            "Failed to process pixbuf: {}",
-                                            e
-                                        );
-                                    }
-                                }
-                            }
-                            None => {
-                                error!("Failed to retrieve pixbuf");
-                            }
-                        }
-                    } else {
-                        error!("Unable to find window");
-                    }
+                    delayed_gui_sender.send(GuiMessage::PageReady).unwrap();
                 }
                 _ => {}
             }
@@ -121,11 +123,6 @@ pub fn web_worker(
 
         window.add(&webview);
         window.show_all();
-
-        // Create a communication channel
-        let main_context = glib::MainContext::default();
-        let (sender, receiver) =
-            glib::MainContext::channel::<GuiMessage>(glib::Priority::default());
 
         receiver.attach(Some(&main_context), move |msg| match msg {
             GuiMessage::Navigate(u) => {
@@ -135,43 +132,49 @@ pub fn web_worker(
             }
             GuiMessage::Exit => {
                 info!("Exit signal received, closing window");
-                //webview.stop_loading();
-                //webview.get_window().unwrap().get_toplevel().destroy();
                 window.close();
                 glib::source::Continue(false)
             }
-        });
-
-        // let mut received_exit_signal = false;
-        /*glib::source::idle_add(move || {
-            // check ctrl+c?
-
-            // Check end of target list
-            match end_of_targets_rx.try_recv() {
-                Err(TryRecvError::Empty) => {}
-                e => {
-                    // Empty does nothing, all other options (message or
-                    // channel disconnected) result in closing the window
-                    if !received_exit_signal {
-                        info!("Received signal `{:?}`, closing webview", e);
-                        received_exit_signal = true;
+            GuiMessage::PageReady => {
+                if let Some(win) = webview.get_window() {
+                    match win.get_pixbuf(0, 0, WIDTH, HEIGHT) {
+                        Some(pix) => match pix.save_to_bufferv("png", &[]) {
+                            Ok(buf) => {
+                                trace!("Got pixbuf length {}", buf.len());
+                                img_tx.send(Ok(buf)).unwrap();
+                            }
+                            Err(e) => {
+                                img_tx
+                                    .send(Err(format!(
+                                        "Failed to process pixbuf: {}",
+                                        e
+                                    )))
+                                    .unwrap();
+                            }
+                        },
+                        None => {
+                            img_tx
+                                .send(Err(
+                                    "Failed to retrieve pixbuf".to_string()
+                                ))
+                                .unwrap();
+                        }
                     }
-                    // +-- this but in a way that works across threads
-                    // v   or can signal to the window somehow to close
-                    //window.close();
+                } else {
+                    img_tx
+                        .send(Err("Unable to find window".to_string()))
+                        .unwrap();
                 }
+                glib::source::Continue(true)
             }
-
-            // check rendered?
-            glib::source::Continue(true)
-        });*/
+        });
 
         let targets_clone = targets.clone();
         let report_tx_clone = report_tx.clone();
         let opts_clone = opts.clone();
         let targets_exhausted_clone = targets_exhausted.clone();
         let caught_ctrl_c_clone = caught_ctrl_c.clone();
-        std::thread::spawn(move || {
+        thread::spawn(move || {
             for target in &targets_clone.web_targets {
                 // If ctrl+c has been pressed then don't send any more targets
                 if caught_ctrl_c_clone.load(Ordering::SeqCst) {
@@ -190,7 +193,7 @@ pub fn web_worker(
                 // Wait for a response
                 match img_rx.recv() {
                     Ok(Ok(img)) => {
-                        trace!("Screen capture received!");
+                        trace!("Screen capture received! (len {})", img.len());
                         save(
                             &target,
                             &opts_clone.output_dir,
