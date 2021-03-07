@@ -1,6 +1,6 @@
 /*
  *   This file is part of NCC Group Scrying https://github.com/nccgroup/scrying
- *   Copyright 2020 David Young <david(dot)young(at)nccgroup(dot)com>
+ *   Copyright 2020-2021 David Young <david(dot)young(at)nccgroup(dot)com>
  *   Released as open source by NCC Group Plc - https://www.nccgroup.com
  *
  *   Scrying is free software: you can redistribute it and/or modify
