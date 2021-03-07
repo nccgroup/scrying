@@ -13,6 +13,11 @@ jobs:
     name: General checks
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev
+
       - name: Checkout sources
         uses: actions/checkout@v1
 
@@ -63,7 +68,7 @@ jobs:
       - name: Configure VNC
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb x11vnc xterm
+          sudo apt-get install -y xvfb x11vnc xterm libwebkit2gtk-4.0-dev
           Xvfb -screen 0 800x600x16 -ac &
           x11vnc -localhost -display :0 &
           export DISPLAY=:0

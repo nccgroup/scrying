@@ -87,11 +87,11 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Full support for IPv6 and IPv4 literals as well as hostnames
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
 * ✔️ Parse targets smartly from Nmap and Nessus output
-* ✔️ HTTP - uses Chromium/Chrome in headless mode
+* ✔️ HTTP - uses platform web renderer
 * ✔️ Full cross-platform support - tested on Linux, Windows and Mac
 * ✔️ Produces an HTML report to allow easy browsing of the results
 * ✔️ VNC
-* RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
+* ✔️ RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
 * Video streams - tracking issue [#5](https://github.com/nccgroup/scrying/issues/5)
 * option for timestamps in filenames
 * Read targets from a msf services -o csv output
