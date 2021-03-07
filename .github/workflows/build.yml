@@ -95,7 +95,8 @@ jobs:
 
       - name: Screenshot the python server
         run: |
-          cargo run -- \
+          cargo build
+          xvfb-run ./target/debug/scrying \
             -t http://localhost:8000/webpage.html \
             -t vnc://localhost:5900
 
