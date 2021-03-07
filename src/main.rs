@@ -31,8 +31,6 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
-
-#[cfg(not(target_os = "macos"))]
 use web::web_worker;
 
 mod argparse;
@@ -286,53 +284,6 @@ fn rdp_worker(
     Ok(())
 }
 
-#[cfg(target_os = "macos")]
-fn web_worker(
-    targets: Arc<InputLists>,
-    opts: Arc<Opts>,
-    report_tx: mpsc::Sender<ReportMessage>,
-    caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    use error::Error;
-    use headless_chrome::{Browser, LaunchOptionsBuilder};
-    use std::collections::HashMap;
-    use std::ffi::OsStr;
-
-    let mut chrome_env = HashMap::new();
-    if let Some(p) = &opts.web_proxy {
-        chrome_env.insert("http_proxy".to_string(), p.clone());
-        chrome_env.insert("https_proxy".to_string(), p.clone());
-    }
-    let launch_options = LaunchOptionsBuilder::default()
-        .headless(true)
-        .window_size(Some((1280, 720)))
-        .process_envs(Some(chrome_env))
-        .args(vec![OsStr::new("--ignore-certificate-errors")])
-        .build()?;
-    let browser = Browser::new(launch_options).expect("failed to init chrome");
-    let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
-
-    for target in &targets.web_targets {
-        if caught_ctrl_c.load(Ordering::SeqCst) {
-            break;
-        }
-        if let Err(e) = web::capture(target, &opts.output_dir, &tab, &report_tx)
-        {
-            match e {
-                Error::IoError(e) => {
-                    // Should probably abort on an IO error
-                    error!("IO error: {}", e);
-                    break;
-                }
-                Error::ChromeError(e) => {
-                    warn!("Failed to capture image: {}", e);
-                }
-                _ => unreachable!(),
-            }
-        }
-    }
-    Ok(())
-}
 
 fn vnc_worker(
     targets: Arc<InputLists>,
