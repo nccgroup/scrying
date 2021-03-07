@@ -189,7 +189,7 @@ pub fn web_worker(
                             msg.len()
                         );
                         if let Some(t) = &current_target {
-                            web::save(&t, &opts.output_dir, &msg, &report_tx)
+                            save(&t, &opts.output_dir, &msg, &report_tx)
                                 .unwrap();
                         }
                         load_next_target = true;
