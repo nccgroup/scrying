@@ -18,11 +18,10 @@
 */
 
 use super::{save, HEIGHT, WIDTH};
-use crate::argparse::Opts;
-use crate::parsing::Target;
-use crate::reporting::ReportMessage;
-use crate::InputLists;
-use gdk::prelude::WindowExtManual;
+use crate::{
+    argparse::Opts, parsing::Target, reporting::ReportMessage, InputLists,
+};
+use gdk::prelude::{WindowExt, WindowExtManual};
 use gio::prelude::*;
 use gtk::{
     Application, ApplicationWindow, ContainerExt, GtkWindowExt, WidgetExt,
@@ -30,12 +29,18 @@ use gtk::{
 };
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use std::sync::mpsc::TryRecvError;
-use std::sync::Arc;
-use std::sync::{atomic::AtomicBool, mpsc};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    mpsc, Arc,
+};
 use webkit2gtk::{
     UserContentManager, WebContext, WebView, WebViewExt, WebViewExtManual,
 };
+
+enum GuiMessage {
+    Navigate(String),
+    Exit,
+}
 
 pub fn web_worker(
     targets: Arc<InputLists>,
@@ -48,6 +53,11 @@ pub fn web_worker(
         Some("com.github.nccgroup.scrying"),
         Default::default(),
     )?;
+
+    // "global" bool to turn off the LoadEvent::Finished handler when
+    // the target list has been exhausted
+    let targets_exhausted = Arc::new(AtomicBool::new(false));
+    let targets_exhausted_clone = targets_exhausted.clone();
     application.connect_activate(move |app| {
         let window = ApplicationWindow::new(app);
         window.set_default_size(WIDTH, HEIGHT);
@@ -65,11 +75,16 @@ pub fn web_worker(
         // Make a channel for sending captured images back to the
         // supervisor thread
         let (img_tx, img_rx) = mpsc::channel::<Result<Vec<u8>, String>>();
-        let (end_of_targets_tx, end_of_targets_rx) = mpsc::channel::<()>();
 
+        let targets_exhausted_clone = targets_exhausted_clone.clone();
         webview.connect_load_changed(move |wv, evt| {
             use webkit2gtk::LoadEvent::*;
             trace!("Webview event: {}", evt);
+            if targets_exhausted_clone.load(Ordering::SeqCst) {
+                // no targets left to capture, so ignore this event
+                trace!("Targets exhausted, ignoring event");
+                return;
+            }
             match evt {
                 Finished => {
                     // grab screenshot
@@ -105,20 +120,30 @@ pub fn web_worker(
         });
 
         window.add(&webview);
+        window.show_all();
 
         // Create a communication channel
         let main_context = glib::MainContext::default();
         let (sender, receiver) =
-            glib::MainContext::channel::<String>(glib::Priority::default());
+            glib::MainContext::channel::<GuiMessage>(glib::Priority::default());
 
-        receiver.attach(Some(&main_context), move |msg| {
-            trace!("Navigating to target: {}", msg);
-            webview.load_uri(&msg);
-            glib::source::Continue(true)
+        receiver.attach(Some(&main_context), move |msg| match msg {
+            GuiMessage::Navigate(u) => {
+                trace!("Navigating to target: {}", u);
+                webview.load_uri(&u);
+                glib::source::Continue(true)
+            }
+            GuiMessage::Exit => {
+                info!("Exit signal received, closing window");
+                //webview.stop_loading();
+                //webview.get_window().unwrap().get_toplevel().destroy();
+                window.close();
+                glib::source::Continue(false)
+            }
         });
 
-        let mut received_exit_signal = false;
-        glib::source::idle_add(move || {
+        // let mut received_exit_signal = false;
+        /*glib::source::idle_add(move || {
             // check ctrl+c?
 
             // Check end of target list
@@ -139,17 +164,24 @@ pub fn web_worker(
 
             // check rendered?
             glib::source::Continue(true)
-        });
-
-        window.show_all();
+        });*/
 
         let targets_clone = targets.clone();
         let report_tx_clone = report_tx.clone();
         let opts_clone = opts.clone();
+        let targets_exhausted_clone = targets_exhausted.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c.clone();
         std::thread::spawn(move || {
             for target in &targets_clone.web_targets {
+                // If ctrl+c has been pressed then don't send any more targets
+                if caught_ctrl_c_clone.load(Ordering::SeqCst) {
+                    break;
+                }
+
                 if let Target::Url(u) = target {
-                    sender.send(u.as_str().to_string()).unwrap();
+                    sender
+                        .send(GuiMessage::Navigate(u.as_str().to_string()))
+                        .unwrap();
                 } else {
                     warn!("Target `{}` is not a URL!", target);
                     continue;
@@ -178,8 +210,15 @@ pub fn web_worker(
             }
 
             // Reached end of input list - close the window
-            end_of_targets_tx.send(()).unwrap();
+            trace!("Reached end of input list, sending window close request");
+            targets_exhausted_clone.store(true, Ordering::SeqCst);
+            sender.send(GuiMessage::Exit).unwrap();
+            //end_of_targets_tx.send(()).unwrap();
         });
+    });
+
+    application.connect_shutdown(|_app| {
+        debug!("application reached SHUTDOWN");
     });
 
     trace!("application.run");
