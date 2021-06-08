@@ -24,10 +24,9 @@ use crate::{
     util::target_to_filename,
 };
 use crate::{InputLists, Opts};
-use headless_chrome::{
-    protocol::page::ScreenshotFormat, Browser, LaunchOptionsBuilder, Tab,
-};
-
+use cacao::macos::window::{Window, WindowConfig, WindowDelegate};
+use cacao::macos::{App, AppDelegate};
+use cacao::webview::{WebView, WebViewConfig, WebViewDelegate};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::collections::HashMap;
@@ -38,7 +37,70 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     mpsc, Arc,
 };
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, thread};
+
+#[derive(Default)]
+pub struct WebViewInstance;
+
+impl WebViewDelegate for WebViewInstance {}
+
+struct ScryingApp {
+    window: Window<ScryingWindow>,
+}
+
+struct ScryingWindow {
+    content: WebView<WebViewInstance>,
+}
+
+impl AppDelegate for ScryingApp {
+    fn did_finish_launching(&self) {
+        App::activate();
+        self.window.show();
+    }
+}
+
+impl ScryingWindow {
+    pub fn new() -> Self {
+        Self {
+            content: WebView::with(
+                WebViewConfig::default(),
+                WebViewInstance::default(),
+            ),
+        }
+    }
+
+    pub fn load_url(&self, url: &str) {
+        self.content.load_url(url);
+    }
+}
+
+impl WindowDelegate for ScryingWindow {
+    const NAME: &'static str = "Scrying";
+
+    fn did_load(&mut self, window: Window) {
+        window.set_minimum_content_size(400., 400.);
+        window.set_title("Scrying Web Capture");
+        window.set_content_view(&self.content);
+        self.load_url("https://davi.dyoung.tech");
+    }
+}
+
+pub fn launch() {
+    App::new(
+        "com.scrying.webcapture",
+        ScryingApp {
+            window: Window::with(
+                {
+                    let mut config = WindowConfig::default();
+
+                    config
+                },
+                ScryingWindow::new(),
+            ),
+        },
+    )
+    .run();
+}
 
 pub fn web_worker(
     targets: Arc<InputLists>,
@@ -46,28 +108,15 @@ pub fn web_worker(
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut chrome_env = HashMap::new();
-    if let Some(p) = &opts.web_proxy {
-        chrome_env.insert("http_proxy".to_string(), p.clone());
-        chrome_env.insert("https_proxy".to_string(), p.clone());
-    }
-    let launch_options = LaunchOptionsBuilder::default()
-        .headless(true)
-        .window_size(Some((
-            WIDTH.try_into().unwrap(),
-            HEIGHT.try_into().unwrap(),
-        )))
-        .process_envs(Some(chrome_env))
-        .args(vec![OsStr::new("--ignore-certificate-errors")])
-        .build()?;
-    let browser = Browser::new(launch_options).expect("failed to init chrome");
-    let tab = browser.wait_for_initial_tab().expect("Failed to init tab");
+    //let win = thread::spawn(|| launch());
+    //win.join().unwrap();
+    launch();
 
     for target in &targets.web_targets {
         if caught_ctrl_c.load(Ordering::SeqCst) {
             break;
         }
-        if let Err(e) = capture(target, &opts.output_dir, &tab, &report_tx) {
+        /* if let Err(e) = capture(target, &opts.output_dir, &tab, &report_tx) {
             match e {
                 Error::IoError(e) => {
                     // Should probably abort on an IO error
@@ -79,11 +128,11 @@ pub fn web_worker(
                 }
                 _ => unreachable!(),
             }
-        }
+        }*/
     }
     Ok(())
 }
-
+/*
 pub fn capture(
     target: &Target,
     output_dir: &str,
@@ -114,4 +163,4 @@ pub fn capture(
         report_tx.send(report_message)?;
     }
     Ok(())
-}
+}*/

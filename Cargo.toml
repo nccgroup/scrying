@@ -45,7 +45,11 @@ winapi = { version = "0.3", features = ["libloaderapi"] }
 winit = "0.24"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-headless_chrome = { "git" = "https://github.com/jeprojects/rust-headless-chrome", "rev" = "c4bb66a1" }
+
+[target.'cfg(target_os = "macos")'.dependencies.cacao]
+git = "https://github.com/ryanmcgrath/cacao"
+rev = "33123c6"
+features = ["webview"]
 
 [profile.release]
 # enable overflow checks because there is sometimes a memory allocation
