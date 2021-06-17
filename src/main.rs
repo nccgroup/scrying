@@ -23,7 +23,7 @@ use crate::reporting::ReportMessage;
 use log::{debug, error, info, trace, warn};
 use parsing::{generate_target_lists, InputLists};
 use simplelog::{
-    CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
+    ColorChoice, CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
 };
 use std::fs::{create_dir_all, File};
@@ -85,6 +85,7 @@ fn main() {
         level_filter,
         Config::default(),
         TerminalMode::Mixed,
+        ColorChoice::Auto,
     ));
 
     CombinedLogger::init(log_dests).unwrap();
