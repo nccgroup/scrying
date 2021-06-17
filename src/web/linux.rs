@@ -140,12 +140,9 @@ pub fn web_worker(
                 trace!("Targets exhausted, ignoring event");
                 return;
             }
-            match evt {
-                Finished => {
-                    // grab screenshot
-                    delayed_gui_sender.send(GuiMessage::PageReady).unwrap();
-                }
-                _ => {}
+            if let Finished = evt {
+                // grab screenshot
+                delayed_gui_sender.send(GuiMessage::PageReady).unwrap();
             }
         });
 

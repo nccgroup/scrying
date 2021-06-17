@@ -175,7 +175,6 @@ fn main() {
     };
 
     let vnc_handle = if !targets.vnc_targets.is_empty() {
-        // clone here will be more useful when there are more target types
         let targets_clone = targets.clone();
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
@@ -199,19 +198,11 @@ fn main() {
     // GUI will either error or silently do nothing if not invoked from
     // the main thread.
     if !targets.web_targets.is_empty() {
-        let targets_clone = targets.clone();
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
-        let caught_ctrl_c_clone = caught_ctrl_c.clone();
 
         debug!("Starting Web worker threads");
-        web_worker(
-            targets_clone,
-            opts_clone,
-            report_tx_clone,
-            caught_ctrl_c_clone,
-        )
-        .unwrap()
+        web_worker(targets, opts_clone, report_tx_clone, caught_ctrl_c).unwrap()
     }
 
     // wait for the workers to complete
