@@ -19,9 +19,6 @@
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("Chrome error: {0}")]
-    ChromeError(String),
-
     #[error("IO error: {0}")]
     IoError(String),
 
@@ -39,12 +36,6 @@ pub enum Error {
 
     #[error("Conversion error: {0}")]
     ConversionError(String),
-}
-
-impl From<failure::Error> for Error {
-    fn from(e: failure::Error) -> Self {
-        Self::ChromeError(e.to_string())
-    }
 }
 
 impl From<std::io::Error> for Error {
