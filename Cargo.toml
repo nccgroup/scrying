@@ -46,7 +46,7 @@ native-windows-gui = "1.0"
 once_cell = "1.7"
 webview2 = "0.1.0-beta.1"
 winapi = { version = "0.3", features = ["libloaderapi"] }
-winit = "0.24"
+winit = "0.25"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cacao = { version = "0.2", features = ["webview"] }
