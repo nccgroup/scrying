@@ -9,7 +9,8 @@ Please file any bugs or feature requests as [GitHub issues](https://github.com/n
 
 ## Caveats
 * Web screenshotting on Linux relies on webkit2gtk and an X server (e.g. `xvfb`)
-* Web screenshotting on Macos relies on Chromium or Google Chrome being installed
+* Web screenshotting uses the system webviews, and hiding these windows is surprisingly hard
+* I haven't found a good way to take screenshots of a cocoa webview on macos - please open an issue or PR if you're interested in using this on macos and have any idea how to implement it
 
 ## Motivation
 Since Eyewitness recently [dropped support for RDP](https://github.com/FortyNorthSecurity/EyeWitness/issues/422#issuecomment-539690698) there isn't a working CLI tool for capturing RDP screenshots.
@@ -88,7 +89,6 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
 * ✔️ Parse targets smartly from Nmap and Nessus output
 * ✔️ HTTP - uses platform web renderer
-* ✔️ Full cross-platform support - tested on Linux, Windows and Mac
 * ✔️ Produces an HTML report to allow easy browsing of the results
 * ✔️ VNC
 * ✔️ RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
@@ -99,6 +99,7 @@ Features with ticks next to them have been implemented, others are TODO
 * OCR on RDP usernames, either live or on a directory of images
 * NLA/auth to test credentials
 * Parse Dirble JSON output to grab screenshots of an entire website - waiting for [nccgroup/dirble#51](https://github.com/nccgroup/dirble/issues/51)
+* Full cross-platform support - tested on Linux and Windows; Mac support has been deprioritised pending good ideas for screenshotting the cocoa webview
 
 
 ## Help text

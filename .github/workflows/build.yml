@@ -153,35 +153,35 @@ jobs:
           name: windows-output
           path: output/
 
-  test_macos:
-    name: Run tests on macOS-latest
-    runs-on: macOS-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v1
+  # test_macos:
+  #   name: Run tests on macOS-latest
+  #   runs-on: macOS-latest
+  #   steps:
+  #     - name: Checkout sources
+  #       uses: actions/checkout@v1
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+  #     - name: Install stable toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
 
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+  #     - name: Run cargo test
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: test
 
-      - name: Start python webserver
-        run: |
-          cd test
-          python3 -m http.server &
+  #     - name: Start python webserver
+  #       run: |
+  #         cd test
+  #         python3 -m http.server &
 
-      - name: Screenshot the python server
-        run: |
-          cargo run -- -t http://localhost:8000/webpage.html
+  #     - name: Screenshot the python server
+  #       run: |
+  #         cargo run -- -t http://localhost:8000/webpage.html
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: macos-output
-          path: output/
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: macos-output
+  #         path: output/
