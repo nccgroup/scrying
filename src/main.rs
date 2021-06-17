@@ -21,7 +21,7 @@ use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use parsing::{generate_target_lists, InputLists};
+use parsing::{generate_target_lists, InputLists, Target};
 use simplelog::{
     CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
@@ -44,6 +44,11 @@ mod web;
 
 pub enum ThreadStatus {
     Complete,
+}
+
+pub enum GuiControlMessage {
+    Exit,
+    Target(Target),
 }
 
 fn main() {
@@ -174,31 +179,12 @@ fn main() {
         None
     };
 
-    let web_handle = if !targets.web_targets.is_empty() {
+    let vnc_handle = if !targets.vnc_targets.is_empty() {
+        // clone here will be more useful when there are more target types
         let targets_clone = targets.clone();
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
         let caught_ctrl_c_clone = caught_ctrl_c.clone();
-        Some(thread::spawn(move || {
-            debug!("Starting Web worker threads");
-            web_worker(
-                targets_clone,
-                opts_clone,
-                report_tx_clone,
-                caught_ctrl_c_clone,
-            )
-            .unwrap()
-        }))
-    } else {
-        None
-    };
-
-    let vnc_handle = if !targets.vnc_targets.is_empty() {
-        // clone here will be more useful when there are more target types
-        let targets_clone = targets; //.clone();
-        let opts_clone = opts; //.clone();
-        let report_tx_clone = report_tx.clone();
-        let caught_ctrl_c_clone = caught_ctrl_c; //.clone();
         Some(thread::spawn(move || {
             debug!("Starting VNC worker threads");
             vnc_worker(
@@ -212,6 +198,42 @@ fn main() {
     } else {
         None
     };
+
+    let (gui_control_tx, gui_control_rx) = mpsc::channel::<GuiControlMessage>();
+    let web_handle = if !targets.web_targets.is_empty() {
+        let targets_clone = targets.clone();
+        let opts_clone = opts.clone();
+        let report_tx_clone = report_tx.clone();
+        let gui_control_tx_clone = gui_control_tx.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c.clone();
+        Some(thread::spawn(move || {
+            debug!("Starting Web worker threads");
+            web_worker(
+                targets_clone,
+                opts_clone,
+                report_tx_clone,
+                gui_control_tx_clone,
+                caught_ctrl_c_clone,
+            )
+            .unwrap()
+        }))
+    } else {
+        None
+    };
+
+    // If there are any web targets then start the web GUI process -
+    // due to limitations in the general design of GUI frameworks the
+    // GUI will either error or silently do nothing if not invoked from
+    // the main thread.
+    if !targets.web_targets.is_empty() {
+        web::launch_gui(
+            gui_control_rx,
+            report_tx.clone(),
+            opts.clone(),
+            caught_ctrl_c.clone(),
+        )
+        .unwrap();
+    }
 
     // wait for the workers to complete
     if let Some(h) = rdp_handle {

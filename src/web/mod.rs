@@ -37,7 +37,7 @@ pub use linux::web_worker;
 mod linux;
 
 #[cfg(target_os = "windows")]
-pub use windows::web_worker;
+pub use windows::{launch_gui, web_worker};
 #[cfg(target_os = "windows")]
 mod windows;
 
