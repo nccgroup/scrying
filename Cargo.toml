@@ -45,11 +45,12 @@ winapi = { version = "0.3", features = ["libloaderapi"] }
 winit = "0.24"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+cacao = { version = "0.2", features = ["webview"] }
 
-[target.'cfg(target_os = "macos")'.dependencies.cacao]
-git = "https://github.com/ryanmcgrath/cacao"
-rev = "33123c6"
-features = ["webview"]
+#[target.'cfg(target_os = "macos")'.dependencies.cacao]
+#git = "https://github.com/ryanmcgrath/cacao"
+#rev = "33123c6"
+#features = ["webview"]
 
 [profile.release]
 # enable overflow checks because there is sometimes a memory allocation

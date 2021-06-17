@@ -239,8 +239,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "cacao"
-version = "0.1.0"
-source = "git+https://github.com/ryanmcgrath/cacao?rev=33123c6#33123c67904f3852d8fc5bd6571dbd07f4e42b1e"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb13736da9ef66c4ecd7e29c5ad06b5f779978fd14b4f08b116fc24c5ef76793"
 dependencies = [
  "block",
  "core-foundation 0.9.1",
