@@ -20,12 +20,16 @@ image = "0.23.4"
 log = "0.4.8"
 nessus_xml_parser = "0.1"
 nmap_xml_parser = { "git" = "https://github.com/Ayrx/nmap_xml_parser" }
-rdp-rs = "0.1.0"
+#rdp-rs = "0.1.0"
 simplelog = "0.10"
 socks = "0.3"
 thiserror = "1.0"
 url = "2.1.1"
 vnc = "0.4"
+
+[dependencies.rdp-rs]
+git = "https://github.com/citronneur/rdp-rs"
+rev = "7ac880d"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 futures = "0.3"
@@ -51,12 +55,6 @@ cacao = { version = "0.2", features = ["webview"] }
 #git = "https://github.com/ryanmcgrath/cacao"
 #rev = "33123c6"
 #features = ["webview"]
-
-[profile.release]
-# enable overflow checks because there is sometimes a memory allocation
-# error where some component tries to allocate 2^64-1 bytes, and it would
-# be helpful to panic at the point of the underflow.
-overflow-checks = true
 
 [package.metadata.deb]
 depends = "libwebkit2gtk-4.0-37"
