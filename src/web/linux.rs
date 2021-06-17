@@ -67,7 +67,12 @@ pub fn web_worker(
         window.set_position(WindowPosition::Center);
         window.set_title("Scrying WebCapture");
         //TODO work out how to make the window invisible
+        // Maybe 'draw' can be used to draw it to some sort of headless
+        // context:
+        // https://docs.rs/gtk/0.9.2/gtk/trait.WidgetExt.html#tymethod.draw
         //window.set_visible(false); // this doesn't work for some reason
+        //window.hide(); // this also has no effect
+        // window.set_opacity(0.0); // this also has no effect
 
         // Create a webview
         let manager = UserContentManager::new();
@@ -145,6 +150,9 @@ pub fn web_worker(
         });
 
         window.add(&webview);
+        // Removing window.show_all successfully hides the window, but
+        // then screen capturing fails as a result:
+        // "[WARN] Capture failed: Unable to find window"
         window.show_all();
 
         receiver.attach(Some(&main_context), move |msg| match msg {
