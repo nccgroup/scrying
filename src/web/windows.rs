@@ -20,7 +20,7 @@
 use super::{save, HEIGHT, WIDTH};
 use crate::parsing::Target;
 use crate::reporting::ReportMessage;
-use crate::{GuiControlMessage, InputLists, Opts};
+use crate::{InputLists, Opts};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use native_windows_gui::{self as nwg, Window, WindowFlags};
@@ -35,22 +35,8 @@ use winapi::um::winuser::*;
 
 pub fn web_worker(
     targets: Arc<InputLists>,
-    _opts: Arc<Opts>,
-    _report_tx: mpsc::Sender<ReportMessage>,
-    gui_tx: mpsc::Sender<GuiControlMessage>,
-    _caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    for target in &targets.web_targets {
-        gui_tx.send(GuiControlMessage::Target(target.clone()))?;
-    }
-
-    Ok(())
-}
-
-pub fn launch_gui(
-    gui_rx: mpsc::Receiver<GuiControlMessage>,
-    report_tx: mpsc::Sender<ReportMessage>,
     opts: Arc<Opts>,
+    report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     type CaptureResult = Result<Vec<u8>, Option<WebErrorStatus>>;
@@ -180,6 +166,7 @@ pub fn launch_gui(
     trace!("Dispatch thread events");
     let mut first_run = true;
     let mut exit_signal_sent = false;
+    let mut idx = 0;
     let mut current_target: Option<Target> = None;
     nwg::dispatch_thread_events_with_callback(move || {
         use mpsc::TryRecvError;
@@ -234,12 +221,12 @@ pub fn launch_gui(
 
                 if load_next_target {
                     // Load in the next target
-                    if let Ok(GuiControlMessage::Target(target)) =
-                        gui_rx.try_recv()
-                    {
-                        if let Target::Url(ref u) = target {
+                    if idx < targets.web_targets.len() {
+                        if let Target::Url(u) = &targets.web_targets[idx] {
                             wv.navigate(u.as_str()).unwrap();
-                            current_target = Some(target);
+                            current_target =
+                                Some(targets.web_targets[idx].clone());
+                            idx += 1;
                         } else {
                             error!("Target is not a URL");
                             c.close().unwrap();

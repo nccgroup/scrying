@@ -21,7 +21,7 @@ use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
-use parsing::{generate_target_lists, InputLists, Target};
+use parsing::{generate_target_lists, InputLists};
 use simplelog::{
     CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
     TerminalMode, WriteLogger,
