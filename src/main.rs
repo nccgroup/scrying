@@ -46,11 +46,6 @@ pub enum ThreadStatus {
     Complete,
 }
 
-pub enum GuiControlMessage {
-    Exit,
-    Target(Target),
-}
-
 fn main() {
     println!("Starting NCC Group Scrying...");
     let opts = Arc::new(argparse::parse().unwrap());
@@ -199,48 +194,29 @@ fn main() {
         None
     };
 
-    let (gui_control_tx, gui_control_rx) = mpsc::channel::<GuiControlMessage>();
-    let web_handle = if !targets.web_targets.is_empty() {
-        let targets_clone = targets.clone();
-        let opts_clone = opts.clone();
-        let report_tx_clone = report_tx.clone();
-        let gui_control_tx_clone = gui_control_tx.clone();
-        let caught_ctrl_c_clone = caught_ctrl_c.clone();
-        Some(thread::spawn(move || {
-            debug!("Starting Web worker threads");
-            web_worker(
-                targets_clone,
-                opts_clone,
-                report_tx_clone,
-                gui_control_tx_clone,
-                caught_ctrl_c_clone,
-            )
-            .unwrap()
-        }))
-    } else {
-        None
-    };
-
     // If there are any web targets then start the web GUI process -
     // due to limitations in the general design of GUI frameworks the
     // GUI will either error or silently do nothing if not invoked from
     // the main thread.
     if !targets.web_targets.is_empty() {
-        web::launch_gui(
-            gui_control_rx,
-            report_tx.clone(),
-            opts.clone(),
-            caught_ctrl_c.clone(),
+        let targets_clone = targets.clone();
+        let opts_clone = opts.clone();
+        let report_tx_clone = report_tx.clone();
+        let caught_ctrl_c_clone = caught_ctrl_c.clone();
+
+        debug!("Starting Web worker threads");
+        web_worker(
+            targets_clone,
+            opts_clone,
+            report_tx_clone,
+            caught_ctrl_c_clone,
         )
-        .unwrap();
+        .unwrap()
     }
 
     // wait for the workers to complete
     if let Some(h) = rdp_handle {
         h.join().unwrap().unwrap();
-    }
-    if let Some(h) = web_handle {
-        h.join().unwrap();
     }
     if let Some(h) = vnc_handle {
         h.join().unwrap();
