@@ -118,8 +118,9 @@ OPTIONS:
     -f, --file <FILE>...                 Targets file, one per line
     -l, --log-file <LOG FILE>            Save logs to the given file
     -m, --mode <MODE>
-            Force targets to be parsed as `web`, `rdp`, `vnc` [default: auto]  [possible values:
-            web, rdp, vnc, auto]
+            Force targets to be parsed as `web`, `rdp`, `vnc` [default: auto] [possible values: web,
+            rdp, vnc, auto]
+
         --nessus <NESSUS XML FILE>...    Nessus XML file
         --nmap <NMAP XML FILE>...        Nmap XML file
     -o, --output <OUTPUT DIR>            Directory to save the captured images in [default: output]
@@ -134,9 +135,9 @@ OPTIONS:
 
     -t, --target <TARGET>...             Target, e.g. http://example.com, rdp://[2001:db8::4]
         --threads <THREADS>              Number of worker threads for each target type [default: 10]
+        --vnc-auth <VNC AUTH>            Password to provide to VNC servers that request one
         --web-proxy <WEB PROXY>
             HTTP/SOCKS Proxy to use for web requests e.g. http://[::1]:8080
-
 ```
 
 ## Sample HTML report

@@ -28,6 +28,7 @@ use crate::ThreadStatus;
 #[allow(unused)]
 use crate::{debug, error, info, trace, warn};
 use image::{DynamicImage, ImageBuffer, Rgb};
+use std::cmp::min;
 use std::convert::TryInto;
 use std::net::TcpStream;
 use std::path::Path;
@@ -383,6 +384,17 @@ fn vnc_capture(
         for method in methods {
             match method {
                 AuthMethod::None => return Some(AuthChoice::None),
+                AuthMethod::Password => {
+                    let mut pass = [0_u8; 8];
+                    if let Some(auth) = &opts.vnc_auth {
+                        let auth_bytes = auth.as_bytes();
+                        let passlen = min(8, auth_bytes.len());
+                        pass[..passlen].copy_from_slice(&auth_bytes[..passlen]);
+                    } else {
+                        warn!(target, "Password requested but not provided");
+                    }
+                    return Some(AuthChoice::Password(pass));
+                }
                 _ => {}
             }
         }

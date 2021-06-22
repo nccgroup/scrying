@@ -73,6 +73,7 @@ pub struct Opts {
     pub output_dir: String,
     pub web_proxy: Option<String>,
     pub rdp_proxy: Option<String>,
+    pub vnc_auth: Option<String>,
     pub silent: bool,
     pub verbose: u64,
     pub test_import: bool,
@@ -184,6 +185,12 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .validator(is_socks5),
         )
         .arg(
+            Arg::new("VNC AUTH")
+                .about("Password to provide to VNC servers that request one")
+                .long("vnc-auth")
+                .takes_value(true),
+        )
+        .arg(
             Arg::new("SILENT")
                 .about("Suppress most log messages")
                 .long("silent")
@@ -273,6 +280,9 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         output_dir: args.value_of_t("OUTPUT DIR").unwrap(),
         web_proxy,
         rdp_proxy,
+        vnc_auth: args
+            .value_of("VNC AUTH")
+            .map_or_else(|| None, |s| Some(s.to_string())),
         silent: args.is_present("SILENT"),
         verbose: args.occurrences_of("VERBOSE"),
         test_import: args.is_present("TEST IMPORT"),
