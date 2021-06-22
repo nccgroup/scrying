@@ -33,6 +33,9 @@ use std::sync::{mpsc, Arc};
 use std::thread;
 use web::web_worker;
 
+//#[macro_use]
+mod log_macros;
+
 mod argparse;
 mod error;
 mod parsing;

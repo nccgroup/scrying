@@ -2221,6 +2221,7 @@ dependencies = [
  "glib",
  "gtk",
  "image",
+ "lazy_static",
  "log 0.4.14",
  "native-windows-gui",
  "nessus_xml_parser",

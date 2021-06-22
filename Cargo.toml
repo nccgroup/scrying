@@ -55,6 +55,10 @@ cacao = { version = "0.2", features = ["webview"] }
 #rev = "33123c6"
 #features = ["webview"]
 
+[dev-dependencies]
+# used for testing the custom logging macros
+lazy_static = "1.4"
+
 [package.metadata.deb]
 depends = "libwebkit2gtk-4.0-37"
 extended-description = """\
