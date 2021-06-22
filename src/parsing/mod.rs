@@ -73,8 +73,8 @@ impl Ord for Target {
     }
 }
 
-impl Target {
-    fn parse(input: &str, mode: Mode) -> Result<Vec<Self>, &str> {
+impl<'a> Target {
+    fn parse(input: &'a str, mode: Mode) -> Result<Vec<Self>, &'a str> {
         use url::Host;
         // Parse a &str into a Target using the mode hint to guide output.
         // It doesn't make much sense to use a URL for RDP, etc.
@@ -563,7 +563,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
                             // this has been broken out into a separate function
                             // for readability
                             input_lists.append(&mut lists_from_nmap(
-                                host, port, &opts.mode,
+                                host, port, &opts,
                             ));
                         }
                     }
@@ -604,6 +604,20 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         }
     }
 
+    // Put in web paths
+    let mut additional_web_targets =
+        Vec::with_capacity(input_lists.web_targets.len() * opts.web_path.len());
+    for target in &input_lists.web_targets {
+        for path in &opts.web_path {
+            if let Target::Url(ref u) = target {
+                let mut u = u.clone();
+                u.set_path(&path);
+                additional_web_targets.push(Target::Url(u));
+            }
+        }
+    }
+    input_lists.web_targets.append(&mut additional_web_targets);
+
     input_lists.dedup();
     input_lists
 }
@@ -611,7 +625,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
 fn lists_from_nmap(
     host: &nmap_xml_parser::host::Host,
     port: &nmap_xml_parser::port::Port,
-    mode: &Mode,
+    opts: &Opts,
 ) -> InputLists {
     use nmap_xml_parser::host::Address;
 
@@ -634,7 +648,9 @@ fn lists_from_nmap(
         };
         match (port.port_number, service_name) {
             // RDP signatures
-            (3389, _) | (_, "ms-wbt-server") if mode.selected(Mode::Rdp) => {
+            (3389, _) | (_, "ms-wbt-server")
+                if opts.mode.selected(Mode::Rdp) =>
+            {
                 debug!("Identified RDP");
                 let port = port.port_number;
                 // Iterate over the host's addresses. It may have multiple
@@ -685,7 +701,7 @@ fn lists_from_nmap(
             | (_, "https")
             | (_, "http-alt")
             | (_, "https-alt")
-                if mode.selected(Mode::Web) =>
+                if opts.mode.selected(Mode::Web) =>
             {
                 debug!("Idenfified web");
                 let port = port.port_number;
@@ -732,7 +748,7 @@ fn lists_from_nmap(
             | (_, "vnc-1")
             | (_, "vnc-2")
             | (_, "vnc-3")
-                if mode.selected(Mode::Vnc) =>
+                if opts.mode.selected(Mode::Vnc) =>
             {
                 debug!("Identified VNC");
                 let port = port.port_number;

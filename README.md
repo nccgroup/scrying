@@ -88,11 +88,11 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Full support for IPv6 and IPv4 literals as well as hostnames
 * ✔️ Read targets from a file and decide whether they're RDP or HTTP or use hints
 * ✔️ Parse targets smartly from Nmap and Nessus output
-* ✔️ HTTP - uses platform web renderer
+* ✔️ HTTP - uses platform web renderer, optionally provide paths to try on each server
 * ✔️ Produces an HTML report to allow easy browsing of the results
-* ✔️ VNC
+* ✔️ VNC - supports sending auth
 * ✔️ RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
-* Proxy support - SOCKS works for RDP. Web may or may not work depending on platform, but consider it broken for the time being [#11](https://github.com/nccgroup/scrying/issues/11)
+* Proxy support - SOCKS works for RDP. Web is currently broken pending [inclusion of the set_proxy command in webkit2gtk](https://github.com/gtk-rs/webkit2gtk-rs/issues/81) [#11](https://github.com/nccgroup/scrying/issues/11)
 * Video streams - tracking issue [#5](https://github.com/nccgroup/scrying/issues/5)
 * option for timestamps in filenames
 * Read targets from a msf services -o csv output
@@ -136,6 +136,9 @@ OPTIONS:
     -t, --target <TARGET>...             Target, e.g. http://example.com, rdp://[2001:db8::4]
         --threads <THREADS>              Number of worker threads for each target type [default: 10]
         --vnc-auth <VNC AUTH>            Password to provide to VNC servers that request one
+        --web-path <WEB PATH>...
+            Append a path to web requests. Provide multiple to request each path sequentially
+
         --web-proxy <WEB PROXY>
             HTTP/SOCKS Proxy to use for web requests e.g. http://[::1]:8080
 ```

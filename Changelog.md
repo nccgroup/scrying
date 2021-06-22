@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 * Add support for VNC passwords [#38](https://github.com/nccgroup/scrying/issues/38)
+* Add support for requesting particular paths from web targets [#41](https://github.com/nccgroup/scrying/issues/41)
 
 ### Changed
 * Log messages from the RDP and VNC modules are now tagged with the target IP [#42](https://github.com/nccgroup/scrying/issues/42)

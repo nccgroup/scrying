@@ -74,6 +74,7 @@ pub struct Opts {
     pub web_proxy: Option<String>,
     pub rdp_proxy: Option<String>,
     pub vnc_auth: Option<String>,
+    pub web_path: Vec<String>,
     pub silent: bool,
     pub verbose: u64,
     pub test_import: bool,
@@ -191,6 +192,16 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .arg(
+            Arg::new("WEB PATH")
+                .about(concat!(
+                    "Append a path to web requests. Provide multiple",
+                    " to request each path sequentially"
+                ))
+                .long("web-path")
+                .multiple(true)
+                .takes_value(true),
+        )
+        .arg(
             Arg::new("SILENT")
                 .about("Suppress most log messages")
                 .long("silent")
@@ -283,6 +294,11 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         vnc_auth: args
             .value_of("VNC AUTH")
             .map_or_else(|| None, |s| Some(s.to_string())),
+        web_path: if let Some(paths) = args.values_of("WEB PATH") {
+            paths.map(|p| p.to_string()).collect()
+        } else {
+            Vec::new()
+        },
         silent: args.is_present("SILENT"),
         verbose: args.occurrences_of("VERBOSE"),
         test_import: args.is_present("TEST IMPORT"),
