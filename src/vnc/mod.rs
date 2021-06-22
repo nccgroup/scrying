@@ -25,9 +25,9 @@ use crate::reporting::ReportMessageContent;
 use crate::reporting::{FileError, ReportMessage};
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
-use image::{DynamicImage, ImageBuffer, Rgb};
 #[allow(unused)]
-use log::{debug, error, info, trace, warn};
+use crate::{debug, error, info, trace, warn};
+use image::{DynamicImage, ImageBuffer, Rgb};
 use std::convert::TryInto;
 use std::net::TcpStream;
 use std::path::Path;
@@ -87,10 +87,15 @@ impl Image {
         })
     }
 
-    fn put_pixels(&mut self, rect: Rect, pixels: &[u8]) -> Result<(), Error> {
+    fn put_pixels(
+        &mut self,
+        target: &Target,
+        rect: Rect,
+        pixels: &[u8],
+    ) -> Result<(), Error> {
         use ColourFormat::*;
-        trace!("pixels: {:?}", pixels);
-        trace!("rect: {:?}", rect);
+        trace!(target, "pixels: {:?}", pixels);
+        trace!(target, "rect: {:?}", rect);
 
         //debug!("rect: {:?}", rect);
         //debug!("number of pixels: {}", pixels.len());
@@ -125,6 +130,7 @@ impl Image {
         for y in rect.top..(rect.top + rect.height) {
             for x in rect.left..(rect.left + rect.width) {
                 trace!(
+                    target,
                     "Position: {},{}: {:?}",
                     x,
                     y,
@@ -356,7 +362,7 @@ fn vnc_capture(
     opts: &Opts,
     report_tx: &Sender<ReportMessage>,
 ) -> Result<(), Error> {
-    info!("Connecting to {:?}", target);
+    info!(target, "Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
         Target::Url(_) => {
@@ -370,7 +376,7 @@ fn vnc_capture(
     let stream = TcpStream::connect(addr)?;
 
     let mut vnc = Client::from_tcp_stream(stream, false, |methods| {
-        debug!("available auth methods: {:?}", methods);
+        debug!(target, "available auth methods: {:?}", methods);
         // Turn off Clippy's single_match check because there might be
         // other auth methods in the future
         #[allow(clippy::single_match)]
@@ -380,12 +386,13 @@ fn vnc_capture(
                 _ => {}
             }
         }
-        warn!("AuthMethod::None may not be supported");
+        warn!(target, "AuthMethod::None may not be supported");
         None
     })?;
 
     let (width, height) = vnc.size();
     info!(
+        target,
         "connected to \"{}\", {}x{} framebuffer",
         vnc.name(),
         width,
@@ -401,9 +408,9 @@ fn vnc_capture(
     ])?;
 
     let vnc_format = vnc.format();
-    debug!("VNC pixel format: {:?}", vnc_format);
+    debug!(target, "VNC pixel format: {:?}", vnc_format);
 
-    debug!("requesting update");
+    debug!(target, "requesting update");
     vnc.request_update(
         vnc::Rect {
             left: 0,
@@ -416,14 +423,14 @@ fn vnc_capture(
 
     let mut vnc_image = Image::new(vnc_format, width, height)?;
 
-    vnc_poll(vnc, &mut vnc_image)?;
+    vnc_poll(&target, vnc, &mut vnc_image)?;
 
     // Save the image
-    info!("Successfully received image");
+    info!(target, "Successfully received image");
     let filename = format!("{}.png", target_to_filename(&target));
     let relative_filepath = Path::new("vnc").join(&filename);
     let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
-    info!("Saving image as {}", filepath.display());
+    info!(target, "Saving image as {}", filepath.display());
     vnc_image.image.save(&filepath)?;
 
     let report_message = ReportMessage::Output(ReportMessageContent {
@@ -436,33 +443,37 @@ fn vnc_capture(
     Ok(())
 }
 
-fn vnc_poll(mut vnc: Client, vnc_image: &mut Image) -> Result<(), Error> {
+fn vnc_poll(
+    target: &Target,
+    mut vnc: Client,
+    vnc_image: &mut Image,
+) -> Result<(), Error> {
     use vnc::client::Event::*;
     loop {
         for event in vnc.poll_iter() {
             match event {
                 Disconnected(None) => {
-                    warn!("VNC Channel disconnected");
+                    warn!(target, "VNC Channel disconnected");
                     return Ok(());
                 }
                 PutPixels(vnc_rect, ref pixels) => {
-                    trace!("PutPixels");
-                    vnc_image.put_pixels(vnc_rect, pixels)?;
+                    trace!(target, "PutPixels");
+                    vnc_image.put_pixels(&target, vnc_rect, pixels)?;
                 }
                 EndOfFrame => {
-                    debug!("End of frame");
+                    debug!(target, "End of frame");
                     return Ok(());
                 }
                 SetColourMap {
                     first_colour,
                     colours,
                 } => {
-                    debug!("Set colour map");
-                    trace!("first colour: {:x}", first_colour);
-                    trace!("colours: {:?}", colours);
+                    debug!(target, "Set colour map");
+                    trace!(target, "first colour: {:x}", first_colour);
+                    trace!(target, "colours: {:?}", colours);
                     vnc_image.set_colour_map(first_colour, colours)?;
                 }
-                other => debug!("Unsupported event: {:?}", other),
+                other => debug!(target, "Unsupported event: {:?}", other),
             }
         }
     }
@@ -475,7 +486,7 @@ pub fn capture(
     report_tx: &Sender<ReportMessage>,
 ) {
     if let Err(e) = vnc_capture(&target, opts, report_tx) {
-        warn!("VNC error: {}", e);
+        warn!(target, "VNC error: {}", e);
     }
 
     tx.send(ThreadStatus::Complete).unwrap();

@@ -19,8 +19,8 @@
 
 use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
-#[allow(unused)]
-use log::{debug, error, info, trace, warn};
+//#[allow(unused)]
+//use log::{debug, error, info, trace, warn};
 use parsing::{generate_target_lists, InputLists};
 use simplelog::{
     ColorChoice, CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
@@ -93,14 +93,14 @@ fn main() {
 
     CombinedLogger::init(log_dests).unwrap();
 
-    debug!("Got opts:\n{:?}", opts);
+    log::debug!("Got opts:\n{:?}", opts);
 
     // Load in the target lists, parsed from arguments, files, and nmap
     let targets = Arc::new(generate_target_lists(&opts));
     println!("{}", targets);
 
     if opts.test_import {
-        info!("--test-import was supplied, exiting");
+        log::info!("--test-import was supplied, exiting");
         return;
     }
 
@@ -109,7 +109,7 @@ fn main() {
         && targets.web_targets.is_empty()
         && targets.vnc_targets.is_empty()
     {
-        error!("No targets imported, exiting");
+        log::error!("No targets imported, exiting");
         return;
     }
 
@@ -139,10 +139,10 @@ fn main() {
     let caught_ctrl_c_clone_for_handler = caught_ctrl_c.clone();
     ctrlc::set_handler(move || {
         if caught_ctrl_c_clone_for_handler.load(Ordering::SeqCst) {
-            error!("Multiple ctrl+c caught, force-exiting...");
+            log::error!("Multiple ctrl+c caught, force-exiting...");
             std::process::exit(-1);
         }
-        warn!("Caught interrupt signal, cleaning up...");
+        log::warn!("Caught interrupt signal, cleaning up...");
         caught_ctrl_c_clone_for_handler.store(true, Ordering::SeqCst);
     })
     .expect("Unable to attach interrupt signal handler");
@@ -155,7 +155,7 @@ fn main() {
     let opts_clone = opts.clone();
     let targets_clone = targets.clone();
     let reporting_handle = thread::spawn(move || {
-        debug!("Starting report thread");
+        log::debug!("Starting report thread");
         reporting::reporting_thread(report_rx, opts_clone, targets_clone)
     });
 
@@ -166,7 +166,7 @@ fn main() {
         let report_tx_clone = report_tx.clone();
         let caught_ctrl_c_clone = caught_ctrl_c.clone();
         Some(thread::spawn(move || {
-            debug!("Starting RDP worker threads");
+            log::debug!("Starting RDP worker threads");
             rdp_worker(
                 targets_clone,
                 opts_clone,
@@ -184,7 +184,7 @@ fn main() {
         let report_tx_clone = report_tx.clone();
         let caught_ctrl_c_clone = caught_ctrl_c.clone();
         Some(thread::spawn(move || {
-            debug!("Starting VNC worker threads");
+            log::debug!("Starting VNC worker threads");
             vnc_worker(
                 targets_clone,
                 opts_clone,
@@ -205,7 +205,7 @@ fn main() {
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
 
-        debug!("Starting Web worker threads");
+        log::debug!("Starting Web worker threads");
         web_worker(targets, opts_clone, report_tx_clone, caught_ctrl_c).unwrap()
     }
 
@@ -243,7 +243,7 @@ fn rdp_worker(
         #[allow(clippy::single_match)]
         match thread_status_rx.try_recv() {
             Ok(ThreadStatus::Complete) => {
-                debug!("Thread complete, yay");
+                debug!("RDP", "Thread complete, yay");
                 num_workers -= 1;
             }
             Err(_) => {}
@@ -251,7 +251,7 @@ fn rdp_worker(
         if num_workers < max_workers {
             if let Some(target) = targets_iter.next() {
                 let target = target.clone();
-                info!("Adding worker for {:?}", target);
+                info!("RDP", "Adding worker for {:?}", target);
                 let opts_clone = opts.clone();
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
@@ -266,11 +266,11 @@ fn rdp_worker(
             }
         }
     }
-    debug!("At the join part");
+    debug!("RDP", "At the join part");
     for w in workers {
-        debug!("Joining {:?}", w);
+        debug!("RDP", "Joining {:?}", w);
         if w.join().is_err() {
-            debug!("Thread finished with errors");
+            debug!("RDP", "Thread finished with errors");
         }
     }
 
@@ -300,7 +300,7 @@ fn vnc_worker(
         #[allow(clippy::single_match)]
         match thread_status_rx.try_recv() {
             Ok(ThreadStatus::Complete) => {
-                info!("Thread complete, yay");
+                info!("VNC", "Thread complete, yay");
                 num_workers -= 1;
             }
             Err(_) => {}
@@ -308,7 +308,7 @@ fn vnc_worker(
         if num_workers < max_workers {
             if let Some(target) = targets_iter.next() {
                 let target = target.clone();
-                info!("Adding VNC worker for {:?}", target);
+                info!("VNC", "Adding worker for {:?}", target);
                 let opts_clone = opts.clone();
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
@@ -323,9 +323,9 @@ fn vnc_worker(
             }
         }
     }
-    debug!("At the join part");
+    debug!("VNC", "At the join part");
     for w in workers {
-        debug!("Joining {:?}", w);
+        debug!("VNC", "Joining {:?}", w);
         w.join().unwrap();
     }
 

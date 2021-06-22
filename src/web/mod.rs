@@ -23,7 +23,7 @@ use crate::parsing::Target;
 use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
 use crate::util::target_to_filename;
 #[allow(unused)]
-use log::{debug, error, info, trace, warn};
+use crate::{debug, error, info, trace, warn};
 use std::path::Path;
 use std::sync::mpsc;
 use std::{fs::File, io::Write};
@@ -52,13 +52,11 @@ pub fn save(
     png_data: &[u8],
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
-    debug!("Saving image for {}", target);
-
     let filename = format!("{}.png", target_to_filename(&target));
 
     let relative_filepath = Path::new("web").join(&filename);
     let output_file = Path::new(output_dir).join(&relative_filepath);
-    info!("Saving image as {}", output_file.display());
+    info!(target, "Saving image as {}", output_file.display());
 
     let mut file = File::create(&output_file)?;
     file.write_all(&png_data)?;

@@ -25,9 +25,9 @@ use crate::reporting::ReportMessageContent;
 use crate::reporting::{FileError, ReportMessage};
 use crate::util::target_to_filename;
 use crate::ThreadStatus;
-use image::{DynamicImage, ImageBuffer, Rgba};
 #[allow(unused)]
-use log::{debug, error, info, trace, warn};
+use crate::{debug, error, info, trace, warn};
+use image::{DynamicImage, ImageBuffer, Rgba};
 use rdp::core::client::Connector;
 use rdp::core::client::RdpClient;
 use rdp::core::event::RdpEvent;
@@ -81,20 +81,24 @@ struct Image {
 }
 
 impl Image {
-    fn add_chunk(&mut self, chunk: &BitmapChunk) -> Result<(), ()> {
+    fn add_chunk(
+        &mut self,
+        target: &Target,
+        chunk: &BitmapChunk,
+    ) -> Result<(), ()> {
         use ImageMode::*;
         //TODO return sensible errors when things are inconsistent
 
         if self.image.is_none() {
             // Image type has not been determined yet
-            self.initialise_buffer(chunk)?;
+            self.initialise_buffer(&target, chunk)?;
         }
 
         //TODO assert that the buffer is the right length etc.
 
         // If the chunk has zero size then we have a problem
         if chunk.left == chunk.right || chunk.top == chunk.bottom {
-            debug!("Received zero-size chunk");
+            debug!(target, "Received zero-size chunk");
             return Err(());
         }
 
@@ -106,10 +110,17 @@ impl Image {
         for (idx, pixel) in
             chunk.data.chunks(self.component_width.unwrap()).enumerate()
         {
-            trace!("idx: {}, pixel: {:?}, at ({}, {})", idx, pixel, x, y);
+            trace!(
+                target,
+                "idx: {}, pixel: {:?}, at ({}, {})",
+                idx,
+                pixel,
+                x,
+                y
+            );
 
             if y > chunk.bottom {
-                debug!("Pixel out of bounds!");
+                debug!(target, "Pixel out of bounds!");
                 break;
             }
 
@@ -137,7 +148,7 @@ impl Image {
             // Increment x and y around the chunk
             x += 1;
             if x > chunk.right {
-                trace!("CR");
+                trace!(target, "CR");
                 x = chunk.left;
                 y += 1;
             }
@@ -146,9 +157,13 @@ impl Image {
         Ok(())
     }
 
-    fn initialise_buffer(&mut self, chunk: &BitmapChunk) -> Result<(), ()> {
+    fn initialise_buffer(
+        &mut self,
+        target: &Target,
+        chunk: &BitmapChunk,
+    ) -> Result<(), ()> {
         use ImageMode::*;
-        debug!("BITS PER PIXEL: {}", chunk.bpp);
+        debug!(target, "BITS PER PIXEL: {}", chunk.bpp);
         //TODO get these values properly
         // IMAGE_WIDTH and IMAGE_HEIGHT are u16
         let width = IMAGE_WIDTH as u32;
@@ -156,7 +171,7 @@ impl Image {
 
         let pixel_size = 4; //chunk.data.len() as u32
                             // / ((chunk.right - chunk.left) * (chunk.bottom - chunk.top));
-        debug!("PIXEL SIZE {}", pixel_size);
+        debug!(target, "PIXEL SIZE {}", pixel_size);
 
         // Have to do a let binding here and then transfer to the self.*
         // variables pending https://github.com/rust-lang/rfcs/pull/2909
@@ -172,7 +187,7 @@ impl Image {
                 )
             }*/
             4 => {
-                debug!("Detected RGBA-32");
+                debug!(target, "Detected RGBA-32");
                 (
                     Some(4),
                     Some(Rgba32(DynamicImage::ImageRgba8(ImageBuffer::<
@@ -236,7 +251,7 @@ fn capture_worker(
     opts: &Opts,
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
-    info!("Connecting to {:?}", target);
+    info!(target, "Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
         Target::Url(_) => {
@@ -253,7 +268,7 @@ fn capture_worker(
     // trait objects can only have one main trait (i.e. "dyn Read +
     // Write") is not possible.
     let stream = if let Some(proxy) = &opts.rdp_proxy {
-        debug!("Connecting to Socks proxy");
+        debug!(target, "Connecting to Socks proxy");
         SocketType::Socks5(Socks5Stream::connect(proxy, *addr)?)
     } else {
         SocketType::Tcp(TcpStream::connect(&addr)?)
@@ -272,20 +287,21 @@ fn capture_worker(
         // Spawn a thread to listen for bitmap events
         let (bmp_sender, bmp_receiver): (Sender<BitmapChunk>, Receiver<_>) =
             mpsc::channel();
+        let target_clone = target.clone();
         let _bmp_thread_handle = thread::spawn(move || {
-            bmp_thread(client, bmp_sender);
+            bmp_thread(target_clone, client, bmp_sender);
         });
 
         let timeout = Duration::from_secs(2);
         loop {
             match bmp_receiver.recv_timeout(timeout) {
                 Err(_) => {
-                    warn!("Timeout reached");
+                    warn!(target, "Timeout reached");
                     break;
                 }
                 Ok(chunk) => {
-                    if rdp_image.add_chunk(&chunk).is_err() {
-                        debug!("Attempted to add invalid chunk");
+                    if rdp_image.add_chunk(&target, &chunk).is_err() {
+                        debug!(target, "Attempted to add invalid chunk");
                         //break;
                     }
                 }
@@ -294,11 +310,11 @@ fn capture_worker(
     }
     match rdp_image.image {
         Some(di) => {
-            info!("Successfully received image");
+            info!(target, "Successfully received image");
             let filename = format!("{}.png", target_to_filename(&target));
             let relative_filepath = Path::new("rdp").join(&filename);
             let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
-            info!("Saving image as {}", filepath.display());
+            info!(target, "Saving image as {}", filepath.display());
             di.extract().save(&filepath)?;
             let report_message = ReportMessage::Output(ReportMessageContent {
                 mode: Rdp,
@@ -310,7 +326,7 @@ fn capture_worker(
             report_tx.send(report_message)?;
         }
         None => {
-            warn!(
+            warn!(target,
             "Error receiving image from {}. Perhaps the server disconnected",
             addr
             );
@@ -325,6 +341,7 @@ fn capture_worker(
 }
 
 fn bmp_thread<T: Read + Write>(
+    target: Target,
     mut client: RdpClient<T>,
     sender: Sender<BitmapChunk>,
 ) {
@@ -354,6 +371,7 @@ fn bmp_thread<T: Read + Write>(
                 chunk.data = data;
 
                 debug!(
+                    target,
                     "Received {}x{} bmp pos {}, {}, {}, {}, bpp: {}, len {}",
                     chunk.width,
                     chunk.height,
@@ -368,16 +386,16 @@ fn bmp_thread<T: Read + Write>(
                 if sender.send(chunk).is_err() {
                     // Recevier disconnected, most likely because the timeout
                     // was reached
-                    info!("Bitmap channel disconnected");
+                    info!(target, "Bitmap channel disconnected");
                     break_cond.store(true, Ordering::Relaxed);
                 }
             }
-            RdpEvent::Pointer(_) => info!("Pointer event!"),
-            RdpEvent::Key(_) => info!("Key event!"),
+            RdpEvent::Pointer(_) => info!(target, "Pointer event!"),
+            RdpEvent::Key(_) => info!(target, "Key event!"),
         }) {
             Ok(_) => (),
             Err(e) => {
-                error!("Error reading RDP stream: {:?}", e);
+                error!(target, "Error reading RDP stream: {:?}", e);
                 return;
             }
         }
@@ -391,7 +409,7 @@ pub fn capture(
     report_tx: &mpsc::Sender<ReportMessage>,
 ) {
     if let Err(e) = capture_worker(target, opts, report_tx) {
-        warn!("error: {}", e);
+        warn!(target, "error: {}", e);
         let report_message = match &e {
             Error::RdpError(r) if r.contains("failed to fill whole buffer") => {
                 ReportMessage::Output(ReportMessageContent {

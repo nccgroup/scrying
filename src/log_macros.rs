@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! debug {
     ($target:expr, $fmt:literal, $($arg:tt)*) => {
     	log::debug!("[{}]: {}", $target, format!($fmt, $($arg)*));
@@ -7,6 +8,7 @@ macro_rules! debug {
     };
 }
 
+#[macro_export]
 macro_rules! error {
     ($target:expr, $fmt:literal, $($arg:tt)*) => {
     	log::error!("[{}]: {}", $target, format!($fmt, $($arg)*));
@@ -16,6 +18,7 @@ macro_rules! error {
     };
 }
 
+#[macro_export]
 macro_rules! info {
     ($target:expr, $fmt:literal, $($arg:tt)*) => {
     	log::info!("[{}]: {}", $target, format!($fmt, $($arg)*));
@@ -25,6 +28,7 @@ macro_rules! info {
     };
 }
 
+#[macro_export]
 macro_rules! trace {
     ($target:expr, $fmt:literal, $($arg:tt)*) => {
     	log::trace!("[{}]: {}", $target, format!($fmt, $($arg)*));
@@ -34,6 +38,7 @@ macro_rules! trace {
     };
 }
 
+#[macro_export]
 macro_rules! warn {
     ($target:expr, $fmt:literal, $($arg:tt)*) => {
     	log::warn!("[{}]: {}", $target, format!($fmt, $($arg)*));
