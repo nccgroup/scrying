@@ -6,20 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [v0.9.0-alpha.2]
+### Added
 * Add support for VNC passwords [#38](https://github.com/nccgroup/scrying/issues/38)
 * Add support for requesting particular paths from web targets [#41](https://github.com/nccgroup/scrying/issues/41)
 
 ### Changed
 * Log messages from the RDP and VNC modules are now tagged with the target IP [#42](https://github.com/nccgroup/scrying/issues/42)
 
-### Deprecated
 
 ### Removed
-* Removed explicit support for macos because I can't easily test or develop for it and I don't know how best to screenshot a webview (contributions welcome if you have any ideas)
-
-### Fixed
-
-### Security
+* Removed explicit support for macos because I can't easily test or develop for it and I don't know how best to screenshot a cocoa webview (contributions welcome if you have any ideas)
 
 
 ## [v0.9.0-alpha.1]
