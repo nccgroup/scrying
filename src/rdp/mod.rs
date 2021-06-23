@@ -41,10 +41,6 @@ use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
 use std::thread;
 use std::time::Duration;
 
-//TODO maybe make this configurable
-const IMAGE_WIDTH: u16 = 1280;
-const IMAGE_HEIGHT: u16 = 1024;
-
 struct BitmapChunk {
     width: u32,
     height: u32,
@@ -83,6 +79,7 @@ struct Image {
 impl Image {
     fn add_chunk(
         &mut self,
+        opts: &Opts,
         target: &Target,
         chunk: &BitmapChunk,
     ) -> Result<(), ()> {
@@ -91,7 +88,7 @@ impl Image {
 
         if self.image.is_none() {
             // Image type has not been determined yet
-            self.initialise_buffer(&target, chunk)?;
+            self.initialise_buffer(&opts, &target, chunk)?;
         }
 
         //TODO assert that the buffer is the right length etc.
@@ -159,15 +156,15 @@ impl Image {
 
     fn initialise_buffer(
         &mut self,
+        opts: &Opts,
         target: &Target,
         chunk: &BitmapChunk,
     ) -> Result<(), ()> {
         use ImageMode::*;
         debug!(target, "BITS PER PIXEL: {}", chunk.bpp);
         //TODO get these values properly
-        // IMAGE_WIDTH and IMAGE_HEIGHT are u16
-        let width = IMAGE_WIDTH as u32;
-        let height = IMAGE_HEIGHT as u32;
+        let width = opts.size.0 as u32;
+        let height = opts.size.1 as u32;
 
         let pixel_size = 4; //chunk.data.len() as u32
                             // / ((chunk.right - chunk.left) * (chunk.bottom - chunk.top));
@@ -275,7 +272,7 @@ fn capture_worker(
     };
 
     let mut connector = Connector::new()
-        .screen(IMAGE_WIDTH, IMAGE_HEIGHT)
+        .screen(opts.size.0 as u16, opts.size.1 as u16)
         .use_nla(false)
         .check_certificate(false)
         .blank_creds(true)
@@ -300,7 +297,7 @@ fn capture_worker(
                     break;
                 }
                 Ok(chunk) => {
-                    if rdp_image.add_chunk(&target, &chunk).is_err() {
+                    if rdp_image.add_chunk(&opts, &target, &chunk).is_err() {
                         debug!(target, "Attempted to add invalid chunk");
                         //break;
                     }

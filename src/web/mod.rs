@@ -28,9 +28,6 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::{fs::File, io::Write};
 
-const WIDTH: i32 = 1280;
-const HEIGHT: i32 = 720;
-
 #[cfg(target_os = "linux")]
 pub use linux::web_worker;
 #[cfg(target_os = "linux")]

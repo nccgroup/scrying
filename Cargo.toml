@@ -16,10 +16,12 @@ askama = "0.10"
 clap = "3.0.0-beta.2"
 ctrlc = "3.1"
 image = "0.23.4"
+lazy_static = "1.4"
 log = "0.4.8"
 nessus_xml_parser = "0.1"
 nmap_xml_parser = { "git" = "https://github.com/Ayrx/nmap_xml_parser" }
 #rdp-rs = "0.1.0"
+regex = "1.5"
 simplelog = "0.10"
 socks = "0.3"
 thiserror = "1.0"
@@ -57,7 +59,7 @@ cacao = { version = "0.2", features = ["webview"] }
 
 [dev-dependencies]
 # used for testing the custom logging macros
-lazy_static = "1.4"
+
 
 [package.metadata.deb]
 depends = "libwebkit2gtk-4.0-37"

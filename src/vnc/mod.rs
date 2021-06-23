@@ -402,6 +402,7 @@ fn vnc_capture(
         None
     })?;
 
+    // Server specifies the initial size, so just use that
     let (width, height) = vnc.size();
     info!(
         target,

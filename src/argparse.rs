@@ -18,7 +18,13 @@
 */
 
 use clap::{crate_version, App, AppSettings, Arg, ArgGroup};
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::str::FromStr;
+
+lazy_static! {
+    static ref SIZE_REGEX: Regex = Regex::new(r"^(\d+)x(\d+)$").unwrap();
+}
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Mode {
@@ -75,6 +81,7 @@ pub struct Opts {
     pub rdp_proxy: Option<String>,
     pub vnc_auth: Option<String>,
     pub web_path: Vec<String>,
+    pub size: (usize, usize),
     pub silent: bool,
     pub verbose: u64,
     pub test_import: bool,
@@ -202,6 +209,19 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
                 .takes_value(true),
         )
         .arg(
+            Arg::new("SIZE")
+                .about(concat!(
+                    "Set the size of captured images in pixels.",
+                    " Due to protocol limitations, sizes greater than",
+                    " 65535x65535 may get truncated in interesting ways.",
+                    " This argument has no effect on VNC screenshots."
+                ))
+                .default_value("1280x1024")
+                .long("size")
+                .takes_value(true)
+                .validator(size_validator),
+        )
+        .arg(
             Arg::new("SILENT")
                 .about("Suppress most log messages")
                 .long("silent")
@@ -277,6 +297,14 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         web_proxy = Some(p.to_string());
     }
 
+    // SIZE has already passed the regex validator, so the following
+    // extraction probably won't panic
+    let captures = SIZE_REGEX
+        .captures_iter(args.value_of("SIZE").unwrap())
+        .next()
+        .unwrap();
+    let size = (captures[1].parse().unwrap(), captures[2].parse().unwrap());
+
     Ok(Opts {
         files,
         targets,
@@ -299,6 +327,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         } else {
             Vec::new()
         },
+        size,
         silent: args.is_present("SILENT"),
         verbose: args.occurrences_of("VERBOSE"),
         test_import: args.is_present("TEST IMPORT"),
@@ -310,6 +339,15 @@ fn is_socks5(val: &str) -> Result<(), String> {
         Err("Global or RDP proxy must be a socks5:// URI".to_string())
     } else {
         Ok(())
+    }
+}
+
+fn size_validator(val: &str) -> Result<(), String> {
+    if SIZE_REGEX.is_match(val) {
+        Ok(())
+    } else {
+        Err(r#"Size must be in the form "1280x720" (regex "^\d+x\d+$""#
+            .to_string())
     }
 }
 

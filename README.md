@@ -92,6 +92,7 @@ Features with ticks next to them have been implemented, others are TODO
 * ✔️ Produces an HTML report to allow easy browsing of the results
 * ✔️ VNC - supports sending auth
 * ✔️ RDP - mostly working, does not support "plain RDP" mode, see [#15](https://github.com/nccgroup/scrying/issues/15)
+* ✔️ Customise size of captured images (web & RDP; VNC does not generally allow this)
 * Proxy support - SOCKS works for RDP. Web is currently broken pending [inclusion of the set_proxy command in webkit2gtk](https://github.com/gtk-rs/webkit2gtk-rs/issues/81) [#11](https://github.com/nccgroup/scrying/issues/11)
 * Video streams - tracking issue [#5](https://github.com/nccgroup/scrying/issues/5)
 * option for timestamps in filenames
@@ -132,6 +133,11 @@ OPTIONS:
 
         --rdp-timeout <RDP TIMEOUT>
             Seconds to wait after last bitmap before saving an image [default: 2]
+
+        --size <SIZE>
+            Set the size of captured images in pixels. Due to protocol limitations, sizes greater
+            than 65535x65535 may get truncated in interesting ways. This argument has no effect on
+            VNC screenshots. [default: 1280x1024]
 
     -t, --target <TARGET>...             Target, e.g. http://example.com, rdp://[2001:db8::4]
         --threads <THREADS>              Number of worker threads for each target type [default: 10]

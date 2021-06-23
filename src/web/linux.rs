@@ -17,7 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use super::{save, HEIGHT, WIDTH};
+use super::save;
 use crate::{
     argparse::Opts, parsing::Target, reporting::ReportMessage, InputLists,
 };
@@ -63,7 +63,7 @@ pub fn web_worker(
     let targets_exhausted_clone = targets_exhausted.clone();
     application.connect_activate(move |app| {
         let window = ApplicationWindow::new(app);
-        window.set_default_size(WIDTH, HEIGHT);
+        window.set_default_size(opts.size.0 as i32, opts.size.1 as i32);
         window.set_position(WindowPosition::Center);
         window.set_title("Scrying WebCapture");
         //TODO work out how to make the window invisible
@@ -152,6 +152,9 @@ pub fn web_worker(
         // "[WARN] Capture failed: Unable to find window"
         window.show_all();
 
+        // Dimensions need to be captured by the closure
+        let width = opts.size.0 as i32;
+        let height = opts.size.1 as i32;
         receiver.attach(Some(&main_context), move |msg| match msg {
             GuiMessage::Navigate(u) => {
                 trace!("Navigating to target: {}", u);
@@ -165,7 +168,7 @@ pub fn web_worker(
             }
             GuiMessage::PageReady => {
                 if let Some(win) = webview.get_window() {
-                    match win.get_pixbuf(0, 0, WIDTH, HEIGHT) {
+                    match win.get_pixbuf(0, 0, width, height) {
                         Some(pix) => match pix.save_to_bufferv("png", &[]) {
                             Ok(buf) => {
                                 trace!("Got pixbuf length {}", buf.len());
