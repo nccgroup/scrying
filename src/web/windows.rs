@@ -17,7 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use super::{save, HEIGHT, WIDTH};
+use super::{save,  };
 use crate::parsing::Target;
 use crate::reporting::ReportMessage;
 use crate::{InputLists, Opts};
@@ -51,7 +51,7 @@ pub fn web_worker(
         .title("WebView2 - NWG")
         // TODO work out how to make a proper invisible window
         .position((65536, 65536))
-        .size((WIDTH, HEIGHT))
+        .size((opts.size.0 as i32, opts.size.1 as i32))
         .flags(WindowFlags::MAIN_WINDOW | WindowFlags::VISIBLE)
         .build(&mut window)?;
 
