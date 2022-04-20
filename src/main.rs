@@ -17,7 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::Opts;
+use crate::argparse::{Opts, WebMode};
 use crate::reporting::ReportMessage;
 //#[allow(unused)]
 //use log::{debug, error, info, trace, warn};
@@ -31,7 +31,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
-use web::web_worker;
+use web::{chrome_worker, web_worker};
 
 //#[macro_use]
 mod log_macros;
@@ -49,7 +49,8 @@ pub enum ThreadStatus {
     Complete,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("Starting NCC Group Scrying...");
     let opts = Arc::new(argparse::parse().unwrap());
 
@@ -205,8 +206,21 @@ fn main() {
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
 
-        log::debug!("Starting Web worker threads");
-        web_worker(targets, opts_clone, report_tx_clone, caught_ctrl_c).unwrap()
+        log::debug!("Starting Web worker");
+        match opts.web_mode {
+            WebMode::Chrome => chrome_worker(
+                targets,
+                opts_clone,
+                report_tx_clone,
+                caught_ctrl_c,
+            )
+            .await
+            .unwrap(),
+            WebMode::Native => {
+                web_worker(targets, opts_clone, report_tx_clone, caught_ctrl_c)
+                    .unwrap()
+            }
+        }
     }
 
     // wait for the workers to complete

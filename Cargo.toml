@@ -13,8 +13,9 @@ readme = "README.md"
 
 [dependencies]
 askama = "0.11"
-clap = { version = "3", features = ["cargo"] }
+clap = { version = "3", features = ["cargo", "derive"] }
 ctrlc = "3.1"
+futures = "0.3"
 image = "0.24"
 lazy_static = "1.4"
 log = "0.4.8"
@@ -29,9 +30,18 @@ thiserror = "1.0"
 url = "2.1.1"
 vnc = "0.4"
 
+[dependencies.chromiumoxide]
+version = "0.3"
+default-features = false
+features = ["tokio-runtime"]
+
 [dependencies.rdp-rs]
 git = "https://github.com/citronneur/rdp-rs"
 rev = "7ac880d"
+
+[dependencies.tokio]
+version = "1"
+features = ["macros", "rt-multi-thread"]
 
 [target.'cfg(target_os = "linux")'.dependencies]
 futures = "0.3"

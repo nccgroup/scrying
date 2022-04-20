@@ -28,6 +28,9 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::{fs::File, io::Write};
 
+pub use chrome::chrome_worker;
+mod chrome;
+
 #[cfg(target_os = "linux")]
 pub use linux::web_worker;
 #[cfg(target_os = "linux")]
