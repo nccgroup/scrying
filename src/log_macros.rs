@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! debug {
     ($target:expr, $fmt:literal, $($arg:tt)*) => {
-    	log::debug!("[{}]: {}", $target, format!($fmt, $($arg)*));
+    	log::debug!("[{}]: {}", $target, format!($fmt, $($arg)*))
     };
     ($target:expr, $msg:expr) => {
         log::debug!("[{}]: {}", $target, $msg);
@@ -24,7 +24,7 @@ macro_rules! info {
     	log::info!("[{}]: {}", $target, format!($fmt, $($arg)*));
     };
     ($target:expr, $msg:expr) => {
-        log::info!("[{}]: {}", $target, $msg);
+        log::info!("[{}]: {}", $target, $msg)
     };
 }
 
