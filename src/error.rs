@@ -20,68 +20,68 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("IO error: {0}")]
-    IoError(String),
+    Io(String),
 
     #[error("RDP error: {0}")]
-    RdpError(String),
+    Rdp(String),
 
     #[error("MPSC error: {0}")]
-    MpscError(String),
+    Mpsc(String),
 
     #[error("Template error: {0}")]
-    TemplateError(String),
+    Template(String),
 
     #[error("VNC error: {0}")]
-    VncError(String),
+    Vnc(String),
 
     #[error("Conversion error: {0}")]
-    ConversionError(String),
+    Conversion(String),
 }
 
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
-        Self::IoError(e.to_string())
+        Self::Io(e.to_string())
     }
 }
 
 impl From<rdp::model::error::Error> for Error {
     fn from(e: rdp::model::error::Error) -> Self {
-        Self::RdpError(format!("{:?}", e))
+        Self::Rdp(format!("{:?}", e))
     }
 }
 
 impl From<image::error::ImageError> for Error {
     fn from(e: image::error::ImageError) -> Self {
-        Self::RdpError(format!("Image error: {}", e.to_string()))
+        Self::Rdp(format!("Image error: {e}"))
     }
 }
 
 impl<T> From<std::sync::mpsc::SendError<T>> for Error {
     fn from(e: std::sync::mpsc::SendError<T>) -> Self {
-        Self::MpscError(e.to_string())
+        Self::Mpsc(e.to_string())
     }
 }
 
 impl From<askama::shared::Error> for Error {
     fn from(e: askama::shared::Error) -> Self {
-        Self::TemplateError(e.to_string())
+        Self::Template(e.to_string())
     }
 }
 
 impl From<vnc::Error> for Error {
     fn from(e: vnc::Error) -> Self {
-        Self::VncError(e.to_string())
+        Self::Vnc(e.to_string())
     }
 }
 
 impl From<std::num::TryFromIntError> for Error {
     fn from(e: std::num::TryFromIntError) -> Self {
-        Self::ConversionError(e.to_string())
+        Self::Conversion(e.to_string())
     }
 }
 
 impl From<std::array::TryFromSliceError> for Error {
     fn from(e: std::array::TryFromSliceError) -> Self {
-        Self::ConversionError(e.to_string())
+        Self::Conversion(e.to_string())
     }
 }

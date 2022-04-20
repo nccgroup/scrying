@@ -24,12 +24,12 @@ use std::net::SocketAddr;
 pub fn target_to_filename(target: &Target) -> String {
     match target {
         Target::Address(SocketAddr::V4(addr)) => {
-            format!("{}", addr).replace(":", "-")
+            format!("{}", addr).replace(':', "-")
         }
         Target::Address(SocketAddr::V6(addr)) => format!("{}", addr)
             .replace("]:", "-")
-            .replace("[", "")
-            .replace(":", "_"),
+            .replace('[', "")
+            .replace(':', "_"),
         Target::Url(u) => {
             // The :// scheme separator is converted to a hyphen
             // Any slashes in the URL are converted into hyphens
@@ -40,10 +40,10 @@ pub fn target_to_filename(target: &Target) -> String {
             // rather than underscores
             let mut converted: String = String::from(u.as_str())
                 .replace("://", "_") // Replace the scheme separator with -
-                .replace("/", "-") // replace all slashes with /
-                .replace(":", "_") // replace colon (probably port, could be uname)
-                .replace("[", "") // Remove the square brackets as they are not
-                .replace("]", "") // needed for uniqueness
+                .replace('/', "-") // replace all slashes with /
+                .replace(':', "_") // replace colon (probably port, could be uname)
+                .replace('[', "") // Remove the square brackets as they are not
+                .replace(']', "") // needed for uniqueness
                 ;
             while converted.ends_with('-') {
                 // remove the trailing - if the URL had a trailing /

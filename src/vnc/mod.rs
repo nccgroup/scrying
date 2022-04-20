@@ -72,7 +72,7 @@ impl Image {
                 height.into(),
             )),
             (d, t) => {
-                return Err(Error::VncError(format!(
+                return Err(Error::Vnc(format!(
                     "Invalid colour depth: {}, true colour: {}",
                     d, t
                 )))
@@ -121,7 +121,7 @@ impl Image {
             16 => 2,
             32 => 4,
             _ => {
-                return Err(Error::VncError(format!(
+                return Err(Error::Vnc(format!(
                     "Invalid bits per pixel: {}",
                     format.bits_per_pixel
                 )))
@@ -147,7 +147,7 @@ impl Image {
                         )? {
                             img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
                         } else {
-                            return Err(Error::VncError(
+                            return Err(Error::Vnc(
                                 "Colour format mismatch: expected 8-bit colours".to_string(),
                             ));
                         }
@@ -160,7 +160,7 @@ impl Image {
                         )? {
                             img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
                         } else {
-                            return Err(Error::VncError(
+                            return Err(Error::Vnc(
                                 "Colour format mismatch: expected 16-bit colours".to_string(),
                             ));
                         }
@@ -323,7 +323,7 @@ impl Image {
 
                     Ok(U16((r, g, b)))
                 } else {
-                    Err(Error::VncError(
+                    Err(Error::Vnc(
                         "No colour map supplied for 8-bit mode!".to_string(),
                     ))
                 }
@@ -338,7 +338,7 @@ impl Image {
         colours: Vec<Colour>,
     ) -> Result<(), Error> {
         if colours.len() != 256 {
-            return Err(Error::VncError(format!(
+            return Err(Error::Vnc(format!(
                 "Invalid number of colours in map: {}",
                 colours.len()
             )));
@@ -367,10 +367,7 @@ fn vnc_capture(
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
         Target::Url(_) => {
-            return Err(Error::VncError(format!(
-                "Invalid VNC target: {}",
-                target
-            )));
+            return Err(Error::Vnc(format!("Invalid VNC target: {}", target)));
         }
     };
 
@@ -436,11 +433,11 @@ fn vnc_capture(
 
     let mut vnc_image = Image::new(vnc_format, width, height)?;
 
-    vnc_poll(&target, vnc, &mut vnc_image)?;
+    vnc_poll(target, vnc, &mut vnc_image)?;
 
     // Save the image
     info!(target, "Successfully received image");
-    let filename = format!("{}.png", target_to_filename(&target));
+    let filename = format!("{}.png", target_to_filename(target));
     let relative_filepath = Path::new("vnc").join(&filename);
     let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
     info!(target, "Saving image as {}", filepath.display());
@@ -471,7 +468,7 @@ fn vnc_poll(
                 }
                 PutPixels(vnc_rect, ref pixels) => {
                     trace!(target, "PutPixels");
-                    vnc_image.put_pixels(&target, vnc_rect, pixels)?;
+                    vnc_image.put_pixels(target, vnc_rect, pixels)?;
                 }
                 EndOfFrame => {
                     debug!(target, "End of frame");
@@ -498,7 +495,7 @@ pub fn capture(
     tx: Sender<ThreadStatus>,
     report_tx: &Sender<ReportMessage>,
 ) {
-    if let Err(e) = vnc_capture(&target, opts, report_tx) {
+    if let Err(e) = vnc_capture(target, opts, report_tx) {
         warn!(target, "VNC error: {}", e);
     }
 

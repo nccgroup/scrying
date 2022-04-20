@@ -88,7 +88,7 @@ impl Image {
 
         if self.image.is_none() {
             // Image type has not been determined yet
-            self.initialise_buffer(&opts, &target, chunk)?;
+            self.initialise_buffer(opts, target, chunk)?;
         }
 
         //TODO assert that the buffer is the right length etc.
@@ -252,10 +252,7 @@ fn capture_worker(
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
         Target::Url(_) => {
-            return Err(Error::RdpError(format!(
-                "Invalid RDP target: {}",
-                target
-            )));
+            return Err(Error::Rdp(format!("Invalid RDP target: {}", target)));
         }
     };
 
@@ -297,7 +294,7 @@ fn capture_worker(
                     break;
                 }
                 Ok(chunk) => {
-                    if rdp_image.add_chunk(&opts, &target, &chunk).is_err() {
+                    if rdp_image.add_chunk(opts, target, &chunk).is_err() {
                         debug!(target, "Attempted to add invalid chunk");
                         //break;
                     }
@@ -308,7 +305,7 @@ fn capture_worker(
     match rdp_image.image {
         Some(di) => {
             info!(target, "Successfully received image");
-            let filename = format!("{}.png", target_to_filename(&target));
+            let filename = format!("{}.png", target_to_filename(target));
             let relative_filepath = Path::new("rdp").join(&filename);
             let filepath = Path::new(&opts.output_dir).join(&relative_filepath);
             info!(target, "Saving image as {}", filepath.display());
@@ -327,7 +324,7 @@ fn capture_worker(
             "Error receiving image from {}. Perhaps the server disconnected",
             addr
             );
-            return Err(Error::RdpError(
+            return Err(Error::Rdp(
                 "Error receiving image, perhaps the server disconnected"
                     .to_string(),
             ));
@@ -408,7 +405,7 @@ pub fn capture(
     if let Err(e) = capture_worker(target, opts, report_tx) {
         warn!(target, "error: {}", e);
         let report_message = match &e {
-            Error::RdpError(r) if r.contains("failed to fill whole buffer") => {
+            Error::Rdp(r) if r.contains("failed to fill whole buffer") => {
                 ReportMessage::Output(ReportMessageContent {
                     mode: Rdp,
                     target: target.to_string(),

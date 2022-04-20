@@ -224,7 +224,7 @@ pub fn web_worker(
                     Ok(Ok(img)) => {
                         trace!("Screen capture received! (len {})", img.len());
                         save(
-                            &target,
+                            target,
                             &opts_clone.output_dir,
                             &img,
                             &report_tx_clone,

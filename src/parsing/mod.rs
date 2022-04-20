@@ -93,7 +93,7 @@ impl<'a> Target {
         // * rdp://192.0.2.4:3390
         // * rdp://[2001:db8:6]
         // * rdp://localhost
-        if let Ok(u) = Url::parse(&input) {
+        if let Ok(u) = Url::parse(input) {
             match u.scheme() {
                 "http" | "https" => {
                     trace!("Parsed as HTTP/HTTPS web url");
@@ -170,12 +170,12 @@ impl<'a> Target {
                 // the provided port
 
                 // Try forcing a parse that includes the port
-                if let Ok(addr) = ip_port_to_sockaddr(&input) {
+                if let Ok(addr) = ip_port_to_sockaddr(input) {
                     return Ok(vec![Target::Address(addr)]);
                 }
 
                 // If that didn't work then try parsing it as just an address
-                if let Ok(addr) = domain_to_sockaddr(&input, 3389) {
+                if let Ok(addr) = domain_to_sockaddr(input, 3389) {
                     return Ok(vec![Target::Address(addr)]);
                 }
 
@@ -223,12 +223,12 @@ impl<'a> Target {
                 //TODO code reuse
 
                 // Try forcing a parse that includes the port
-                if let Ok(addr) = ip_port_to_sockaddr(&input) {
+                if let Ok(addr) = ip_port_to_sockaddr(input) {
                     return Ok(vec![Target::Address(addr)]);
                 }
 
                 // If that didn't work then try parsing it as just an address
-                if let Ok(addr) = domain_to_sockaddr(&input, 5900) {
+                if let Ok(addr) = domain_to_sockaddr(input, 5900) {
                     return Ok(vec![Target::Address(addr)]);
                 }
 
@@ -363,38 +363,38 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         match &opts.mode {
             Auto => {
                 // Try parsing as both web and RDP, saving any that stick
-                if let Ok(mut targets) = Target::parse(&t, Rdp) {
+                if let Ok(mut targets) = Target::parse(t, Rdp) {
                     input_lists.rdp_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as RDP target", t);
                 }
-                if let Ok(mut targets) = Target::parse(&t, Web) {
+                if let Ok(mut targets) = Target::parse(t, Web) {
                     input_lists.web_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as Web target", t);
                 }
-                if let Ok(mut targets) = Target::parse(&t, Vnc) {
+                if let Ok(mut targets) = Target::parse(t, Vnc) {
                     input_lists.vnc_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as VNC target", t);
                 }
             }
             Web => {
-                if let Ok(mut targets) = Target::parse(&t, Web) {
+                if let Ok(mut targets) = Target::parse(t, Web) {
                     input_lists.web_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as Web target", t);
                 }
             }
             Rdp => {
-                if let Ok(mut targets) = Target::parse(&t, Rdp) {
+                if let Ok(mut targets) = Target::parse(t, Rdp) {
                     input_lists.rdp_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as RDP target", t);
                 }
             }
             Vnc => {
-                if let Ok(mut targets) = Target::parse(&t, Vnc) {
+                if let Ok(mut targets) = Target::parse(t, Vnc) {
                     input_lists.vnc_targets.append(&mut targets);
                     parse_successful = true;
                     debug!("{} parsed as VNC target", t);
@@ -562,9 +562,8 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
 
                             // this has been broken out into a separate function
                             // for readability
-                            input_lists.append(&mut lists_from_nmap(
-                                host, port, &opts,
-                            ));
+                            input_lists
+                                .append(&mut lists_from_nmap(host, port, opts));
                         }
                     }
                 }
@@ -611,7 +610,7 @@ pub fn generate_target_lists(opts: &Opts) -> InputLists {
         for path in &opts.web_path {
             if let Target::Url(ref u) = target {
                 let mut u = u.clone();
-                u.set_path(&path);
+                u.set_path(path);
                 additional_web_targets.push(Target::Url(u));
             }
         }
@@ -897,7 +896,7 @@ mod test {
 
         for case in test_cases {
             eprintln!("Test case: {:?}", case);
-            let parsed = Target::parse(&case.0, case.2).unwrap();
+            let parsed = Target::parse(case.0, case.2).unwrap();
             assert_eq!(parsed.len(), 1, "Parsed wrong number of addresses");
             assert_eq!(parsed[0], case.1,);
         }
@@ -1025,14 +1024,14 @@ mod test {
 
         for case in test_cases {
             eprintln!("Test case: {:?}", case);
-            let parsed = Target::parse(&case.0, case.2).unwrap();
+            let parsed = Target::parse(case.0, case.2).unwrap();
             assert_eq!(parsed.len(), 1, "Parsed wrong number of addresses");
             assert_eq!(parsed[0], case.1,);
         }
 
         for case in vec_test_cases {
             eprintln!("Test case: {:?}", case);
-            let parsed = Target::parse(&case.0, case.2).unwrap();
+            let parsed = Target::parse(case.0, case.2).unwrap();
 
             // Each address should result in an HTTPS and HTTP URL
             assert_eq!(parsed.len(), 2, "Parsed wrong number of addresses");

@@ -49,14 +49,14 @@ pub fn save(
     png_data: &[u8],
     report_tx: &mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
-    let filename = format!("{}.png", target_to_filename(&target));
+    let filename = format!("{}.png", target_to_filename(target));
 
     let relative_filepath = Path::new("web").join(&filename);
     let output_file = Path::new(output_dir).join(&relative_filepath);
     info!(target, "Saving image as {}", output_file.display());
 
     let mut file = File::create(&output_file)?;
-    file.write_all(&png_data)?;
+    file.write_all(png_data)?;
 
     let report_message = ReportMessage::Output(ReportMessageContent {
         mode: Web,
