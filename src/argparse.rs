@@ -17,7 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{crate_version, App, AppSettings, Arg, ArgGroup};
+use clap::{command, Arg, ArgGroup};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::str::FromStr;
@@ -88,30 +88,28 @@ pub struct Opts {
 }
 
 pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
-    let args = App::new("Scrying")
-        .version(crate_version!())
-        .author("David Young https://github.com/nccgroup/scrying")
+    let args = command!()
         .about("Automatic RDP, Web, and VNC screenshotting tool")
-        .setting(AppSettings::ArgRequiredElseHelp)
+        .arg_required_else_help(true)
         .arg(
             Arg::new("FILE")
-                .about("Targets file, one per line")
+                .help("Targets file, one per line")
                 .long("file")
-                .multiple(true)
+                .multiple_occurrences(true)
                 .short('f')
                 .takes_value(true),
         )
         .arg(
             Arg::new("TARGET")
-                .about("Target, e.g. http://example.com, rdp://[2001:db8::4]")
+                .help("Target, e.g. http://example.com, rdp://[2001:db8::4]")
                 .long("target")
-                .multiple(true)
+                .multiple_occurrences(true)
                 .short('t')
                 .takes_value(true),
         )
         .arg(
             Arg::new("MODE")
-                .about("Force targets to be parsed as `web`, `rdp`, `vnc`")
+                .help("Force targets to be parsed as `web`, `rdp`, `vnc`")
                 .default_value("auto")
                 .long("mode")
                 .possible_values(&["web", "rdp", "vnc", "auto"])
@@ -120,7 +118,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("RDP TIMEOUT")
-                .about(
+                .help(
                     "Seconds to wait after last bitmap before saving an image",
                 )
                 .default_value("2")
@@ -130,35 +128,35 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("THREADS")
-                .about("Number of worker threads for each target type")
+                .help("Number of worker threads for each target type")
                 .default_value("10")
                 .long("threads")
                 .takes_value(true),
         )
         .arg(
             Arg::new("LOG FILE")
-                .about("Save logs to the given file")
+                .help("Save logs to the given file")
                 .long("log-file")
                 .short('l')
                 .takes_value(true),
         )
         .arg(
             Arg::new("NMAP XML FILE")
-                .about("Nmap XML file")
+                .help("Nmap XML file")
                 .long("nmap")
-                .multiple(true)
+                .multiple_occurrences(true)
                 .takes_value(true),
         )
         .arg(
             Arg::new("NESSUS XML FILE")
-                .about("Nessus XML file")
+                .help("Nessus XML file")
                 .long("nessus")
-                .multiple(true)
+                .multiple_occurrences(true)
                 .takes_value(true),
         )
         .arg(
             Arg::new("OUTPUT DIR")
-                .about("Directory to save the captured images in")
+                .help("Directory to save the captured images in")
                 .default_value("output")
                 .long("output")
                 .short('o')
@@ -166,7 +164,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("WEB PROXY")
-                .about(concat!(
+                .help(concat!(
                     "HTTP/SOCKS Proxy to use for web requests",
                     " e.g. http://[::1]:8080"
                 ))
@@ -175,7 +173,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("RDP PROXY")
-                .about(concat!(
+                .help(concat!(
                     "SOCKS5 proxy to use for RDP connections",
                     " e.g. socks5://[::1]:1080"
                 ))
@@ -184,7 +182,7 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("PROXY")
-                .about(concat!(
+                .help(concat!(
                     "Default SOCKS5 proxy to use for connections",
                     " e.g. socks5://[::1]:1080"
                 ))
@@ -194,23 +192,23 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("VNC AUTH")
-                .about("Password to provide to VNC servers that request one")
+                .help("Password to provide to VNC servers that request one")
                 .long("vnc-auth")
                 .takes_value(true),
         )
         .arg(
             Arg::new("WEB PATH")
-                .about(concat!(
+                .help(concat!(
                     "Append a path to web requests. Provide multiple",
                     " to request each path sequentially"
                 ))
                 .long("web-path")
-                .multiple(true)
+                .multiple_occurrences(true)
                 .takes_value(true),
         )
         .arg(
             Arg::new("SIZE")
-                .about(concat!(
+                .help(concat!(
                     "Set the size of captured images in pixels.",
                     " Due to protocol limitations, sizes greater than",
                     " 65535x65535 may get truncated in interesting ways.",
@@ -223,21 +221,21 @@ pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
         )
         .arg(
             Arg::new("SILENT")
-                .about("Suppress most log messages")
+                .help("Suppress most log messages")
                 .long("silent")
                 .short('s'),
         )
         .arg(
             Arg::new("VERBOSE")
-                .about("Increase log verbosity")
+                .help("Increase log verbosity")
                 .long("verbose")
-                .multiple(true)
+                .multiple_occurrences(true)
                 .short('v')
                 .takes_value(false),
         )
         .arg(
             Arg::new("TEST IMPORT")
-                .about("Exit after importing targets")
+                .help("Exit after importing targets")
                 .long("test-import"),
         )
         .group(

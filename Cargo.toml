@@ -12,17 +12,18 @@ readme = "README.md"
 [features]
 
 [dependencies]
-askama = "0.10"
-clap = "3.0.0-beta.2"
+askama = "0.11"
+clap = { version = "3", features = ["cargo"] }
 ctrlc = "3.1"
-image = "0.23.4"
+image = "0.24"
 lazy_static = "1.4"
 log = "0.4.8"
 nessus_xml_parser = "0.1"
-nmap_xml_parser = { "git" = "https://github.com/Ayrx/nmap_xml_parser" }
+nmap_xml_parser = "0.3"
+#nmap_xml_parser = { "git" = "https://github.com/Ayrx/nmap_xml_parser" }
 #rdp-rs = "0.1.0"
 regex = "1.5"
-simplelog = "0.10"
+simplelog = "0.12"
 socks = "0.3"
 thiserror = "1.0"
 url = "2.1.1"
@@ -47,7 +48,7 @@ native-windows-gui = "1.0"
 once_cell = "1.7"
 webview2 = "0.1.0-beta.1"
 winapi = { version = "0.3", features = ["libloaderapi"] }
-winit = "0.25"
+winit = "0.26"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cacao = { version = "0.2", features = ["webview"] }
