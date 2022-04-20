@@ -21,12 +21,10 @@ use super::save;
 use crate::{
     argparse::Opts, parsing::Target, reporting::ReportMessage, InputLists,
 };
-use gdk::prelude::WindowExtManual;
-use gio::prelude::*;
-use gtk::{
-    Application, ApplicationWindow, ContainerExt, GtkWindowExt, WidgetExt,
-    WindowPosition,
-};
+
+use gdk::prelude::*;
+use gtk::prelude::*;
+use gtk::{Application, ApplicationWindow, WindowPosition};
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::sync::{
@@ -34,9 +32,9 @@ use std::sync::{
     mpsc, Arc,
 };
 use std::{thread, time::Duration};
+use webkit2gtk::traits::{WebContextExt, WebViewExt};
 use webkit2gtk::{
-    TLSErrorsPolicy, UserContentManager, WebContext, WebContextExt, WebView,
-    WebViewExt, WebViewExtManual,
+    TLSErrorsPolicy, UserContentManager, WebContext, WebView, WebViewExtManual,
 };
 
 enum GuiMessage {
@@ -55,7 +53,7 @@ pub fn web_worker(
     let application = Application::new(
         Some("com.github.nccgroup.scrying"),
         Default::default(),
-    )?;
+    );
 
     // "global" bool to turn off the LoadEvent::Finished handler when
     // the target list has been exhausted
@@ -128,12 +126,12 @@ pub fn web_worker(
             }
         });
 
-        webview.connect_load_changed(move |wv, evt| {
+        webview.connect_load_changed(move |_wv, evt| {
             use webkit2gtk::LoadEvent::*;
             trace!(
-                "Webview event: {} from `{:?}`",
+                "Webview event: {}",
                 evt,
-                wv.get_uri().map(|s| s.as_str().to_string())
+                //wv.get_uri().map(|s| s.as_str().to_string())
             );
             if targets_exhausted_clone.load(Ordering::SeqCst) {
                 // no targets left to capture, so ignore this event
@@ -167,8 +165,8 @@ pub fn web_worker(
                 glib::source::Continue(false)
             }
             GuiMessage::PageReady => {
-                if let Some(win) = webview.get_window() {
-                    match win.get_pixbuf(0, 0, width, height) {
+                if let Some(win) = webview.window() {
+                    match win.pixbuf(0, 0, width, height) {
                         Some(pix) => match pix.save_to_bufferv("png", &[]) {
                             Ok(buf) => {
                                 trace!("Got pixbuf length {}", buf.len());
@@ -256,7 +254,7 @@ pub fn web_worker(
     });
 
     trace!("application.run");
-    application.run(Default::default());
+    application.run();
     trace!("End of web_worker function");
     Ok(())
 }
