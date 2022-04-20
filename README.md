@@ -106,47 +106,41 @@ Features with ticks next to them have been implemented, others are TODO
 ## Help text
 ```
 USAGE:
-    scrying [FLAGS] [OPTIONS] <--file <FILE>...|--nmap <NMAP XML FILE>...|--nessus <NESSUS XML FILE>...|--target <TARGET>...>
-
-FLAGS:
-    -s, --silent         Suppress most log messages
-        --test-import    Exit after importing targets
-    -v, --verbose        Increase log verbosity
-    -h, --help           Prints help information
-    -V, --version        Prints version information
+    scrying [OPTIONS] <--file <FILE>|--nmap <NMAP XML FILE>|--nessus <NESSUS XML FILE>|--target <TARGET>>
 
 OPTIONS:
-    -f, --file <FILE>...                 Targets file, one per line
-    -l, --log-file <LOG FILE>            Save logs to the given file
-    -m, --mode <MODE>
-            Force targets to be parsed as `web`, `rdp`, `vnc` [default: auto] [possible values: web,
-            rdp, vnc, auto]
-
-        --nessus <NESSUS XML FILE>...    Nessus XML file
-        --nmap <NMAP XML FILE>...        Nmap XML file
-    -o, --output <OUTPUT DIR>            Directory to save the captured images in [default: output]
-        --proxy <PROXY>
-            Default SOCKS5 proxy to use for connections e.g. socks5://[::1]:1080
-
-        --rdp-proxy <RDP PROXY>
-            SOCKS5 proxy to use for RDP connections e.g. socks5://[::1]:1080
-
-        --rdp-timeout <RDP TIMEOUT>
-            Seconds to wait after last bitmap before saving an image [default: 2]
-
-        --size <SIZE>
-            Set the size of captured images in pixels. Due to protocol limitations, sizes greater
-            than 65535x65535 may get truncated in interesting ways. This argument has no effect on
-            VNC screenshots. [default: 1280x1024]
-
-    -t, --target <TARGET>...             Target, e.g. http://example.com, rdp://[2001:db8::4]
-        --threads <THREADS>              Number of worker threads for each target type [default: 10]
-        --vnc-auth <VNC AUTH>            Password to provide to VNC servers that request one
-        --web-path <WEB PATH>...
-            Append a path to web requests. Provide multiple to request each path sequentially
-
-        --web-proxy <WEB PROXY>
-            HTTP/SOCKS Proxy to use for web requests e.g. http://[::1]:8080
+    -f, --file <FILE>                  Targets file, one per line
+    -h, --help                         Print help information
+    -l, --log-file <LOG FILE>          Save logs to the given file
+    -m, --mode <MODE>                  Force targets to be parsed as `web`, `rdp`, `vnc` [default:
+                                       auto] [possible values: web, rdp, vnc, auto]
+        --nessus <NESSUS XML FILE>     Nessus XML file
+        --nmap <NMAP XML FILE>         Nmap XML file
+    -o, --output <OUTPUT DIR>          Directory to save the captured images in [default: output]
+        --proxy <PROXY>                Default SOCKS5 proxy to use for connections e.g.
+                                       socks5://[::1]:1080
+        --rdp-proxy <RDP PROXY>        SOCKS5 proxy to use for RDP connections e.g.
+                                       socks5://[::1]:1080
+        --rdp-timeout <RDP TIMEOUT>    Seconds to wait after last bitmap before saving an image
+                                       [default: 2]
+    -s, --silent                       Suppress most log messages
+        --size <SIZE>                  Set the size of captured images in pixels. Due to protocol
+                                       limitations, sizes greater than 65535x65535 may get truncated
+                                       in interesting ways. This argument has no effect on VNC
+                                       screenshots. [default: 1280x1024]
+    -t, --target <TARGET>              Target, e.g. http://example.com, rdp://[2001:db8::4]
+        --test-import                  Exit after importing targets
+        --threads <THREADS>            Number of worker threads for each target type [default: 10]
+    -v, --verbose                      Increase log verbosity
+    -V, --version                      Print version information
+        --vnc-auth <VNC AUTH>          Password to provide to VNC servers that request one
+        --web-mode <WEB MODE>          Choose between headless Chrom{e,ium} or native webview (GTK
+                                       on Linux, Edge WebView2 on Windows, Cocoa WebView on Mac
+                                       [default: chrome] [possible values: chrome, native]
+        --web-path <WEB PATH>          Append a path to web requests. Provide multiple to request
+                                       each path sequentially
+        --web-proxy <WEB PROXY>        HTTP/SOCKS Proxy to use for web requests e.g.
+                                       http://[::1]:8080
 ```
 
 ## Sample HTML report
