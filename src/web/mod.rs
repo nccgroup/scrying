@@ -18,12 +18,12 @@
 */
 
 use crate::argparse::Mode::Web;
-use crate::error::Error;
 use crate::parsing::Target;
 use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
 use crate::util::target_to_filename;
 #[allow(unused)]
 use crate::{debug, error, info, trace, warn};
+use color_eyre::Result;
 use std::path::Path;
 use std::sync::mpsc;
 use std::{fs::File, io::Write};
@@ -51,7 +51,7 @@ pub fn save(
     output_dir: &str,
     png_data: &[u8],
     report_tx: &mpsc::Sender<ReportMessage>,
-) -> Result<(), Error> {
+) -> Result<()> {
     let filename = format!("{}.png", target_to_filename(target));
 
     let relative_filepath = Path::new("web").join(&filename);

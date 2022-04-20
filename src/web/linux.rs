@@ -22,6 +22,7 @@ use crate::{
     argparse::Opts, parsing::Target, reporting::ReportMessage, InputLists,
 };
 
+use color_eyre::Result;
 use gdk::prelude::*;
 use gtk::prelude::*;
 use gtk::{Application, ApplicationWindow, WindowPosition};
@@ -48,7 +49,7 @@ pub fn web_worker(
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<()> {
     // Create a window
     let application = Application::new(
         Some("com.github.nccgroup.scrying"),

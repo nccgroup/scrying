@@ -27,6 +27,7 @@ use crate::{InputLists, Opts};
 use cacao::macos::window::{Window, WindowConfig, WindowDelegate};
 use cacao::macos::{App, AppDelegate};
 use cacao::webview::{WebView, WebViewConfig, WebViewDelegate};
+use color_eyre::Result;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use std::collections::HashMap;
@@ -107,7 +108,7 @@ pub fn web_worker(
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<()> {
     //let win = thread::spawn(|| launch());
     //win.join().unwrap();
     launch();

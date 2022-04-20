@@ -19,14 +19,13 @@
 
 use crate::argparse::Mode;
 use crate::argparse::Opts;
-use crate::error::Error;
 use crate::parsing::InputLists;
 
 use askama::Template;
+use color_eyre::Result;
 use std::fs;
 use std::path::Path;
-use std::sync::mpsc;
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
 
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
@@ -79,7 +78,7 @@ pub fn reporting_thread(
     rx: mpsc::Receiver<ReportMessage>,
     opts: Arc<Opts>,
     targets: Arc<InputLists>,
-) -> Result<(), Error> {
+) -> Result<()> {
     use Mode::*;
     // Vecs to collect the output messages in
     let mut rdp_outputs: Vec<ReportItem> = Vec::new();

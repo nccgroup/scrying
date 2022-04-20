@@ -18,6 +18,7 @@
 */
 
 use clap::{command, Arg, ArgEnum, ArgGroup, PossibleValue};
+use color_eyre::Result;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::str::FromStr;
@@ -121,7 +122,7 @@ pub struct Opts {
     pub web_mode: WebMode,
 }
 
-pub fn parse() -> Result<Opts, Box<dyn std::error::Error>> {
+pub fn parse() -> Result<Opts> {
     let args = command!()
         .about("Automatic RDP, Web, and VNC screenshotting tool")
         .arg_required_else_help(true)

@@ -6,6 +6,7 @@ use chromiumoxide::cdp::browser_protocol::page::{
     CaptureScreenshotFormat, CaptureScreenshotParams,
 };
 use chromiumoxide::{Browser, BrowserConfig};
+use color_eyre::{eyre::eyre, Result};
 use futures::StreamExt;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -17,9 +18,11 @@ pub async fn chrome_worker(
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let (browser, mut handler) =
-        Browser::launch(BrowserConfig::builder().build()?).await?;
+) -> Result<()> {
+    let (browser, mut handler) = Browser::launch(
+        BrowserConfig::builder().build().map_err(|e| eyre!(e))?,
+    )
+    .await?;
 
     let _handle = tokio::task::spawn(async move {
         loop {

@@ -21,6 +21,7 @@ use crate::argparse::{Opts, WebMode};
 use crate::reporting::ReportMessage;
 //#[allow(unused)]
 //use log::{debug, error, info, trace, warn};
+use color_eyre::Result;
 use parsing::{generate_target_lists, InputLists};
 use simplelog::{
     ColorChoice, CombinedLogger, Config, LevelFilter, SharedLogger, TermLogger,
@@ -37,7 +38,6 @@ use web::{chrome_worker, web_worker};
 mod log_macros;
 
 mod argparse;
-mod error;
 mod parsing;
 mod rdp;
 mod reporting;
@@ -50,7 +50,7 @@ pub enum ThreadStatus {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     println!("Starting NCC Group Scrying...");
     let opts = Arc::new(argparse::parse().unwrap());
 
@@ -102,7 +102,7 @@ async fn main() {
 
     if opts.test_import {
         log::info!("--test-import was supplied, exiting");
-        return;
+        return Ok(());
     }
 
     // Verify that targets have been processed
@@ -111,7 +111,7 @@ async fn main() {
         && targets.vnc_targets.is_empty()
     {
         log::error!("No targets imported, exiting");
-        return;
+        return Ok(());
     }
 
     // Create output directories if they do not exist
@@ -232,6 +232,8 @@ async fn main() {
     }
     report_tx.send(ReportMessage::GenerateReport).unwrap();
     reporting_handle.join().unwrap().unwrap();
+
+    Ok(())
 }
 
 fn rdp_worker(
@@ -239,7 +241,7 @@ fn rdp_worker(
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), ()> {
+) -> Result<()> {
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
     let mut num_workers: usize = 0;
@@ -296,7 +298,7 @@ fn vnc_worker(
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<()> {
     use mpsc::{Receiver, Sender};
     let max_workers = opts.threads;
     let mut num_workers: usize = 0;

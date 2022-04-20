@@ -17,10 +17,11 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use super::{save,  };
+use super::save;
 use crate::parsing::Target;
 use crate::reporting::ReportMessage;
 use crate::{InputLists, Opts};
+use color_eyre::Result;
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
 use native_windows_gui::{self as nwg, Window, WindowFlags};
@@ -38,7 +39,7 @@ pub fn web_worker(
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
     caught_ctrl_c: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<()> {
     type CaptureResult = Result<Vec<u8>, Option<WebErrorStatus>>;
 
     let (result_sender, result_receiver) = mpsc::channel::<CaptureResult>();

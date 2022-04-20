@@ -19,7 +19,6 @@
 
 use crate::argparse::Mode::Rdp;
 use crate::argparse::Opts;
-use crate::error::Error;
 use crate::parsing::Target;
 use crate::reporting::ReportMessageContent;
 use crate::reporting::{FileError, ReportMessage};
@@ -27,19 +26,48 @@ use crate::util::target_to_filename;
 use crate::ThreadStatus;
 #[allow(unused)]
 use crate::{debug, error, info, trace, warn};
+use color_eyre::eyre::eyre;
 use image::{DynamicImage, ImageBuffer, Rgba};
-use rdp::core::client::Connector;
-use rdp::core::client::RdpClient;
+use rdp::core::client::{Connector, RdpClient};
 use rdp::core::event::RdpEvent;
 use socks::Socks5Stream;
-use std::io::Read;
-use std::io::Write;
+use std::fmt::{self, Display, Formatter};
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, mpsc::Receiver, mpsc::Sender};
 use std::thread;
 use std::time::Duration;
+
+pub enum Error {
+    Rdp(String),
+    Other(color_eyre::Report),
+}
+
+impl Display for Error {
+    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+        match self {
+            Error::Rdp(e) => write!(fmt, "RDP error: {e}"),
+            Error::Other(e) => write!(fmt, "{e}"),
+        }
+    }
+}
+
+impl<E> From<E> for Error
+where
+    E: Into<color_eyre::Report>,
+{
+    fn from(e: E) -> Self {
+        Error::Other(e.into())
+    }
+}
+
+/*impl From<rdp::model::error::Error> for Error {
+    fn from(e: rdp::model::error::Error) -> Error {
+        Error::Rdp(e.to_string())
+    }
+}*/
 
 struct BitmapChunk {
     width: u32,
@@ -274,7 +302,7 @@ fn capture_worker(
         .check_certificate(false)
         .blank_creds(true)
         .credentials("".to_string(), "".to_string(), "".to_string());
-    let client = connector.connect(stream)?;
+    let client = connector.connect(stream).map_err(|e| eyre!("{e:?}"))?;
 
     let mut rdp_image: Image = Default::default();
     {

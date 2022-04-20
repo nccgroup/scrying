@@ -19,7 +19,6 @@
 
 use crate::argparse::Mode::Vnc;
 use crate::argparse::Opts;
-use crate::error::Error;
 use crate::parsing::Target;
 use crate::reporting::ReportMessageContent;
 use crate::reporting::{FileError, ReportMessage};
@@ -27,6 +26,7 @@ use crate::util::target_to_filename;
 use crate::ThreadStatus;
 #[allow(unused)]
 use crate::{debug, error, info, trace, warn};
+use color_eyre::{eyre::eyre, Result};
 use image::{DynamicImage, ImageBuffer, Rgb};
 use std::cmp::min;
 use std::convert::TryInto;
@@ -52,11 +52,7 @@ enum ColourFormat {
 }
 
 impl Image {
-    fn new(
-        format: PixelFormat,
-        width: u16,
-        height: u16,
-    ) -> Result<Self, Error> {
+    fn new(format: PixelFormat, width: u16, height: u16) -> Result<Self> {
         let image = match (format.depth, format.true_colour) {
             (15, true) | (16, true) | (24, true) => {
                 DynamicImage::ImageRgb8(ImageBuffer::<Rgb<u8>, Vec<u8>>::new(
@@ -72,10 +68,9 @@ impl Image {
                 height.into(),
             )),
             (d, t) => {
-                return Err(Error::Vnc(format!(
-                    "Invalid colour depth: {}, true colour: {}",
-                    d, t
-                )))
+                return Err(eyre!(
+                    "Invalid colour depth: {d}, true colour: {t}",
+                ))
             }
         };
 
@@ -93,7 +88,7 @@ impl Image {
         target: &Target,
         rect: Rect,
         pixels: &[u8],
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         use ColourFormat::*;
         trace!(target, "pixels: {:?}", pixels);
         trace!(target, "rect: {:?}", rect);
@@ -121,10 +116,10 @@ impl Image {
             16 => 2,
             32 => 4,
             _ => {
-                return Err(Error::Vnc(format!(
+                return Err(eyre!(
                     "Invalid bits per pixel: {}",
                     format.bits_per_pixel
-                )))
+                ))
             }
         };
         let mut idx = 0_usize;
@@ -147,8 +142,8 @@ impl Image {
                         )? {
                             img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
                         } else {
-                            return Err(Error::Vnc(
-                                "Colour format mismatch: expected 8-bit colours".to_string(),
+                            return Err(eyre!(
+                                "Colour format mismatch: expected 8-bit colours",
                             ));
                         }
                     }
@@ -160,8 +155,8 @@ impl Image {
                         )? {
                             img.put_pixel(x.into(), y.into(), Rgb([r, g, b]))
                         } else {
-                            return Err(Error::Vnc(
-                                "Colour format mismatch: expected 16-bit colours".to_string(),
+                            return Err(eyre!(
+                                "Colour format mismatch: expected 16-bit colours",
                             ));
                         }
                     }
@@ -266,7 +261,7 @@ impl Image {
         format: &PixelFormat,
         colour_map: &Option<ColourMap>,
         bytes: &[u8],
-    ) -> Result<ColourFormat, Error> {
+    ) -> Result<ColourFormat> {
         use ColourFormat::*;
         //TODO code reuse
         match (format.bits_per_pixel, format.depth) {
@@ -323,9 +318,7 @@ impl Image {
 
                     Ok(U16((r, g, b)))
                 } else {
-                    Err(Error::Vnc(
-                        "No colour map supplied for 8-bit mode!".to_string(),
-                    ))
+                    Err(eyre!("No colour map supplied for 8-bit mode!",))
                 }
             }
             d => panic!("Unsupported colour depth {:?}", d),
@@ -336,12 +329,12 @@ impl Image {
         &mut self,
         first_colour: u16,
         colours: Vec<Colour>,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         if colours.len() != 256 {
-            return Err(Error::Vnc(format!(
+            return Err(eyre!(
                 "Invalid number of colours in map: {}",
                 colours.len()
-            )));
+            ));
         }
         self.colour_map = Some(ColourMap {
             first_colour,
@@ -362,12 +355,12 @@ fn vnc_capture(
     target: &Target,
     opts: &Opts,
     report_tx: &Sender<ReportMessage>,
-) -> Result<(), Error> {
+) -> Result<()> {
     info!(target, "Connecting to {:?}", target);
     let addr = match target {
         Target::Address(sock_addr) => sock_addr,
         Target::Url(_) => {
-            return Err(Error::Vnc(format!("Invalid VNC target: {}", target)));
+            return Err(eyre!("Invalid VNC target: {target}",));
         }
     };
 
@@ -457,7 +450,7 @@ fn vnc_poll(
     target: &Target,
     mut vnc: Client,
     vnc_image: &mut Image,
-) -> Result<(), Error> {
+) -> Result<()> {
     use vnc::client::Event::*;
     loop {
         for event in vnc.poll_iter() {
