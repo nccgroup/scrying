@@ -1,6 +1,6 @@
 [package]
 name = "scrying"
-version = "0.9.0-alpha.3"
+version = "0.9.0"
 authors = ["David Young <david.young@nccgroup.com>"]
 edition = "2021"
 license = "GPL-3.0-or-later"

@@ -7,11 +7,6 @@ A new tool for collecting RDP, web and VNC screenshots all in one place
 This tool is still a work-in-progress and should be mostly usable but is not yet complete.
 Please file any bugs or feature requests as [GitHub issues](https://github.com/nccgroup/scrying/issues)
 
-## Caveats
-* Web screenshotting on Linux relies on webkit2gtk and an X server (e.g. `xvfb`)
-* Web screenshotting uses the system webviews, and hiding these windows is surprisingly hard
-* I haven't found a good way to take screenshots of a cocoa webview on macos - please open an issue or PR if you're interested in using this on macos and have any idea how to implement it
-
 ## Motivation
 Since Eyewitness recently [dropped support for RDP](https://github.com/FortyNorthSecurity/EyeWitness/issues/422#issuecomment-539690698) there isn't a working CLI tool for capturing RDP screenshots.
 Nessus still works, but it's a pain to get the images out and they're not included in the export file.

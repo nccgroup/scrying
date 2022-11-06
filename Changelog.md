@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+
+## [v0.9.0] - 2022-11-06
+### Added
 * Customise the size of captured images with the `--size` option (web & RDP). Does not work on VNC because the server generally specifies the screen size [#36](https://github.com/nccgroup/scrying/issues/36)
 * Optionally provide RDP credentials
 * Option to skip producing a report.html [#45](https://github.com/nccgroup/scrying/issues/45)
@@ -13,15 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Disable RDP certificate verification [#48](https://github.com/nccgroup/scrying/issues/48)
 
-### Deprecated
-
 ### Removed
 * Removed support for platform-native webview to reduce maintenance requirements
 
 ### Fixed
 * Replace question marks in URLs when generating filenames
-
-### Security
 
 
 ## [v0.9.0-alpha.2] - 2021-06-22
