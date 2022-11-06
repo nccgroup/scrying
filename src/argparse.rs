@@ -27,7 +27,7 @@ lazy_static! {
     static ref SIZE_REGEX: Regex = Regex::new(r"^(\d+)x(\d+)$").unwrap();
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Mode {
     Auto,
     Web,
@@ -150,7 +150,7 @@ pub fn parse() -> Result<Opts> {
                 .help("Force targets to be parsed as `web`, `rdp`, `vnc`")
                 .default_value("auto")
                 .long("mode")
-                .possible_values(&["web", "rdp", "vnc", "auto"])
+                .possible_values(["web", "rdp", "vnc", "auto"])
                 .short('m')
                 .takes_value(true),
         )

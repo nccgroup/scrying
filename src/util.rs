@@ -40,11 +40,12 @@ pub fn target_to_filename(target: &Target) -> String {
             // rather than underscores
             let mut converted: String = String::from(u.as_str())
                 .replace("://", "_") // Replace the scheme separator with -
-                .replace('/', "-") // replace all slashes with /
-                .replace(':', "_") // replace colon (probably port, could be uname)
-                .replace('[', "") // Remove the square brackets as they are not
-                .replace(']', "") // needed for uniqueness
-                ;
+                .replace('/', "-") // replace all slashes with -
+                // replace colon (probably port, could be uname)
+                .replace(':', "_")
+                // Remove the square brackets as they are not needed for
+                // uniqueness
+                .replace(['[', ']'], "");
             while converted.ends_with('-') {
                 // remove the trailing - if the URL had a trailing /
                 converted.pop();
