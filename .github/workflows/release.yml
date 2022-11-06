@@ -74,8 +74,8 @@ jobs:
         run: |
           cargo deb
           # Fix the tilde-name that happens on alpha builds
-          mv target/debian/scrying_*_amd64.deb \
-            target/debian/scrying_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
+          #mv target/debian/scrying_*_amd64.deb \
+          #  target/debian/scrying_${{ needs.create_new_release.outputs.version_num }}_amd64.deb
 
       - name: Zip binary
         run: |
