@@ -17,6 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use self::vnc::{PixelFormat, Rect, VncConnector, VncEvent, X11Event};
 use crate::argparse::Mode::Vnc;
 use crate::argparse::Opts;
 use crate::parsing::Target;
@@ -33,13 +34,55 @@ use std::convert::TryInto;
 use std::path::Path;
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::Sender;
-use vnc_rs::{PixelFormat, Rect, VncConnector, VncEvent, X11Event};
+use vnc_rs as vnc;
 
 async fn vnc_capture(
     target: &Target,
     opts: &Opts,
     report_tx: &Sender<ReportMessage>,
 ) -> Result<()> {
+    info!(target, "Connecting to {:?}", target);
+    let addr = match target {
+        Target::Address(sock_addr) => sock_addr,
+        Target::Url(_) => {
+            return Err(eyre!("Invalid VNC target: {target}",));
+        }
+    };
+
+    async fn auth() -> anyhow::Result<String> {
+        Ok(String::new())
+    }
+
+    let tcp = TcpStream::connect(addr).await?;
+    let vnc = VncConnector::new(tcp)
+        .set_auth_method(auth())
+        .add_encoding(vnc::VncEncoding::Tight)
+        .add_encoding(vnc::VncEncoding::Zrle)
+        .add_encoding(vnc::VncEncoding::CopyRect)
+        .add_encoding(vnc::VncEncoding::Raw)
+        .allow_shared(true)
+        .set_pixel_format(PixelFormat::bgra())
+        .build()
+        .unwrap()
+        .try_start()
+        .await
+        .unwrap()
+        .finish()
+        .unwrap();
+    let (vnc_event_sender, mut vnc_event_receiver) =
+        tokio::sync::mpsc::channel(100);
+    let (x11_event_sender, x11_event_receiver) =
+        tokio::sync::mpsc::channel(100);
+    tokio::spawn(async move {
+        vnc.run(vnc_event_sender, x11_event_receiver).await.unwrap()
+    });
+    let _ = x11_event_sender.send(X11Event::Refresh).await;
+
+    let mut image = VncImage::new();
+    while let Some(event) = vnc_event_receiver.recv().await {
+        image.handle_event(event)?;
+    }
+
     todo!()
 }
 
@@ -54,4 +97,16 @@ pub async fn capture(
     }
 
     tx.send(ThreadStatus::Complete).await.unwrap();
+}
+
+struct VncImage {}
+
+impl VncImage {
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    pub fn handle_event(&mut self, event: VncEvent) -> Result<()> {
+        Ok(())
+    }
 }

@@ -313,9 +313,8 @@ async fn vnc_worker(
                 let opts_clone = opts.clone();
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
-                let handle = tokio::task::spawn(async move {
+                let handle = tokio::task::spawn({
                     vnc2::capture(&target, &opts_clone, tx, &report_tx_clone)
-                        .await
                 });
 
                 workers.push(handle);
