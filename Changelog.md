@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
-## [v0.9.0-alpha.2]
+## [v0.9.0-alpha.2] - 2021-06-22
 ### Added
 * Add support for VNC passwords [#38](https://github.com/nccgroup/scrying/issues/38)
 * Add support for requesting particular paths from web targets [#41](https://github.com/nccgroup/scrying/issues/41)
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed explicit support for macos because I can't easily test or develop for it and I don't know how best to screenshot a cocoa webview (contributions welcome if you have any ideas)
 
 
-## [v0.9.0-alpha.1]
+## [v0.9.0-alpha.1] - 2021-03-07
 
 ### Changed
 * Windows builds now use the native Edge webview for web rendering
