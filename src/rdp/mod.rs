@@ -312,14 +312,18 @@ fn capture_worker(
         .check_certificate(false);
 
     if s_rdpuser.len() > 0 && s_rdppass.len() > 0 {
-        connector = connector
-            .credentials(s_rdpdomain.to_string(), s_rdpuser.to_string(), s_rdppass.to_string());
+        connector = connector.credentials(
+            s_rdpdomain.to_string(),
+            s_rdpuser.to_string(),
+            s_rdppass.to_string(),
+        );
     } else {
         warn!(target, "Using blank credentials");
-        connector = connector
-            .use_nla(false)
-            .blank_creds(true)
-            .credentials("".to_string(), "".to_string(), "".to_string());
+        connector = connector.use_nla(false).blank_creds(true).credentials(
+            "".to_string(),
+            "".to_string(),
+            "".to_string(),
+        );
     };
 
     let client = connector.connect(stream).map_err(|e| eyre!("{e:?}"))?;
