@@ -147,41 +147,41 @@ jobs:
           asset_name: scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_windows.zip
           asset_content_type: application/zip
 
-  # build_macos_release:
-  #   name: Build macos releases
-  #   runs-on: macOS-latest
-  #   needs: create_new_release
-  #   steps:
-  #     - name: Checkout sources
-  #       uses: actions/checkout@v2
+  build_macos_release:
+    name: Build macos releases
+    runs-on: macOS-latest
+    needs: create_new_release
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
 
-  #     - name: Install stable toolchain
-  #       uses: actions-rs/toolchain@v1
-  #       with:
-  #         profile: minimal
-  #         toolchain: stable
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
 
-  #     - name: Build
-  #       run: cargo build --release
+      - name: Build
+        run: cargo build --release
 
-  #     - name: Zip binary
-  #       run: |
-  #         # Stick the binary and readme into a directory and zip the directory
-  #         mkdir scrying
-  #         cp README.md scrying/
-  #         cp target/release/scrying scrying/
-  #         zip -r \
-  #           scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
-  #           scrying
+      - name: Zip binary
+        run: |
+          # Stick the binary and readme into a directory and zip the directory
+          mkdir scrying
+          cp README.md scrying/
+          cp target/release/scrying scrying/
+          zip -r \
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip \
+            scrying
 
-  #     - name: Upload zip
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ needs.create_new_release.outputs.upload_url }}
-  #         asset_path: |
-  #           scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
-  #         asset_name: |
-  #           scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
-  #         asset_content_type: application/zip
+      - name: Upload zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_new_release.outputs.upload_url }}
+          asset_path: |
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
+          asset_name: |
+            scrying_${{ needs.create_new_release.outputs.version_num }}_amd64_macos.zip
+          asset_content_type: application/zip
