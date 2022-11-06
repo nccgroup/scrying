@@ -6,11 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-* Customise the size of captured images with the `--size` option (web & RDP). Does not work on VNC because the server generally specifies the screen size [36](https://github.com/nccgroup/scrying/issues/36)
+* Customise the size of captured images with the `--size` option (web & RDP). Does not work on VNC because the server generally specifies the screen size [#36](https://github.com/nccgroup/scrying/issues/36)
 * Optionally provide RDP credentials
+* Option to skip producing a report.html [#45](https://github.com/nccgroup/scrying/issues/45)
 
 ### Changed
-* Disable RDP certificate verification
+* Disable RDP certificate verification [#48](https://github.com/nccgroup/scrying/issues/48)
 
 ### Deprecated
 

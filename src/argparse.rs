@@ -89,6 +89,7 @@ pub struct Opts {
     pub silent: bool,
     pub verbose: u64,
     pub test_import: bool,
+    pub disable_report: bool,
 }
 
 pub fn parse() -> Result<Opts> {
@@ -165,6 +166,12 @@ pub fn parse() -> Result<Opts> {
                 .long("output")
                 .short('o')
                 .takes_value(true),
+        )
+        .arg(
+            Arg::new("DISABLE REPORT")
+                .help("Don't create a report.html")
+                .long("disable-report")
+                .visible_alias("no-report"),
         )
         .arg(
             Arg::new("WEB PROXY")
@@ -350,6 +357,7 @@ pub fn parse() -> Result<Opts> {
         silent: args.is_present("SILENT"),
         verbose: args.occurrences_of("VERBOSE"),
         test_import: args.is_present("TEST IMPORT"),
+        disable_report: args.is_present("DISABLE REPORT"),
     })
 }
 
