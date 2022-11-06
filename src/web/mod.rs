@@ -31,21 +31,6 @@ use std::{fs::File, io::Write};
 pub use chrome::chrome_worker;
 mod chrome;
 
-#[cfg(target_os = "linux")]
-pub use linux::web_worker;
-#[cfg(target_os = "linux")]
-mod linux;
-
-#[cfg(target_os = "windows")]
-pub use windows::web_worker;
-#[cfg(target_os = "windows")]
-mod windows;
-
-#[cfg(target_os = "macos")]
-pub use mac::web_worker;
-#[cfg(target_os = "macos")]
-pub mod mac;
-
 pub fn save(
     target: &Target,
     output_dir: &str,

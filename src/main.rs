@@ -17,7 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::{Opts, WebMode};
+use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
 //#[allow(unused)]
 //use log::{debug, error, info, trace, warn};
@@ -32,7 +32,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
-use web::{chrome_worker, web_worker};
+use web::chrome_worker;
 
 //#[macro_use]
 mod log_macros;
@@ -207,20 +207,9 @@ async fn main() -> Result<()> {
         let report_tx_clone = report_tx.clone();
 
         log::debug!("Starting Web worker");
-        match opts.web_mode {
-            WebMode::Chrome => chrome_worker(
-                targets,
-                opts_clone,
-                report_tx_clone,
-                caught_ctrl_c,
-            )
+        chrome_worker(targets, opts_clone, report_tx_clone, caught_ctrl_c)
             .await
-            .unwrap(),
-            WebMode::Native => {
-                web_worker(targets, opts_clone, report_tx_clone, caught_ctrl_c)
-                    .unwrap()
-            }
-        }
+            .unwrap();
     }
 
     // wait for the workers to complete
