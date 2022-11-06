@@ -293,33 +293,30 @@ fn capture_worker(
         debug!(target, "Connecting to Socks proxy");
         SocketType::Socks5(Socks5Stream::connect(proxy, *addr)?)
     } else {
-        SocketType::Tcp(TcpStream::connect(&addr)?)
+        SocketType::Tcp(TcpStream::connect(addr)?)
     };
 
-    let rdpdomain = &opts.rdp_domain;
-    let s_rdpdomain = rdpdomain.as_deref().unwrap_or("");
-    let rdpuser = &opts.rdp_user;
-    let s_rdpuser = rdpuser.as_deref().unwrap_or("");
-    let rdppass = &opts.rdp_pass;
-    let s_rdppass = rdppass.as_deref().unwrap_or("");
-
-    debug!(target, "RDP domain: {:?}", s_rdpdomain);
-    debug!(target, "RDP username: {:?}", s_rdpuser);
-    debug!(target, "RDP password: {:?}", s_rdppass);
+    debug!(target, "RDP domain: {:?}", opts.rdp_domain);
+    debug!(target, "RDP username: {:?}", opts.rdp_user);
+    debug!(target, "RDP password set: {}", opts.rdp_pass.is_some());
 
     let mut connector = Connector::new()
         .screen(opts.size.0 as u16, opts.size.1 as u16)
         .check_certificate(false);
 
-    if s_rdpuser.len() > 0 && s_rdppass.len() > 0 {
-        connector = connector
-            .credentials(s_rdpdomain.to_string(), s_rdpuser.to_string(), s_rdppass.to_string());
+    if let (Some(user), Some(pass)) = (&opts.rdp_user, &opts.rdp_pass) {
+        connector = connector.credentials(
+            opts.rdp_domain.as_ref().cloned().unwrap_or_default(),
+            user.to_string(),
+            pass.to_string(),
+        );
     } else {
-        warn!(target, "Using blank credentials");
-        connector = connector
-            .use_nla(false)
-            .blank_creds(true)
-            .credentials("".to_string(), "".to_string(), "".to_string());
+        warn!(target, "Using blank RDP credentials");
+        connector = connector.use_nla(false).blank_creds(true).credentials(
+            "".to_string(),
+            "".to_string(),
+            "".to_string(),
+        );
     };
 
     let client = connector.connect(stream).map_err(|e| eyre!("{e:?}"))?;

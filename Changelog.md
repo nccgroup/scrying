@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 * Customise the size of captured images with the `--size` option (web & RDP). Does not work on VNC because the server generally specifies the screen size [36](https://github.com/nccgroup/scrying/issues/36)
+* Optionally provide RDP credentials
 
 ### Changed
+* Disable RDP certificate verification
 
 ### Deprecated
 
