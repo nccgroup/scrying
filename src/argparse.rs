@@ -17,7 +17,7 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{command, Arg, ArgEnum, ArgGroup, PossibleValue};
+use clap::{command, Arg, ArgGroup};
 use color_eyre::Result;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -67,39 +67,6 @@ impl FromStr for Mode {
     }
 }
 
-#[derive(ArgEnum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum WebMode {
-    Chrome,
-    Native,
-}
-
-impl Default for WebMode {
-    fn default() -> WebMode {
-        WebMode::Chrome
-    }
-}
-
-impl std::str::FromStr for WebMode {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        for variant in Self::value_variants() {
-            if variant.to_possible_value().unwrap().matches(s, false) {
-                return Ok(*variant);
-            }
-        }
-        Err(format!("Invalid variant: {}", s))
-    }
-}
-
-impl WebMode {
-    pub fn possible_values() -> impl Iterator<Item = PossibleValue<'static>> {
-        WebMode::value_variants()
-            .iter()
-            .filter_map(ArgEnum::to_possible_value)
-    }
-}
-
 #[derive(Debug, Default)]
 pub struct Opts {
     pub files: Vec<String>,
@@ -122,7 +89,6 @@ pub struct Opts {
     pub silent: bool,
     pub verbose: u64,
     pub test_import: bool,
-    pub web_mode: WebMode,
 }
 
 pub fn parse() -> Result<Opts> {
@@ -276,18 +242,6 @@ pub fn parse() -> Result<Opts> {
                 .validator(size_validator),
         )
         .arg(
-            Arg::new("WEB MODE")
-                .help(concat!(
-            "Choose between headless Chrom{e,ium} or native webview (GTK on ",
-            "Linux, Edge WebView2 on Windows, Cocoa WebView on Mac"
-        ))
-                .default_value("chrome")
-                .long("web-mode")
-                .takes_value(true)
-                .possible_values(WebMode::possible_values())
-                .ignore_case(true),
-        )
-        .arg(
             Arg::new("SILENT")
                 .help("Suppress most log messages")
                 .long("silent")
@@ -396,7 +350,6 @@ pub fn parse() -> Result<Opts> {
         silent: args.is_present("SILENT"),
         verbose: args.occurrences_of("VERBOSE"),
         test_import: args.is_present("TEST IMPORT"),
-        web_mode: args.value_of_t("WEB MODE")?,
     })
 }
 
