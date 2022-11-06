@@ -377,28 +377,18 @@ pub fn parse() -> Result<Opts> {
         mode: args.value_of_t("MODE").unwrap(),
         rdp_timeout: args.value_of_t("RDP TIMEOUT").unwrap(),
         threads: args.value_of_t("THREADS").unwrap(),
-        log_file: args
-            .value_of("LOG FILE")
-            .map_or_else(|| None, |s| Some(s.to_string())),
+        log_file: args.value_of("LOG FILE").map(String::from),
         nmaps,
         nessus,
         output_dir: args.value_of_t("OUTPUT DIR").unwrap(),
         web_proxy,
         rdp_proxy,
-        vnc_auth: args
-            .value_of("VNC AUTH")
-            .map_or_else(|| None, |s| Some(s.to_string())),
-        rdp_domain: args
-            .value_of("RDP DOMAIN")
-            .map_or_else(|| None, |s| Some(s.to_string())),
-        rdp_user: args
-            .value_of("RDP USER")
-            .map_or_else(|| None, |s| Some(s.to_string())),
-        rdp_pass: args
-            .value_of("RDP PASS")
-            .map_or_else(|| None, |s| Some(s.to_string())),
+        vnc_auth: args.value_of("VNC AUTH").map(String::from),
+        rdp_domain: args.value_of("RDP DOMAIN").map(String::from),
+        rdp_user: args.value_of("RDP USER").map(String::from),
+        rdp_pass: args.value_of("RDP PASS").map(String::from),
         web_path: if let Some(paths) = args.values_of("WEB PATH") {
-            paths.map(|p| p.to_string()).collect()
+            paths.map(String::from).collect()
         } else {
             Vec::new()
         },
