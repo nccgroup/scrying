@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [v0.9.1] - 2022-11-06
+### Fixed
+* Fix Linux release on CI
+
+
 ## [v0.9.0] - 2022-11-06
 ### Added
 * Customise the size of captured images with the `--size` option (web & RDP). Does not work on VNC because the server generally specifies the screen size [#36](https://github.com/nccgroup/scrying/issues/36)
