@@ -29,6 +29,7 @@ simplelog = "0.12"
 socks = "0.3"
 url = "2.1.1"
 vnc = "0.4"
+vnc-rs = { version = "0.3", package = "vnc-rs" }
 
 [dependencies.chromiumoxide]
 version = "0.4"

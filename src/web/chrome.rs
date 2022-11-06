@@ -10,8 +10,9 @@ use color_eyre::{eyre::eyre, Result};
 use futures::StreamExt;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    mpsc, Arc,
+    Arc,
 };
+use tokio::sync::mpsc;
 
 pub async fn chrome_worker(
     targets: Arc<InputLists>,

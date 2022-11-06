@@ -19,8 +19,6 @@
 
 use crate::argparse::Opts;
 use crate::reporting::ReportMessage;
-//#[allow(unused)]
-//use log::{debug, error, info, trace, warn};
 use color_eyre::Result;
 use parsing::{generate_target_lists, InputLists};
 use simplelog::{
@@ -30,8 +28,9 @@ use simplelog::{
 use std::fs::{create_dir_all, File};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::Arc;
 use std::thread;
+use tokio::sync::mpsc;
 use web::chrome_worker;
 
 //#[macro_use]
@@ -43,8 +42,10 @@ mod rdp;
 mod reporting;
 mod util;
 mod vnc;
+mod vnc2;
 mod web;
 
+#[derive(Debug)]
 pub enum ThreadStatus {
     Complete,
 }
@@ -152,10 +153,10 @@ async fn main() -> Result<()> {
     let (report_tx, report_rx): (
         mpsc::Sender<ReportMessage>,
         mpsc::Receiver<_>,
-    ) = mpsc::channel();
+    ) = mpsc::channel(10);
     let opts_clone = opts.clone();
     let targets_clone = targets.clone();
-    let reporting_handle = thread::spawn(move || {
+    let reporting_handle = tokio::task::spawn({
         log::debug!("Starting report thread");
         reporting::reporting_thread(report_rx, opts_clone, targets_clone)
     });
@@ -184,7 +185,7 @@ async fn main() -> Result<()> {
         let opts_clone = opts.clone();
         let report_tx_clone = report_tx.clone();
         let caught_ctrl_c_clone = caught_ctrl_c.clone();
-        Some(thread::spawn(move || {
+        Some(tokio::task::spawn({
             log::debug!("Starting VNC worker threads");
             vnc_worker(
                 targets_clone,
@@ -192,7 +193,6 @@ async fn main() -> Result<()> {
                 report_tx_clone,
                 caught_ctrl_c_clone,
             )
-            .unwrap()
         }))
     } else {
         None
@@ -214,13 +214,13 @@ async fn main() -> Result<()> {
 
     // wait for the workers to complete
     if let Some(h) = rdp_handle {
-        h.join().unwrap().unwrap();
+        h.join().unwrap()?;
     }
     if let Some(h) = vnc_handle {
-        h.join().unwrap();
+        tokio::join!(h).0??;
     }
-    report_tx.send(ReportMessage::GenerateReport).unwrap();
-    reporting_handle.join().unwrap().unwrap();
+    report_tx.send(ReportMessage::GenerateReport).await.unwrap();
+    tokio::join!(reporting_handle).0.unwrap().unwrap();
 
     Ok(())
 }
@@ -236,10 +236,10 @@ fn rdp_worker(
     let mut num_workers: usize = 0;
     let mut targets_iter = targets.rdp_targets.iter();
     let mut workers: Vec<_> = Vec::new();
-    let (thread_status_tx, thread_status_rx): (
+    let (thread_status_tx, mut thread_status_rx): (
         Sender<ThreadStatus>,
         Receiver<ThreadStatus>,
-    ) = mpsc::channel();
+    ) = mpsc::channel(10);
     while !caught_ctrl_c.load(Ordering::SeqCst) {
         // check for status messages
         // Turn off clippy's single_match warning here because match
@@ -282,7 +282,7 @@ fn rdp_worker(
     Ok(())
 }
 
-fn vnc_worker(
+async fn vnc_worker(
     targets: Arc<InputLists>,
     opts: Arc<Opts>,
     report_tx: mpsc::Sender<ReportMessage>,
@@ -293,16 +293,12 @@ fn vnc_worker(
     let mut num_workers: usize = 0;
     let mut targets_iter = targets.vnc_targets.iter();
     let mut workers: Vec<_> = Vec::new();
-    let (thread_status_tx, thread_status_rx): (
+    let (thread_status_tx, mut thread_status_rx): (
         Sender<ThreadStatus>,
         Receiver<ThreadStatus>,
-    ) = mpsc::channel();
+    ) = mpsc::channel(10);
     while !caught_ctrl_c.load(Ordering::SeqCst) {
         // check for status messages
-        // Turn off clippy's single_match warning here because match
-        // matches the intuition for how try_recv is processed better
-        // than an if let.
-        #[allow(clippy::single_match)]
         match thread_status_rx.try_recv() {
             Ok(ThreadStatus::Complete) => {
                 info!("VNC", "Thread complete, yay");
@@ -317,8 +313,9 @@ fn vnc_worker(
                 let opts_clone = opts.clone();
                 let tx = thread_status_tx.clone();
                 let report_tx_clone = report_tx.clone();
-                let handle = thread::spawn(move || {
-                    vnc::capture(&target, &opts_clone, tx, &report_tx_clone)
+                let handle = tokio::task::spawn(async move {
+                    vnc2::capture(&target, &opts_clone, tx, &report_tx_clone)
+                        .await
                 });
 
                 workers.push(handle);
@@ -331,7 +328,7 @@ fn vnc_worker(
     debug!("VNC", "At the join part");
     for w in workers {
         debug!("VNC", "Joining {:?}", w);
-        w.join().unwrap();
+        tokio::join!(w).0.unwrap();
     }
 
     Ok(())

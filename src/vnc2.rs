@@ -17,41 +17,41 @@
  *   along with Scrying.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use crate::argparse::Mode::Web;
+use crate::argparse::Mode::Vnc;
+use crate::argparse::Opts;
 use crate::parsing::Target;
-use crate::reporting::{FileError, ReportMessage, ReportMessageContent};
+use crate::reporting::ReportMessageContent;
+use crate::reporting::{FileError, ReportMessage};
 use crate::util::target_to_filename;
+use crate::ThreadStatus;
 #[allow(unused)]
 use crate::{debug, error, info, trace, warn};
-use color_eyre::Result;
+use color_eyre::{eyre::eyre, Result};
+use image::{DynamicImage, ImageBuffer, Rgb};
+use std::cmp::min;
+use std::convert::TryInto;
 use std::path::Path;
-use std::{fs::File, io::Write};
-use tokio::sync::mpsc;
+use tokio::net::TcpStream;
+use tokio::sync::mpsc::Sender;
+use vnc_rs::{PixelFormat, Rect, VncConnector, VncEvent, X11Event};
 
-pub use chrome::chrome_worker;
-mod chrome;
-
-pub fn save(
+async fn vnc_capture(
     target: &Target,
-    output_dir: &str,
-    png_data: &[u8],
-    report_tx: &mpsc::Sender<ReportMessage>,
+    opts: &Opts,
+    report_tx: &Sender<ReportMessage>,
 ) -> Result<()> {
-    let filename = format!("{}.png", target_to_filename(target));
+    todo!()
+}
 
-    let relative_filepath = Path::new("web").join(&filename);
-    let output_file = Path::new(output_dir).join(&relative_filepath);
-    info!(target, "Saving image as {}", output_file.display());
+pub async fn capture(
+    target: &Target,
+    opts: &Opts,
+    tx: Sender<ThreadStatus>,
+    report_tx: &Sender<ReportMessage>,
+) {
+    if let Err(e) = vnc_capture(target, opts, report_tx).await {
+        warn!(target, "VNC error: {}", e);
+    }
 
-    let mut file = File::create(&output_file)?;
-    file.write_all(png_data)?;
-
-    let report_message = ReportMessage::Output(ReportMessageContent {
-        mode: Web,
-        target: target.to_string(),
-        output: FileError::File(relative_filepath.display().to_string()),
-    });
-    report_tx.blocking_send(report_message)?;
-
-    Ok(())
+    tx.send(ThreadStatus::Complete).await.unwrap();
 }

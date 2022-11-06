@@ -274,7 +274,7 @@ impl Write for SocketType {
 fn capture_worker(
     target: &Target,
     opts: &Opts,
-    report_tx: &mpsc::Sender<ReportMessage>,
+    report_tx: &tokio::sync::mpsc::Sender<ReportMessage>,
 ) -> Result<(), Error> {
     info!(target, "Connecting to {:?}", target);
     let addr = match target {
@@ -362,7 +362,7 @@ fn capture_worker(
                     relative_filepath.display().to_string(),
                 ),
             });
-            report_tx.send(report_message)?;
+            report_tx.blocking_send(report_message)?;
         }
         None => {
             warn!(target,
@@ -444,8 +444,8 @@ fn bmp_thread<T: Read + Write>(
 pub fn capture(
     target: &Target,
     opts: &Opts,
-    tx: mpsc::Sender<ThreadStatus>,
-    report_tx: &mpsc::Sender<ReportMessage>,
+    tx: tokio::sync::mpsc::Sender<ThreadStatus>,
+    report_tx: &tokio::sync::mpsc::Sender<ReportMessage>,
 ) {
     if let Err(e) = capture_worker(target, opts, report_tx) {
         warn!(target, "error: {}", e);
@@ -470,9 +470,9 @@ pub fn capture(
             }),
         };
         report_tx
-            .send(report_message)
+            .blocking_send(report_message)
             .expect("Reporting thread seems to have disconnected");
     }
 
-    tx.send(ThreadStatus::Complete).unwrap();
+    tx.blocking_send(ThreadStatus::Complete).unwrap();
 }
