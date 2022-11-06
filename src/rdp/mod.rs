@@ -296,12 +296,32 @@ fn capture_worker(
         SocketType::Tcp(TcpStream::connect(&addr)?)
     };
 
+    let rdpdomain = &opts.rdp_domain;
+    let s_rdpdomain = rdpdomain.as_deref().unwrap_or("");
+    let rdpuser = &opts.rdp_user;
+    let s_rdpuser = rdpuser.as_deref().unwrap_or("");
+    let rdppass = &opts.rdp_pass;
+    let s_rdppass = rdppass.as_deref().unwrap_or("");
+
+    debug!(target, "RDP domain: {:?}", s_rdpdomain);
+    debug!(target, "RDP username: {:?}", s_rdpuser);
+    debug!(target, "RDP password: {:?}", s_rdppass);
+
     let mut connector = Connector::new()
         .screen(opts.size.0 as u16, opts.size.1 as u16)
-        .use_nla(false)
-        .check_certificate(false)
-        .blank_creds(true)
-        .credentials("".to_string(), "".to_string(), "".to_string());
+        .check_certificate(false);
+
+    if s_rdpuser.len() > 0 && s_rdppass.len() > 0 {
+        connector = connector
+            .credentials(s_rdpdomain.to_string(), s_rdpuser.to_string(), s_rdppass.to_string());
+    } else {
+        warn!(target, "Using blank credentials");
+        connector = connector
+            .use_nla(false)
+            .blank_creds(true)
+            .credentials("".to_string(), "".to_string(), "".to_string());
+    };
+
     let client = connector.connect(stream).map_err(|e| eyre!("{e:?}"))?;
 
     let mut rdp_image: Image = Default::default();

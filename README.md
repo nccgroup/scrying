@@ -119,10 +119,13 @@ OPTIONS:
     -o, --output <OUTPUT DIR>          Directory to save the captured images in [default: output]
         --proxy <PROXY>                Default SOCKS5 proxy to use for connections e.g.
                                        socks5://[::1]:1080
+        --rdp-domain <RDP DOMAIN>      Domain name to provide to RDP servers that request one
+        --rdp-pass <RDP PASS>          Password to provide to RDP servers that request one
         --rdp-proxy <RDP PROXY>        SOCKS5 proxy to use for RDP connections e.g.
                                        socks5://[::1]:1080
         --rdp-timeout <RDP TIMEOUT>    Seconds to wait after last bitmap before saving an image
                                        [default: 2]
+        --rdp-user <RDP USER>          Username to provide to RDP servers that request one
     -s, --silent                       Suppress most log messages
         --size <SIZE>                  Set the size of captured images in pixels. Due to protocol
                                        limitations, sizes greater than 65535x65535 may get truncated

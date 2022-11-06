@@ -113,6 +113,9 @@ pub struct Opts {
     pub output_dir: String,
     pub web_proxy: Option<String>,
     pub rdp_proxy: Option<String>,
+    pub rdp_domain: Option<String>,
+    pub rdp_user: Option<String>,
+    pub rdp_pass: Option<String>,
     pub vnc_auth: Option<String>,
     pub web_path: Vec<String>,
     pub size: (usize, usize),
@@ -224,6 +227,24 @@ pub fn parse() -> Result<Opts> {
                 .long("proxy")
                 .takes_value(true)
                 .validator(is_socks5),
+        )
+        .arg(
+            Arg::new("RDP DOMAIN")
+                .help("Domain name to provide to RDP servers that request one")
+                .long("rdp-domain")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("RDP USER")
+                .help("Username to provide to RDP servers that request one")
+                .long("rdp-user")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("RDP PASS")
+                .help("Password to provide to RDP servers that request one")
+                .long("rdp-pass")
+                .takes_value(true),
         )
         .arg(
             Arg::new("VNC AUTH")
@@ -366,6 +387,15 @@ pub fn parse() -> Result<Opts> {
         rdp_proxy,
         vnc_auth: args
             .value_of("VNC AUTH")
+            .map_or_else(|| None, |s| Some(s.to_string())),
+        rdp_domain: args
+            .value_of("RDP DOMAIN")
+            .map_or_else(|| None, |s| Some(s.to_string())),
+        rdp_user: args
+            .value_of("RDP USER")
+            .map_or_else(|| None, |s| Some(s.to_string())),
+        rdp_pass: args
+            .value_of("RDP PASS")
             .map_or_else(|| None, |s| Some(s.to_string())),
         web_path: if let Some(paths) = args.values_of("WEB PATH") {
             paths.map(|p| p.to_string()).collect()
