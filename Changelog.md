@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed support for platform-native webview to reduce maintenance requirements
 
 ### Fixed
+* Replace question marks in URLs when generating filenames
 
 ### Security
 

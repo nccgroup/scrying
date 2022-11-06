@@ -42,7 +42,7 @@ pub fn target_to_filename(target: &Target) -> String {
                 .replace("://", "_") // Replace the scheme separator with -
                 .replace('/', "-") // replace all slashes with -
                 // replace colon (probably port, could be uname)
-                .replace(':', "_")
+                .replace([':', '?'], "_")
                 // Remove the square brackets as they are not needed for
                 // uniqueness
                 .replace(['[', ']'], "");
