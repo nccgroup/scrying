@@ -44,7 +44,7 @@ version = "1"
 features = ["macros", "rt-multi-thread"]
 
 [package.metadata.deb]
-depends = "libwebkit2gtk-4.0-37"
+depends = "chromium | chromium-browser | google-chrome"
 extended-description = """\
 A new tool for collecting RDP, web and VNC screenshots all in one place\
 """
