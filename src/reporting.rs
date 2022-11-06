@@ -144,25 +144,27 @@ pub fn reporting_thread(
         }
     }
 
-    info!("Generating report");
+    if !opts.disable_report {
+        info!("Generating report");
 
-    println!("RDP outputs: {:?}", rdp_outputs);
-    println!("Web outputs: {:?}", web_outputs);
+        println!("RDP outputs: {:?}", rdp_outputs);
+        println!("Web outputs: {:?}", web_outputs);
 
-    let report_file = Path::new(&opts.output_dir).join("report.html");
+        let report_file = Path::new(&opts.output_dir).join("report.html");
 
-    let report_template = ReportTemplate {
-        targets,
-        rdp_outputs,
-        rdp_errors,
-        web_outputs,
-        web_errors,
-        vnc_outputs,
-        vnc_errors,
-    };
-    let report = report_template.render()?;
-    debug!("Report: {:?}", report);
-    fs::write(&report_file, report)?;
-    info!("Report saved to {:?}", report_file);
+        let report_template = ReportTemplate {
+            targets,
+            rdp_outputs,
+            rdp_errors,
+            web_outputs,
+            web_errors,
+            vnc_outputs,
+            vnc_errors,
+        };
+        let report = report_template.render()?;
+        debug!("Report: {:?}", report);
+        fs::write(&report_file, report)?;
+        info!("Report saved to {:?}", report_file);
+    }
     Ok(())
 }

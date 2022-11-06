@@ -109,6 +109,7 @@ USAGE:
     scrying [OPTIONS] <--file <FILE>|--nmap <NMAP XML FILE>|--nessus <NESSUS XML FILE>|--target <TARGET>>
 
 OPTIONS:
+        --disable-report               Don't create a report.html [aliases: no-report]
     -f, --file <FILE>                  Targets file, one per line
     -h, --help                         Print help information
     -l, --log-file <LOG FILE>          Save logs to the given file
