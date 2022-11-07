@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 
+## [v0.9.2] - 2022-11-07
+### Fixed
+* Fix Linux and macos release on CI (again)
+
+
 ## [v0.9.1] - 2022-11-06
 ### Fixed
 * Fix Linux release on CI
