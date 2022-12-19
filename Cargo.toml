@@ -12,6 +12,7 @@ readme = "README.md"
 [features]
 
 [dependencies]
+anyhow = "1"
 askama = "0.11"
 clap = { version = "3", features = ["cargo", "derive"] }
 color-eyre = "0.6"
@@ -29,6 +30,7 @@ simplelog = "0.12"
 socks = "0.3"
 url = "2.1.1"
 vnc = "0.4"
+vnc-rs = { version = "0.3", package = "vnc-rs" }
 
 [dependencies.chromiumoxide]
 version = "0.4"

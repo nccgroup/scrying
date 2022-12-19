@@ -25,7 +25,8 @@ use askama::Template;
 use color_eyre::Result;
 use std::fs;
 use std::path::Path;
-use std::sync::{mpsc, Arc};
+use std::sync::Arc;
+use tokio::sync::mpsc;
 
 #[allow(unused)]
 use log::{debug, error, info, trace, warn};
@@ -74,8 +75,8 @@ pub enum FileError {
     Error(String),
 }
 
-pub fn reporting_thread(
-    rx: mpsc::Receiver<ReportMessage>,
+pub async fn reporting_thread(
+    mut rx: mpsc::Receiver<ReportMessage>,
     opts: Arc<Opts>,
     targets: Arc<InputLists>,
 ) -> Result<()> {
@@ -90,7 +91,7 @@ pub fn reporting_thread(
     let mut vnc_errors: Vec<ReportError> = Vec::new();
 
     // Main loop listening on the channel
-    while let Ok(msg) = rx.recv() {
+    while let Some(msg) = rx.recv().await {
         use ReportMessage::*;
         debug!("Received message: {:?}", msg);
         match msg {

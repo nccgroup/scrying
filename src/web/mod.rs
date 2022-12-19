@@ -25,8 +25,8 @@ use crate::util::target_to_filename;
 use crate::{debug, error, info, trace, warn};
 use color_eyre::Result;
 use std::path::Path;
-use std::sync::mpsc;
 use std::{fs::File, io::Write};
+use tokio::sync::mpsc;
 
 pub use chrome::chrome_worker;
 mod chrome;
@@ -51,7 +51,7 @@ pub fn save(
         target: target.to_string(),
         output: FileError::File(relative_filepath.display().to_string()),
     });
-    report_tx.send(report_message)?;
+    report_tx.blocking_send(report_message)?;
 
     Ok(())
 }
